@@ -1,16 +1,12 @@
 use {
-    CoordinateType, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Segment,
+    CoordinateType, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
-
-fn determinant<T: CoordinateType>(seg: &Segment<T>) -> T {
-    seg.start.x * seg.end.y - seg.start.y * seg.end.x
-}
 
 fn get_signed_loop_area<T: CoordinateType>(ls: &LineString<T>) -> T {
     if ls.len() < 4 {
         return T::zero();
     }
-    let twice_area: T = ls.segments_iter().map(|s| determinant(&s)).sum();
+    let twice_area: T = ls.segments_iter().map(|s| s.determinant()).sum();
     twice_area / (T::one() + T::one())
 }
 

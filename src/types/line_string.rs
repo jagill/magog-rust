@@ -75,6 +75,23 @@ impl<T: CoordinateType> LineString<T> {
     pub fn area(&self) -> T {
         T::zero()
     }
+
+    /// Return the first coordinate of the linestring
+    pub fn first(&self) -> Option<Coordinate<T>> {
+        if self.coords.len() == 0 {
+            return None;
+        }
+        Some(self.coords[0])
+    }
+
+    /// Return the last coordinate of the linestring
+    pub fn last(&self) -> Option<Coordinate<T>> {
+        if self.coords.len() == 0 {
+            return None;
+        }
+        Some(self.coords[self.coords.len() - 1])
+    }
+
 }
 
 #[cfg(test)]

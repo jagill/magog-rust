@@ -1,4 +1,5 @@
 use crate::types::primitive::{Coordinate, CoordinateType};
+use crate::utils;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Segment<T>
@@ -7,6 +8,14 @@ where
 {
     pub start: Coordinate<T>,
     pub end: Coordinate<T>,
+}
+
+/// Location of a point in relation to a line
+#[derive(PartialEq, Clone, Debug)]
+pub enum PointLocation {
+    Left,
+    On,
+    Right,
 }
 
 impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<(IC, IC)> for Segment<T> {
@@ -44,7 +53,27 @@ impl<T: CoordinateType> Segment<T> {
     pub fn length(&self) -> T {
         self.length_squared().sqrt()
     }
+
+    /// Tests if a coordinate is Left|On|Right of the infinite line determined by the segment.
+    ///    Return: PointLocation for location of P2 relative to [P0, P1]
+    pub fn coord_position(&self, c: Coordinate<T>) -> PointLocation {
+        let test = utils::cross_product(self.start, self.end, c);
+        if test > T::zero() {
+            PointLocation::Left
+        } else if test == T::zero() {
+            PointLocation::On
+        } else {
+            PointLocation::Right
+        }
+    }
+
+    /// Determinant of segment
+    pub fn determinant(&self) -> T {
+        self.start.x * self.end.y - self.start.y * self.end.x
+    }
+
 }
+
 
 #[cfg(test)]
 mod tests {

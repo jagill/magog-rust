@@ -9,7 +9,7 @@ pub use crate::relation::*;
 mod properties;
 pub use crate::properties::*;
 
-mod iter_tests;
+mod utils;
 
 #[cfg(test)]
 mod tests {

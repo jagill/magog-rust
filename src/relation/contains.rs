@@ -1,9 +1,48 @@
-use crate::types::Coordinate;
 use crate::types::CoordinateType;
+use crate::types::Rect;
 use crate::types::LineString;
 use crate::types::Point;
 use crate::types::Polygon;
-use crate::types::Triangle;
+use crate::types::PointLocation;
+use Intersection;
+
+pub fn intersection_linestring_point<T>(
+    linestring: &LineString<T>,
+    point: &Point<T>,
+) -> Intersection
+where T: CoordinateType,
+{
+    let coord = point.0;
+    if !linestring.envelope.contains(coord) {
+        return Intersection::Outside;
+    }
+
+    if !linestring.is_closed() {
+        match linestring.first() {
+            // Already checked empty case, but for syntactic completeness...
+            None => return Intersection::Outside,
+            Some(c) => if c == coord {
+                return Intersection::Boundary;
+            },
+        }
+        match linestring.last() {
+            // Already checked empty case, but for syntactic completeness...
+            None => return Intersection::Outside,
+            Some(c) => if c == coord {
+                return Intersection::Boundary;
+            },
+        }
+    }
+
+    if linestring.segments_iter()
+            .filter(|&s| Rect::from(s).contains(coord))
+            .any(|s| s.coord_position(coord) == PointLocation::On)
+    {
+        Intersection::Contains
+    } else {
+        Intersection::Outside
+    }
+}
 
 pub fn polygon_contains_point<T>(
     polygon: &Polygon<T>,
@@ -43,49 +82,20 @@ where
     for seg in ls.segments_iter() {
         if seg.start.y <= point.0.y {
             if seg.end.y > point.0.y  // an upward crossing
-                 && line_point_position(&seg.start, &seg.end, &point.0) == PointLocation::Left
+                 && seg.coord_position(point.0.clone()) == PointLocation::Left
             {
                 wn += 1; // have  a valid up intersect
             }
         } else {
             // seg.start.y > P.y (no test needed)
             if seg.end.y <= point.0.y  // a downward crossing
-                 && line_point_position(&seg.start, &seg.end, &point.0) == PointLocation::Right
+                 && seg.coord_position(point.0.clone()) == PointLocation::Right
             {
                 wn -= 1; // have  a valid down intersect
             }
         }
     }
     Ok(wn)
-}
-
-/// Location of a point in relation to a line
-#[derive(PartialEq, Clone, Debug)]
-enum PointLocation {
-    Left,
-    On,
-    Right,
-}
-
-/// Tests if a coordinate is Left|On|Right of an infinite line.
-///    Input:  three points P0, P1, and P2
-///    Return: PointLocation for location of P2 relative to [P0, P1]
-fn line_point_position<T>(
-    c0: &Coordinate<T>,
-    c1: &Coordinate<T>,
-    c2: &Coordinate<T>,
-) -> PointLocation
-where
-    T: CoordinateType,
-{
-    let test = Triangle(c0.clone(), c1.clone(), c2.clone()).signed_area();
-    if test > T::zero() {
-        PointLocation::Left
-    } else if test == T::zero() {
-        PointLocation::On
-    } else {
-        PointLocation::Right
-    }
 }
 
 #[cfg(test)]
@@ -150,5 +160,63 @@ mod tests {
         );
         let point = Point::from((0.0, 0.0));
         assert!(!polygon_contains_point(&poly, &point).unwrap());
+    }
+
+    // Intersectino of LineString and Point
+    #[test]
+    fn check_linestring_point_far_outside() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+        let p = Point::from((-1.0, -1.0));
+        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Outside);
+    }
+
+    #[test]
+    fn check_linestring_point_outside() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+        let p = Point::from((0.0, 1.0));
+        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Outside);
+    }
+
+    #[test]
+    fn check_linestring_point_first_endpoint() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+        let p = Point::from((0.0, 0.0));
+        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Boundary);
+    }
+
+    #[test]
+    fn check_linestring_point_last_endpoint() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+        let p = Point::from((1.0, 1.0));
+        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Boundary);
+    }
+
+    #[test]
+    fn check_loop_point_first_endpoint() {
+        let ls = LineString::from(vec![(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0., 0.)]);
+        let p = Point::from((0.0, 0.0));
+        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Contains);
+    }
+
+    #[test]
+    fn check_linestring_point_interior_vertex() {
+        let ls = LineString::from(vec![(0., 0.), (0., 1.), (1., 1.)]);
+        let p = Point::from((0.0, 1.0));
+        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Contains);
+    }
+
+    #[test]
+    fn check_linestring_point_interior_nonvertex() {
+        let ls = LineString::from(vec![(0., 0.), (0., 1.), (1., 1.)]);
+        let p = Point::from((0.0, 0.5));
+        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Contains);
+    }
+
+    // This tests our condition which checks for colinearity of the infinite line.
+    #[test]
+    fn check_linestring_point_inside_crook() {
+        let ls = LineString::from(vec![(0., 0.), (0., 1.), (1., 1.), (1., 2.), (0., 2.)]);
+        let p = Point::from((0.0, 1.5));
+        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Outside);
     }
 }
