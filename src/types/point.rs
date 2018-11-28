@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType};
+use {Coordinate, CoordinateType, Envelope, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct Point<T>(pub Coordinate<T>)
@@ -35,6 +35,33 @@ impl<T: CoordinateType> Point<T> {
     pub fn area(&self) -> T {
         T::zero()
     }
+}
+
+impl<T: CoordinateType> Geometry<T> for Point<T> {
+    fn dimension(&self) -> u8 {
+        0
+    }
+
+    fn geometry_type(&self) -> &'static str {
+        "Point"
+    }
+
+    fn envelope(&self) -> Envelope<T> {
+        Envelope::from((self.0, self.0))
+    }
+
+    fn is_empty(&self) -> bool {
+        false
+    }
+
+    fn is_simple(&self) -> bool {
+        true
+    }
+
+    fn boundary(&self) -> Option<&Geometry<T>> {
+        None
+    }
+
 }
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 use CoordinateType;
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Hash, PartialEq)]
 pub struct Coordinate<T>
 where
     T: CoordinateType,
@@ -32,6 +32,7 @@ impl<T: CoordinateType> Coordinate<T> {
         };
         Ok(())
     }
+
 }
 
 #[cfg(test)]
