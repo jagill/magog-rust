@@ -1,6 +1,4 @@
-use crate::types::CoordinateType;
-use crate::types::Envelope;
-use crate::types::LineString;
+use crate::types::{CoordinateType, Envelope, LineString, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct Polygon<T>
@@ -16,7 +14,7 @@ where
 impl<T: CoordinateType, ILS: Into<LineString<T>>> From<ILS> for Polygon<T> {
     fn from(ext: ILS) -> Self {
         let exterior: LineString<T> = ext.into();
-        let envelope = exterior.envelope.clone();
+        let envelope = exterior.envelope().clone();
         Polygon {
             exterior: exterior,
             interiors: vec![],
@@ -40,7 +38,7 @@ where
     T: CoordinateType,
 {
     pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
-        let envelope = exterior.envelope.clone();
+        let envelope = exterior.envelope().clone();
         Polygon {
             exterior,
             interiors,
@@ -79,7 +77,7 @@ mod tests {
     #[test]
     fn check_basic_polygon() {
         let p = Polygon::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
-        assert_eq!(p.exterior.len(), 4);
+        assert_eq!(p.exterior.num_points(), 4);
         assert_eq!(p.interiors.len(), 0);
     }
 }

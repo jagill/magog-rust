@@ -58,7 +58,7 @@ impl<T: CoordinateType> Geometry<T> for Point<T> {
         true
     }
 
-    fn boundary(&self) -> Option<&Geometry<T>> {
+    fn boundary<'a>(&self) -> Option<&'a Geometry<T>> {
         None
     }
 

@@ -9,7 +9,7 @@ where T: CoordinateType,
     fn envelope(&self) -> Envelope<T>;
     fn is_empty(&self) -> bool;
     fn is_simple(&self) -> bool;
-    fn boundary(&self) -> Option<&Geometry<T>>;
+    fn boundary<'a>(&self) -> Option<&'a Geometry<T>>;
 
     // Intersection Relations
     // fn equals(&self, other: &Geometry<T>) -> bool;

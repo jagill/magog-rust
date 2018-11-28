@@ -1,4 +1,4 @@
-use {CoordinateType, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use {CoordinateType, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 pub trait Length<T> {
     fn length(&self) -> T;
@@ -19,16 +19,6 @@ where
 {
     fn length(&self) -> T {
         T::zero()
-    }
-}
-
-/// Calculate the sum of the lengths of its segments.
-impl<T> Length<T> for LineString<T>
-where
-    T: CoordinateType,
-{
-    fn length(&self) -> T {
-        self.segments_iter().map(|s| s.length()).sum()
     }
 }
 
@@ -65,6 +55,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use LineString;
 
     #[test]
     fn check_point() {

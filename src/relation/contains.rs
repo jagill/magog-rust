@@ -1,9 +1,12 @@
-use crate::types::CoordinateType;
-use crate::types::Rect;
-use crate::types::LineString;
-use crate::types::Point;
-use crate::types::Polygon;
-use crate::types::PointLocation;
+use crate::types::{
+    CoordinateType,
+    Rect,
+    LineString,
+    Point,
+    Polygon,
+    PointLocation,
+    Geometry,
+};
 use Intersection;
 
 pub fn intersection_linestring_point<T>(
@@ -13,19 +16,19 @@ pub fn intersection_linestring_point<T>(
 where T: CoordinateType,
 {
     let coord = point.0;
-    if !linestring.envelope.contains(coord) {
+    if !linestring.envelope().contains(coord) {
         return Intersection::Outside;
     }
 
     if !linestring.is_closed() {
-        match linestring.first() {
+        match linestring.start_point() {
             // Already checked empty case, but for syntactic completeness...
             None => return Intersection::Outside,
             Some(c) => if c == coord {
                 return Intersection::Boundary;
             },
         }
-        match linestring.last() {
+        match linestring.end_point() {
             // Already checked empty case, but for syntactic completeness...
             None => return Intersection::Outside,
             Some(c) => if c == coord {

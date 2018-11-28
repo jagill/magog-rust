@@ -1,4 +1,4 @@
-use {CoordinateType, Envelope, LineString};
+use {CoordinateType, Envelope, LineString, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiLineString<T>
@@ -11,7 +11,7 @@ where
 
 impl<T: CoordinateType> MultiLineString<T> {
     pub fn new(line_strings: Vec<LineString<T>>) -> Self {
-        let envs: Vec<Envelope<T>> = line_strings.iter().map(|ls| ls.envelope).collect();
+        let envs: Vec<Envelope<T>> = line_strings.iter().map(|ls| ls.envelope()).collect();
         let envelope = Envelope::from(&envs);
         MultiLineString {
             line_strings,

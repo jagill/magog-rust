@@ -3,7 +3,7 @@ use {
 };
 
 fn get_signed_loop_area<T: CoordinateType>(ls: &LineString<T>) -> T {
-    if ls.len() < 4 {
+    if ls.num_points() < 4 {
         return T::zero();
     }
     let twice_area: T = ls.segments_iter().map(|s| s.determinant()).sum();

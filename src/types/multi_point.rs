@@ -51,7 +51,7 @@ impl<T: CoordinateType> Geometry<T> for MultiPoint<T> {
         has_adjacent_duplicates(&coords)
     }
 
-    fn boundary(&self) -> Option<&Geometry<T>> {
+    fn boundary<'a>(&self) -> Option<&'a Geometry<T>> {
         None
     }
 

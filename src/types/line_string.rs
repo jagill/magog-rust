@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType, Envelope, Segment};
+use {Coordinate, CoordinateType, MultiPoint, Envelope, Segment, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct LineString<T>
@@ -6,7 +6,7 @@ where
     T: CoordinateType,
 {
     pub coords: Vec<Coordinate<T>>,
-    pub envelope: Envelope<T>,
+    _envelope: Envelope<T>,
 }
 
 /// Turn a `Vec` of `Coordinate`-ish objects into a `LineString`.
@@ -18,14 +18,8 @@ impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T>
 
 impl<T: CoordinateType> LineString<T> {
     pub fn new(coords: Vec<Coordinate<T>>) -> LineString<T> {
-        let envelope = Envelope::from(&coords);
-        LineString { coords, envelope }
-    }
-
-    pub fn new_validate(coords: Vec<Coordinate<T>>) -> Result<LineString<T>, &'static str> {
-        let ls = LineString::new(coords);
-        ls.validate()?;
-        Ok(ls)
+        let _envelope = Envelope::from(&coords);
+        LineString { coords, _envelope }
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
@@ -43,11 +37,11 @@ impl<T: CoordinateType> LineString<T> {
                 }
             }
         }
-        self.envelope.validate()?;
+        self._envelope.validate()?;
         Ok(())
     }
 
-    pub fn len(&self) -> usize {
+    pub fn num_points(&self) -> usize {
         self.coords.len()
     }
 
@@ -72,12 +66,20 @@ impl<T: CoordinateType> LineString<T> {
         return self.coords[0] == self.coords[self.coords.len() - 1];
     }
 
+    pub fn is_ring(&self) -> bool {
+        self.is_closed() && self.is_simple()
+    }
+
+    pub fn length(&self) -> T {
+        self.segments_iter().map(|s| s.length()).sum()
+    }
+
     pub fn area(&self) -> T {
         T::zero()
     }
 
     /// Return the first coordinate of the linestring
-    pub fn first(&self) -> Option<Coordinate<T>> {
+    pub fn start_point(&self) -> Option<Coordinate<T>> {
         if self.coords.len() == 0 {
             return None;
         }
@@ -85,11 +87,51 @@ impl<T: CoordinateType> LineString<T> {
     }
 
     /// Return the last coordinate of the linestring
-    pub fn last(&self) -> Option<Coordinate<T>> {
+    pub fn end_point(&self) -> Option<Coordinate<T>> {
         if self.coords.len() == 0 {
             return None;
         }
         Some(self.coords[self.coords.len() - 1])
+    }
+
+}
+
+impl<T: CoordinateType> Geometry<T> for LineString<T> {
+    fn dimension(&self) -> u8 {
+        1
+    }
+
+    fn geometry_type(&self) -> &'static str {
+        "LineString"
+    }
+
+    fn envelope(&self) -> Envelope<T> {
+        self._envelope
+    }
+
+    fn is_empty(&self) -> bool {
+        self.coords.is_empty()
+    }
+
+    /// A LineString is simple if it has no self-intersections.
+    fn is_simple(&self) -> bool {
+        // STUB TODO
+        true
+    }
+
+    fn boundary<'a>(&self) -> Option<&'a Geometry<T>> {
+        None
+        // if self.is_closed() {
+        //     None
+        // } else {
+        //     match (self.start_point(), self.end_point()) {
+        //         (None, _) | (_, None) => None,
+        //         (Some(s), Some(e)) => {
+        //             let mp: &'a MultiPoint<T> = &'a MultiPoint::from(vec![s, e]);
+        //             Some(mp)
+        //         },
+        //     }
+        // }
     }
 
 }
@@ -169,7 +211,7 @@ mod tests {
     #[test]
     fn check_envelope() {
         let ls = LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
-        match ls.envelope.rect {
+        match ls.envelope().rect {
             None => assert!(false, "Envelope should not be empty."),
             Some(r) => assert_eq!(r, Rect::from(((0.0, 0.0), (1.0, 1.0)))),
         }
