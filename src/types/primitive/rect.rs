@@ -67,19 +67,12 @@ impl<T: CoordinateType> Rect<T> {
         self.min.x <= c.x && self.max.x >= c.x && self.min.y <= c.y && self.max.y >= c.y
     }
 
-    pub fn add_coord(&mut self, c: Coordinate<T>) {
-        if c.x < self.min.x {
-            self.min.x = c.x
-        }
-        if c.x > self.max.x {
-            self.max.x = c.x
-        }
-        if c.y < self.min.y {
-            self.min.y = c.y
-        }
-        if c.y > self.max.y {
-            self.max.y = c.y
-        }
+    pub fn add_coord(&self, c: Coordinate<T>) -> Rect<T> {
+        Rect::new(
+            Coordinate::new(self.min.x.min(c.x), self.min.y.min(c.y)),
+            Coordinate::new(self.max.x.max(c.x), self.max.y.max(c.y)),
+
+        )
     }
 
     pub fn merge(&self, other: Rect<T>) -> Rect<T> {

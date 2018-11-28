@@ -20,31 +20,8 @@ impl<T: CoordinateType, IR: Into<Rect<T>>> From<IR> for Envelope<T> {
 // Vec<Coordinate> -> Envelope
 impl<'a, T: CoordinateType> From<&'a Vec<Coordinate<T>>> for Envelope<T> {
     fn from(coords: &'a Vec<Coordinate<T>>) -> Self {
-        let mut iter = coords.iter().map(|c| c.clone());
-        if let Some(c) = iter.next() {
-            let mut min_x = c.x;
-            let mut max_x = c.x;
-            let mut min_y = c.y;
-            let mut max_y = c.y;
-            for c in iter {
-                if c.x < min_x {
-                    min_x = c.x
-                }
-                if c.x > max_x {
-                    max_x = c.x
-                }
-                if c.y < min_y {
-                    min_y = c.y
-                }
-                if c.y > max_y {
-                    max_y = c.y
-                }
-            }
-            return Envelope {
-                rect: Some(Rect::from(((min_x, min_y), (max_x, max_y)))),
-            };
-        }
-        Envelope { rect: None }
+        let empty_env = Envelope{rect: None};
+        coords.iter().fold(empty_env, |env, c| env.add_coord(*c))
     }
 }
 
@@ -79,17 +56,21 @@ impl<T: CoordinateType> Envelope<T> {
         }
     }
 
-    // pub fn add_coord(&mut self, c: Coordinate<T>) {
-    //     match &self.rect {
-    //         None => {
-    //             self.rect = Some(Rect{min: c.clone(), max: c.clone()});
-    //         },
-    //         Some(r) => {
-    //             r.add_coord(c);
-    //         }
-    //     }
-    // }
-    //
+    pub fn add_coord(&self, c: Coordinate<T>) -> Envelope<T> {
+        match &self.rect {
+            None => {
+                Envelope{
+                    rect: Some(Rect::new(c.clone(), c.clone()))
+                }
+            },
+            Some(r) => {
+                Envelope{
+                    rect: Some(r.add_coord(c))
+                }
+            }
+        }
+    }
+
     pub fn merge(&self, other: &Envelope<T>) -> Envelope<T> {
         match &self.rect {
             None => Envelope {
