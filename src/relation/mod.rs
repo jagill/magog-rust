@@ -8,3 +8,12 @@ pub enum Intersection {
     Boundary,
     Outside,
 }
+
+pub enum Relation {
+    Touches,
+    Contains,
+    Intersects,
+    Within,
+    Crosses,
+    Overlaps,
+}

@@ -1,4 +1,4 @@
-use crate::types::primitive::{Coordinate, CoordinateType};
+use crate::types::primitive::{Coordinate, CoordinateType, Rect};
 use crate::utils;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -38,12 +38,6 @@ impl<T: CoordinateType> Segment<T> {
         Ok(())
     }
 
-    // pub fn contains(&self, p: Coordinate<T>) -> bool {
-    //     let is_collinear = (self.end.x - self.start.x) * (p.y - self.start.y) ==
-    //         (p.x - self.start.x) * (self.end.y - self.start.y)
-    //     self.min.x <= p.x && self.max.x >= p.x && self.min.y <= p.y && self.max.y >= p.y
-    // }
-
     pub fn length_squared(&self) -> T {
         let dx = self.end.x - self.start.x;
         let dy = self.end.y - self.start.y;
@@ -55,9 +49,9 @@ impl<T: CoordinateType> Segment<T> {
     }
 
     /// Tests if a coordinate is Left|On|Right of the infinite line determined by the segment.
-    ///    Return: PointLocation for location of P2 relative to [P0, P1]
-    pub fn coord_position(&self, c: Coordinate<T>) -> PointLocation {
-        let test = utils::cross_product(self.start, self.end, c);
+    ///    Return: PointLocation for location of c relative to [start, end]
+    pub fn coord_position(&self, coord: Coordinate<T>) -> PointLocation {
+        let test = utils::cross_product(self.start, self.end, coord);
         if test > T::zero() {
             PointLocation::Left
         } else if test == T::zero() {
@@ -70,6 +64,10 @@ impl<T: CoordinateType> Segment<T> {
     /// Determinant of segment
     pub fn determinant(&self) -> T {
         self.start.x * self.end.y - self.start.y * self.end.x
+    }
+
+    pub fn contains(self, c: Coordinate<T>) -> bool {
+        Rect::from(self).contains(c) && self.coord_position(c) == PointLocation::On
     }
 
 }
