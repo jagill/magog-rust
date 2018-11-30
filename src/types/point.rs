@@ -13,10 +13,9 @@ impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<IC> for Point<T> {
 }
 
 impl<T: CoordinateType> Point<T> {
-    pub fn new(coord: Coordinate<T>) -> Result<Point<T>, &'static str> {
+    pub fn new(coord: Coordinate<T>) -> Point<T> {
         let p = Point(coord);
-        p.validate()?;
-        Ok(p)
+        p
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
@@ -58,7 +57,7 @@ impl<T: CoordinateType> Geometry<T> for Point<T> {
         true
     }
 
-    fn boundary<'a>(&self) -> Option<&'a Geometry<T>> {
+    fn boundary(&self) -> Option<Box<Geometry<T>>> {
         None
     }
 

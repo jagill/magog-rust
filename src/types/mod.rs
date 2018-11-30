@@ -1,8 +1,8 @@
 use super::num_traits::{Float, Num};
 use std::iter::Sum;
 
-pub trait CoordinateType: Num + Float + Sum + Copy + Clone + PartialOrd {}
-impl<T: Num + Float + Sum + Copy> CoordinateType for T {}
+pub trait CoordinateType: Num + Float + Sum + Copy + Clone + PartialOrd + 'static {}
+impl<T: Num + Float + Sum + Copy + 'static> CoordinateType for T {}
 
 
 mod primitive;

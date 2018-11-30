@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType, MultiPoint, Envelope, Segment, Geometry};
+use {Coordinate, CoordinateType, Point, MultiPoint, Envelope, Segment, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct LineString<T>
@@ -94,6 +94,7 @@ impl<T: CoordinateType> LineString<T> {
         Some(self.coords[self.coords.len() - 1])
     }
 
+
 }
 
 impl<T: CoordinateType> Geometry<T> for LineString<T> {
@@ -119,19 +120,19 @@ impl<T: CoordinateType> Geometry<T> for LineString<T> {
         true
     }
 
-    fn boundary<'a>(&self) -> Option<&'a Geometry<T>> {
-        None
-        // if self.is_closed() {
-        //     None
-        // } else {
-        //     match (self.start_point(), self.end_point()) {
-        //         (None, _) | (_, None) => None,
-        //         (Some(s), Some(e)) => {
-        //             let mp: &'a MultiPoint<T> = &'a MultiPoint::from(vec![s, e]);
-        //             Some(mp)
-        //         },
-        //     }
-        // }
+    fn boundary(&self) -> Option<Box<Geometry<T>>> {
+        // None
+        if self.is_closed() {
+            None
+        } else {
+            match (self.start_point(), self.end_point()) {
+                (None, _) | (_, None) => None,
+                (Some(s), Some(e)) => {
+                    let mp = MultiPoint::from(vec![s, e]);
+                    Some(Box::from(mp))
+                },
+            }
+        }
     }
 
 }
