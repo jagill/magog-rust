@@ -41,14 +41,6 @@ impl<T: CoordinateType> LineString<T> {
         Ok(())
     }
 
-    pub fn num_points(&self) -> usize {
-        self.coords.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.coords.len() == 0
-    }
-
     pub fn segments_iter<'a>(&'a self) -> impl Iterator<Item = Segment<T>> + 'a {
         self.coords
             .iter()
@@ -57,6 +49,22 @@ impl<T: CoordinateType> LineString<T> {
                 start: start.clone(),
                 end: end.clone(),
             })
+    }
+}
+
+// LineString Implementation
+impl<T: CoordinateType> LineString<T> {
+    pub fn num_points(&self) -> usize {
+        self.coords.len()
+    }
+
+    /// Get the point at coordinate `n` of the LineString.
+    /// If `n > self.num_points`, return None.
+    pub fn get_point(&self, n: usize) -> Option<Point<T>> {
+        match self.coords.get(n) {
+            None => None,
+            Some(c) => Some(Point::new(*c)),
+        }
     }
 
     pub fn is_closed(&self) -> bool {
@@ -72,10 +80,6 @@ impl<T: CoordinateType> LineString<T> {
 
     pub fn length(&self) -> T {
         self.segments_iter().map(|s| s.length()).sum()
-    }
-
-    pub fn area(&self) -> T {
-        T::zero()
     }
 
     /// Return the first coordinate of the linestring
@@ -95,40 +99,37 @@ impl<T: CoordinateType> LineString<T> {
     }
 }
 
-impl<T: CoordinateType> Geometry<T> for LineString<T> {
-    fn dimension(&self) -> u8 {
+// GEOMETRY implementation
+impl<T: CoordinateType> LineString<T> {
+    pub fn dimension(&self) -> u8 {
         1
     }
 
-    fn geometry_type(&self) -> &'static str {
+    pub fn geometry_type(&self) -> &'static str {
         "LineString"
     }
 
-    fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<T> {
         self._envelope
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.coords.is_empty()
     }
 
     /// A LineString is simple if it has no self-intersections.
-    fn is_simple(&self) -> bool {
-        // STUB TODO
+    pub fn is_simple(&self) -> bool {
+        // TODO STUB
         true
     }
 
-    fn boundary(&self) -> Option<Box<Geometry<T>>> {
-        // None
+    pub fn boundary(&self) -> Geometry<T> {
         if self.is_closed() {
-            None
+            Geometry::Empty
         } else {
             match (self.start_point(), self.end_point()) {
-                (None, _) | (_, None) => None,
-                (Some(s), Some(e)) => {
-                    let mp = MultiPoint::from(vec![s, e]);
-                    Some(Box::from(mp))
-                }
+                (None, _) | (_, None) => Geometry::Empty,
+                (Some(s), Some(e)) => Geometry::from(MultiPoint::from(vec![s, e])),
             }
         }
     }
@@ -213,5 +214,17 @@ mod tests {
             None => assert!(false, "Envelope should not be empty."),
             Some(r) => assert_eq!(r, Rect::from(((0.0, 0.0), (1.0, 1.0)))),
         }
+    }
+
+    #[test]
+    fn check_num_points() {
+        let ls = LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
+        assert_eq!(4, ls.num_points());
+    }
+
+    #[test]
+    fn check_get_point() {
+        let ls = LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
+        assert_eq!(Some(Point::from((0.0, 1.0))), ls.get_point(1));
     }
 }

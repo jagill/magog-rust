@@ -30,35 +30,32 @@ impl<T: CoordinateType> Point<T> {
     pub fn y(&self) -> T {
         self.0.y
     }
-
-    pub fn area(&self) -> T {
-        T::zero()
-    }
 }
 
-impl<T: CoordinateType> Geometry<T> for Point<T> {
-    fn dimension(&self) -> u8 {
+// GEOMETRY implementation
+impl<T: CoordinateType> Point<T> {
+    pub fn dimension(&self) -> u8 {
         0
     }
 
-    fn geometry_type(&self) -> &'static str {
+    pub fn geometry_type(&self) -> &'static str {
         "Point"
     }
 
-    fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<T> {
         Envelope::from((self.0, self.0))
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         false
     }
 
-    fn is_simple(&self) -> bool {
+    pub fn is_simple(&self) -> bool {
         true
     }
 
-    fn boundary(&self) -> Option<Box<Geometry<T>>> {
-        None
+    pub fn boundary(&self) -> Geometry<T> {
+        Geometry::Empty
     }
 }
 

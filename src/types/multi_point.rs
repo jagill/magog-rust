@@ -25,25 +25,26 @@ impl<T: CoordinateType> MultiPoint<T> {
     }
 }
 
-impl<T: CoordinateType> Geometry<T> for MultiPoint<T> {
-    fn dimension(&self) -> u8 {
+// GEOMETRY implementation
+impl<T: CoordinateType> MultiPoint<T> {
+    pub fn dimension(&self) -> u8 {
         0
     }
 
-    fn geometry_type(&self) -> &'static str {
+    pub fn geometry_type(&self) -> &'static str {
         "MultiPoint"
     }
 
-    fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<T> {
         self._envelope
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.points.is_empty()
     }
 
     /// A MultiPoint is simple if it has no duplicate points.
-    fn is_simple(&self) -> bool {
+    pub fn is_simple(&self) -> bool {
         // TODO: Only sort once.
         // XXX TODO: Really, any NaN values in coordinates should be an error.
         let mut coords: Vec<Coordinate<T>> = self.points.iter().map(|p| p.0).collect();
@@ -51,8 +52,8 @@ impl<T: CoordinateType> Geometry<T> for MultiPoint<T> {
         has_adjacent_duplicates(&coords)
     }
 
-    fn boundary(&self) -> Option<Box<Geometry<T>>> {
-        None
+    pub fn boundary(&self) -> Geometry<T> {
+        Geometry::Empty
     }
 }
 
@@ -71,4 +72,22 @@ fn has_adjacent_duplicates<T: CoordinateType>(coords: &Vec<Coordinate<T>>) -> bo
         }
     }
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn check_is_simple() {
+        let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+        assert!(mp.is_simple());
+    }
+
+    #[test]
+    fn check_not_is_simple() {
+        let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0), (0.0, 0.0)]);
+        assert!(!mp.is_simple());
+    }
+
 }

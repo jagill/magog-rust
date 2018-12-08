@@ -1,4 +1,4 @@
-use crate::types::{CoordinateType, Envelope, Geometry, LineString};
+use crate::types::{CoordinateType, Envelope, Geometry, LineString, Point};
 
 #[derive(Debug, PartialEq)]
 pub struct Polygon<T>
@@ -7,52 +7,33 @@ where
 {
     pub exterior: LineString<T>,
     pub interiors: Vec<LineString<T>>,
-    pub envelope: Envelope<T>,
+    _envelope: Envelope<T>,
 }
 
 /// Turn a `Vec` of `Coordinate`-ish objects into a `Polygon`.
 impl<T: CoordinateType, ILS: Into<LineString<T>>> From<ILS> for Polygon<T> {
     fn from(ext: ILS) -> Self {
         let exterior: LineString<T> = ext.into();
-        let envelope = exterior.envelope().clone();
+        let _envelope = exterior.envelope().clone();
         Polygon {
-            exterior: exterior,
+            exterior,
             interiors: vec![],
-            envelope: envelope,
+            _envelope,
         }
     }
 }
-
-/// Turn a `Vec` of `Coordinate`-ish objects into a `Polygon`.
-// impl<'a, T: CoordinateType, ILS: Into<LineString<T>>> From<(ILS, &'a Vec<ILS>)> for Polygon<T> {
-//     fn from(data: (ILS, &'a Vec<ILS>)) -> Self {
-//         let exterior: LineString<T> = data.0.into();
-//         let envelope = exterior.envelope.clone();
-//         let interiors: Vec<LineString<T>> = data.1.iter().map(|ls| ls.into());
-//         Polygon{exterior: exterior, interiors: vec![], envelope: envelope}
-//     }
-// }
 
 impl<T> Polygon<T>
 where
     T: CoordinateType,
 {
     pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
-        let envelope = exterior.envelope().clone();
+        let _envelope = exterior.envelope().clone();
         Polygon {
             exterior,
             interiors,
-            envelope,
+            _envelope,
         }
-    }
-
-    pub fn new_validate(
-        exterior: LineString<T>,
-        interiors: Vec<LineString<T>>,
-    ) -> Result<Polygon<T>, &'static str> {
-        let p = Polygon::new(exterior, interiors);
-        p.validate()?;
-        Ok(p)
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
@@ -67,6 +48,56 @@ where
             };
         }
         Ok(())
+    }
+}
+
+// Polygon implementation
+impl<T: CoordinateType> Polygon<T> {
+    pub fn centroid(&self) -> Point<T> {
+        // TODO: STUB
+        Point::from((T::zero(), T::zero()))
+    }
+
+    pub fn point_on_surface(&self) -> Point<T> {
+        // TODO: STUB
+        Point::from((T::zero(), T::zero()))
+    }
+}
+
+// GEOMETRY implementation
+impl<T: CoordinateType> Polygon<T>
+where
+    T: CoordinateType,
+{
+    pub fn dimension(&self) -> u8 {
+        2
+    }
+
+    pub fn geometry_type(&self) -> &'static str {
+        "Polygon"
+    }
+
+    pub fn envelope(&self) -> Envelope<T> {
+        self._envelope
+    }
+
+    pub fn is_empty(&self) -> bool {
+        // TODO: STUB
+        false
+    }
+
+    /// A Polygon is simple if it has no self-intersections in its envelopes.
+    pub fn is_simple(&self) -> bool {
+        self.exterior.is_simple()
+            && self.interiors.iter().all(|ls| ls.is_simple())
+            // TODO: STUB  Should be that none of the rings intersect.
+            && true
+    }
+
+    /// The boundary of a Polygon are the component LineStrings.
+    pub fn boundary(&self) -> Geometry<T> {
+        // TODO: STUB
+        Geometry::Empty
     }
 }
 

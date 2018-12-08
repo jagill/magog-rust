@@ -38,6 +38,10 @@ impl<T: CoordinateType> Envelope<T> {
         Envelope { rect }
     }
 
+    pub fn empty() -> Envelope<T> {
+        Envelope { rect: None }
+    }
+
     pub fn validate(&self) -> Result<(), &'static str> {
         match &self.rect {
             None => Ok(()),
