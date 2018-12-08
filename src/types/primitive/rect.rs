@@ -71,7 +71,6 @@ impl<T: CoordinateType> Rect<T> {
         Rect::new(
             Coordinate::new(self.min.x.min(c.x), self.min.y.min(c.y)),
             Coordinate::new(self.max.x.max(c.x), self.max.y.max(c.y)),
-
         )
     }
 
@@ -158,7 +157,8 @@ mod tests {
         let e = Rect::new_validate(
             Coordinate { x: min_x, y: min_y },
             Coordinate { x: max_x, y: max_y },
-        ).expect("Shouldn't fail construction here.");
+        )
+        .expect("Shouldn't fail construction here.");
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
         assert_eq!(e.max.x, max_x);
@@ -174,7 +174,8 @@ mod tests {
         let e = Rect::new_validate(
             Coordinate { x: min_x, y: min_y },
             Coordinate { x: max_x, y: max_y },
-        ).expect("Shouldn't fail construction here.");
+        )
+        .expect("Shouldn't fail construction here.");
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
         assert_eq!(e.max.x, max_x);
@@ -191,7 +192,8 @@ mod tests {
             Rect::new_validate(
                 Coordinate { x: min_x, y: min_y },
                 Coordinate { x: max_x, y: max_y },
-            ).is_err(),
+            )
+            .is_err(),
             "Min_x > max_x"
         );
     }
@@ -206,7 +208,8 @@ mod tests {
             Rect::new_validate(
                 Coordinate { x: min_x, y: min_y },
                 Coordinate { x: max_x, y: max_y },
-            ).is_err(),
+            )
+            .is_err(),
             "Min_y > max_y"
         );
     }

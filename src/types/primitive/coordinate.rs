@@ -32,7 +32,6 @@ impl<T: CoordinateType> Coordinate<T> {
         };
         Ok(())
     }
-
 }
 
 #[cfg(test)]

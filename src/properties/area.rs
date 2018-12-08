@@ -111,7 +111,8 @@ mod tests {
             MultiLineString::new(vec![
                 LineString::from(vec![(0.0, 0.0), (1.0, 0.0), (1.0, 1.0)]),
                 LineString::from(vec![(1.0, 0.0), (1.0, -1.0)]),
-            ]).area()
+            ])
+            .area()
         );
     }
 

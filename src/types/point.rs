@@ -60,7 +60,6 @@ impl<T: CoordinateType> Geometry<T> for Point<T> {
     fn boundary(&self) -> Option<Box<Geometry<T>>> {
         None
     }
-
 }
 
 #[cfg(test)]

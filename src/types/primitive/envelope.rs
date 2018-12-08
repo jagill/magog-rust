@@ -20,7 +20,7 @@ impl<T: CoordinateType, IR: Into<Rect<T>>> From<IR> for Envelope<T> {
 // Vec<Coordinate> -> Envelope
 impl<'a, T: CoordinateType> From<&'a Vec<Coordinate<T>>> for Envelope<T> {
     fn from(coords: &'a Vec<Coordinate<T>>) -> Self {
-        let empty_env = Envelope{rect: None};
+        let empty_env = Envelope { rect: None };
         coords.iter().fold(empty_env, |env, c| env.add_coord(*c))
     }
 }
@@ -58,16 +58,12 @@ impl<T: CoordinateType> Envelope<T> {
 
     pub fn add_coord(&self, c: Coordinate<T>) -> Envelope<T> {
         match &self.rect {
-            None => {
-                Envelope{
-                    rect: Some(Rect::new(c.clone(), c.clone()))
-                }
+            None => Envelope {
+                rect: Some(Rect::new(c.clone(), c.clone())),
             },
-            Some(r) => {
-                Envelope{
-                    rect: Some(r.add_coord(c))
-                }
-            }
+            Some(r) => Envelope {
+                rect: Some(r.add_coord(c)),
+            },
         }
     }
 

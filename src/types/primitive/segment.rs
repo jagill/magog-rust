@@ -69,9 +69,7 @@ impl<T: CoordinateType> Segment<T> {
     pub fn contains(self, c: Coordinate<T>) -> bool {
         Rect::from(self).contains(c) && self.coord_position(c) == PointLocation::On
     }
-
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -1,4 +1,4 @@
-use crate::types::{Coordinate, CoordinateType, Point, MultiPoint, Envelope, Segment, Geometry};
+use crate::types::{Coordinate, CoordinateType, Envelope, Geometry, MultiPoint, Point, Segment};
 
 #[derive(Debug, PartialEq)]
 pub struct LineString<T>
@@ -93,8 +93,6 @@ impl<T: CoordinateType> LineString<T> {
         }
         Some(self.coords[self.coords.len() - 1])
     }
-
-
 }
 
 impl<T: CoordinateType> Geometry<T> for LineString<T> {
@@ -130,11 +128,10 @@ impl<T: CoordinateType> Geometry<T> for LineString<T> {
                 (Some(s), Some(e)) => {
                     let mp = MultiPoint::from(vec![s, e]);
                     Some(Box::from(mp))
-                },
+                }
             }
         }
     }
-
 }
 
 #[cfg(test)]

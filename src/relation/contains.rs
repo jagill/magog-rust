@@ -1,19 +1,12 @@
-use crate::types::{
-    CoordinateType,
-    Rect,
-    LineString,
-    Point,
-    Polygon,
-    PointLocation,
-    Geometry,
-};
 use crate::relation::Intersection;
+use crate::types::{CoordinateType, Geometry, LineString, Point, PointLocation, Polygon, Rect};
 
 pub fn intersection_linestring_point<T>(
     linestring: &LineString<T>,
     point: &Point<T>,
 ) -> Intersection
-where T: CoordinateType,
+where
+    T: CoordinateType,
 {
     let coord = point.0;
     if !linestring.envelope().contains(coord) {
@@ -24,22 +17,27 @@ where T: CoordinateType,
         match linestring.start_point() {
             // Already checked empty case, but for syntactic completeness...
             None => return Intersection::Outside,
-            Some(c) => if c == coord {
-                return Intersection::Boundary;
-            },
+            Some(c) => {
+                if c == coord {
+                    return Intersection::Boundary;
+                }
+            }
         }
         match linestring.end_point() {
             // Already checked empty case, but for syntactic completeness...
             None => return Intersection::Outside,
-            Some(c) => if c == coord {
-                return Intersection::Boundary;
-            },
+            Some(c) => {
+                if c == coord {
+                    return Intersection::Boundary;
+                }
+            }
         }
     }
 
-    if linestring.segments_iter()
-            .filter(|&s| Rect::from(s).contains(coord))
-            .any(|s| s.coord_position(coord) == PointLocation::On)
+    if linestring
+        .segments_iter()
+        .filter(|&s| Rect::from(s).contains(coord))
+        .any(|s| s.coord_position(coord) == PointLocation::On)
     {
         Intersection::Contains
     } else {
@@ -82,7 +80,10 @@ where
 }
 
 /// Check the intersection of a simple polygon (defined by a loop) and a point.
-fn _intersection_simple_polygon_point<T>(ls: &LineString<T>, point: &Point<T>) -> Result<Intersection, &'static str>
+fn _intersection_simple_polygon_point<T>(
+    ls: &LineString<T>,
+    point: &Point<T>,
+) -> Result<Intersection, &'static str>
 where
     T: CoordinateType,
 {
@@ -99,7 +100,9 @@ where
         coord.y <= rect.max.y && coord.y >= rect.min.y && coord.x <= rect.max.x
     });
     for seg in right_segments {
-        if seg.contains(coord) { return Ok(Intersection::Boundary); }
+        if seg.contains(coord) {
+            return Ok(Intersection::Boundary);
+        }
 
         if seg.start.y <= coord.y {
             if seg.end.y > coord.y  // an upward crossing
@@ -199,49 +202,70 @@ mod tests {
     fn check_linestring_point_far_outside() {
         let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
         let p = Point::from((-1.0, -1.0));
-        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Outside);
+        assert_eq!(
+            intersection_linestring_point(&ls, &p),
+            Intersection::Outside
+        );
     }
 
     #[test]
     fn check_linestring_point_outside() {
         let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
         let p = Point::from((0.0, 1.0));
-        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Outside);
+        assert_eq!(
+            intersection_linestring_point(&ls, &p),
+            Intersection::Outside
+        );
     }
 
     #[test]
     fn check_linestring_point_first_endpoint() {
         let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
         let p = Point::from((0.0, 0.0));
-        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Boundary);
+        assert_eq!(
+            intersection_linestring_point(&ls, &p),
+            Intersection::Boundary
+        );
     }
 
     #[test]
     fn check_linestring_point_last_endpoint() {
         let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
         let p = Point::from((1.0, 1.0));
-        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Boundary);
+        assert_eq!(
+            intersection_linestring_point(&ls, &p),
+            Intersection::Boundary
+        );
     }
 
     #[test]
     fn check_loop_point_first_endpoint() {
         let ls = LineString::from(vec![(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0., 0.)]);
         let p = Point::from((0.0, 0.0));
-        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Contains);
+        assert_eq!(
+            intersection_linestring_point(&ls, &p),
+            Intersection::Contains
+        );
     }
 
     #[test]
     fn check_linestring_point_interior_vertex() {
         let ls = LineString::from(vec![(0., 0.), (0., 1.), (1., 1.)]);
         let p = Point::from((0.0, 1.0));
-        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Contains);
+        assert_eq!(
+            intersection_linestring_point(&ls, &p),
+            Intersection::Contains
+        );
     }
 
     #[test]
     fn check_linestring_point_interior_nonvertex() {
         let ls = LineString::from(vec![(0., 0.), (0., 1.), (1., 1.)]);
         let p = Point::from((0.0, 0.5));
-        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Contains);
+        assert_eq!(
+            intersection_linestring_point(&ls, &p),
+            Intersection::Contains
+        );
     }
 
     // This tests our condition which checks for colinearity of the infinite line.
@@ -249,6 +273,9 @@ mod tests {
     fn check_linestring_point_inside_crook() {
         let ls = LineString::from(vec![(0., 0.), (0., 1.), (1., 1.), (1., 2.), (0., 2.)]);
         let p = Point::from((0.0, 1.5));
-        assert_eq!(intersection_linestring_point(&ls, &p), Intersection::Outside);
+        assert_eq!(
+            intersection_linestring_point(&ls, &p),
+            Intersection::Outside
+        );
     }
 }

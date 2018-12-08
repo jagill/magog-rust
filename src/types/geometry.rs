@@ -1,7 +1,8 @@
 use crate::types::{CoordinateType, Envelope};
 
 pub trait Geometry<T>
-where T: CoordinateType,
+where
+    T: CoordinateType,
 {
     // Basic accessors
     fn dimension(&self) -> u8;

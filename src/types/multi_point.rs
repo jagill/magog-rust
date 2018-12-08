@@ -1,4 +1,4 @@
-use crate::types::{Coordinate, CoordinateType, Envelope, Point, Geometry};
+use crate::types::{Coordinate, CoordinateType, Envelope, Geometry, Point};
 use crate::utils;
 
 #[derive(Debug, PartialEq)]
@@ -21,7 +21,7 @@ impl<T: CoordinateType> MultiPoint<T> {
     pub fn new(points: Vec<Point<T>>) -> Self {
         let coords: Vec<Coordinate<T>> = points.iter().map(|p| p.0).collect();
         let _envelope: Envelope<T> = Envelope::from(&coords);
-        MultiPoint { points, _envelope, }
+        MultiPoint { points, _envelope }
     }
 }
 
@@ -54,7 +54,6 @@ impl<T: CoordinateType> Geometry<T> for MultiPoint<T> {
     fn boundary(&self) -> Option<Box<Geometry<T>>> {
         None
     }
-
 }
 
 fn has_adjacent_duplicates<T: CoordinateType>(coords: &Vec<Coordinate<T>>) -> bool {
