@@ -1,4 +1,4 @@
-use crate::types::primitive::{Coordinate, CoordinateType, Segment};
+use crate::types::primitive::{Coordinate, CoordinateType};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Rect<T>
@@ -11,32 +11,25 @@ where
 
 //// From Conversions
 
+fn min_max<T: CoordinateType>(z1: T, z2: T) -> (T, T) {
+    if z1 < z2 {
+        (z1, z2)
+    } else {
+        (z2, z1)
+    }
+}
+
 // (Coordinate, Coordinate) -> Rect
 impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<(IC, IC)> for Rect<T> {
     fn from(coords: (IC, IC)) -> Self {
         let c1: Coordinate<T> = coords.0.into();
         let c2: Coordinate<T> = coords.1.into();
-        let (min_x, max_x) = if c1.x < c2.x {
-            (c1.x, c2.x)
-        } else {
-            (c2.x, c1.x)
-        };
-        let (min_y, max_y) = if c1.y < c2.y {
-            (c1.y, c2.y)
-        } else {
-            (c2.y, c1.y)
-        };
+        let (min_x, max_x) = min_max(c1.x, c2.x);
+        let (min_y, max_y) = min_max(c1.y, c2.y);
         Rect {
             min: Coordinate::from((min_x, min_y)),
             max: Coordinate::from((max_x, max_y)),
         }
-    }
-}
-
-// Segment -> Rect
-impl<T: CoordinateType> From<Segment<T>> for Rect<T> {
-    fn from(seg: Segment<T>) -> Self {
-        Rect::from((seg.start, seg.end))
     }
 }
 
@@ -248,16 +241,6 @@ mod tests {
     #[test]
     fn check_from_tuple_tuple() {
         let e = Rect::from(((0.0, 3.0), (1.0, 2.0)));
-        assert_eq!(e.min.x, 0.0);
-        assert_eq!(e.min.y, 2.0);
-        assert_eq!(e.max.x, 1.0);
-        assert_eq!(e.max.y, 3.0);
-    }
-
-    #[test]
-    fn check_from_rect() {
-        let s = Segment::from(((0.0, 2.0), (1.0, 3.0)));
-        let e = Rect::from(s);
         assert_eq!(e.min.x, 0.0);
         assert_eq!(e.min.y, 2.0);
         assert_eq!(e.max.x, 1.0);

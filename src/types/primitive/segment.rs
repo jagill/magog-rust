@@ -18,12 +18,20 @@ pub enum PointLocation {
     Right,
 }
 
+// (T, T) -> Segment
 impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<(IC, IC)> for Segment<T> {
     fn from(coords: (IC, IC)) -> Self {
         Segment {
             start: coords.0.into(),
             end: coords.1.into(),
         }
+    }
+}
+
+// Segment -> Rect
+impl<T: CoordinateType> From<Segment<T>> for Rect<T> {
+    fn from(seg: Segment<T>) -> Self {
+        Rect::from((seg.start, seg.end))
     }
 }
 
@@ -137,6 +145,16 @@ mod tests {
             end: Coordinate { x: 3., y: 4. },
         };
         assert_ne!(s1, s2);
+    }
+
+    #[test]
+    fn check_to_rect() {
+        let s = Segment::from(((0.0, 2.0), (1.0, 3.0)));
+        let e = Rect::from(s);
+        assert_eq!(e.min.x, 0.0);
+        assert_eq!(e.min.y, 2.0);
+        assert_eq!(e.max.x, 1.0);
+        assert_eq!(e.max.y, 3.0);
     }
 
 }
