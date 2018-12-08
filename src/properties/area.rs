@@ -1,4 +1,4 @@
-use {
+use crate::types::{
     CoordinateType, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 

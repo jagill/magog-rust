@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType, Envelope, Geometry};
+use crate::types::{Coordinate, CoordinateType, Envelope, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct Point<T>(pub Coordinate<T>)

@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType, Envelope, Point, Geometry};
+use crate::types::{Coordinate, CoordinateType, Envelope, Point, Geometry};
 use crate::utils;
 
 #[derive(Debug, PartialEq)]

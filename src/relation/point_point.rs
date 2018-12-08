@@ -3,8 +3,8 @@ use crate::types::CoordinateType;
 use crate::types::Point;
 use crate::types::MultiPoint;
 use crate::types::Geometry;
-use Relation;
-use Relation::*;
+use crate::relation::Relation;
+use crate::relation::Relation::*;
 
 pub fn check_relation_point_point<T>(p1: &Point<T>, p2: &Point<T>, relation: Relation) -> bool
 where T: CoordinateType,

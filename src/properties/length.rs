@@ -1,4 +1,4 @@
-use {CoordinateType, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use crate::types::{CoordinateType, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 pub trait Length<T> {
     fn length(&self) -> T;
@@ -55,7 +55,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use LineString;
+    use crate::types::LineString;
 
     #[test]
     fn check_point() {

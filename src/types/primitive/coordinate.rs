@@ -1,4 +1,4 @@
-use CoordinateType;
+use crate::types::CoordinateType;
 
 #[derive(Copy, Clone, Debug, Hash, PartialEq)]
 pub struct Coordinate<T>

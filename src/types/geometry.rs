@@ -1,4 +1,4 @@
-use {CoordinateType, Envelope};
+use crate::types::{CoordinateType, Envelope};
 
 pub trait Geometry<T>
 where T: CoordinateType,

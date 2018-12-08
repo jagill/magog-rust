@@ -7,7 +7,7 @@ use crate::types::{
     PointLocation,
     Geometry,
 };
-use Intersection;
+use crate::relation::Intersection;
 
 pub fn intersection_linestring_point<T>(
     linestring: &LineString<T>,

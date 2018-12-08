@@ -1,4 +1,4 @@
-use {Coordinate, CoordinateType, Point, MultiPoint, Envelope, Segment, Geometry};
+use crate::types::{Coordinate, CoordinateType, Point, MultiPoint, Envelope, Segment, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct LineString<T>

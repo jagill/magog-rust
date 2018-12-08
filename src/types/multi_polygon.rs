@@ -1,4 +1,4 @@
-use {CoordinateType, Envelope, Polygon};
+use crate::types::{CoordinateType, Envelope, Polygon};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiPolygon<T>

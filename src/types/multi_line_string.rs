@@ -1,4 +1,4 @@
-use {CoordinateType, Envelope, LineString, Geometry};
+use crate::types::{CoordinateType, Envelope, LineString, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiLineString<T>
