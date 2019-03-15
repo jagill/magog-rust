@@ -38,12 +38,6 @@ impl<T: CoordinateType> Rect<T> {
         Rect { min, max }
     }
 
-    pub fn new_validate(min: Coordinate<T>, max: Coordinate<T>) -> Result<Rect<T>, &'static str> {
-        let e = Rect::new(min, max);
-        e.validate()?;
-        Ok(e)
-    }
-
     pub fn validate(&self) -> Result<(), &'static str> {
         &self.min.validate()?;
         &self.max.validate()?;
@@ -147,11 +141,10 @@ mod tests {
         let min_y: f32 = 2.;
         let max_x: f32 = 3.;
         let max_y: f32 = 4.;
-        let e = Rect::new_validate(
+        let e = Rect::new(
             Coordinate { x: min_x, y: min_y },
             Coordinate { x: max_x, y: max_y },
-        )
-        .expect("Shouldn't fail construction here.");
+        );
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
         assert_eq!(e.max.x, max_x);
@@ -164,11 +157,10 @@ mod tests {
         let min_y: f64 = 2.;
         let max_x: f64 = 3.;
         let max_y: f64 = 4.;
-        let e = Rect::new_validate(
+        let e = Rect::new(
             Coordinate { x: min_x, y: min_y },
             Coordinate { x: max_x, y: max_y },
-        )
-        .expect("Shouldn't fail construction here.");
+        );
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
         assert_eq!(e.max.x, max_x);
@@ -176,35 +168,29 @@ mod tests {
     }
 
     #[test]
-    fn check_new_rect_fail_x() {
+    fn check_validate_fail_x() {
         let min_x: f64 = 3.;
         let min_y: f64 = 2.;
         let max_x: f64 = 1.;
         let max_y: f64 = 4.;
-        assert!(
-            Rect::new_validate(
-                Coordinate { x: min_x, y: min_y },
-                Coordinate { x: max_x, y: max_y },
-            )
-            .is_err(),
-            "Min_x > max_x"
+        let r = Rect::new(
+            Coordinate { x: min_x, y: min_y },
+            Coordinate { x: max_x, y: max_y },
         );
+        assert!(r.validate().is_err(), "Min_x > max_x");
     }
 
     #[test]
-    fn check_new_rect_fail_y() {
+    fn check_validate_fail_y() {
         let min_x: f64 = 1.;
         let min_y: f64 = 4.;
         let max_x: f64 = 3.;
         let max_y: f64 = 2.;
-        assert!(
-            Rect::new_validate(
-                Coordinate { x: min_x, y: min_y },
-                Coordinate { x: max_x, y: max_y },
-            )
-            .is_err(),
-            "Min_y > max_y"
+        let r = Rect::new(
+            Coordinate { x: min_x, y: min_y },
+            Coordinate { x: max_x, y: max_y },
         );
+        assert!(r.validate().is_err(), "Min_y > max_y");
     }
 
     #[test]
