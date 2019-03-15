@@ -1,6 +1,7 @@
 use crate::types::CoordinateType;
+use ordered_float::{FloatIsNan, NotNan};
 
-#[derive(Copy, Clone, Debug, Hash, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Coordinate<T>
 where
     T: CoordinateType,
@@ -18,6 +19,15 @@ impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
     }
 }
 
+impl<T: CoordinateType> From<(NotNan<T>, NotNan<T>)> for Coordinate<T> {
+    fn from(coords: (NotNan<T>, NotNan<T>)) -> Self {
+        Coordinate {
+            x: coords.0.into_inner(),
+            y: coords.1.into_inner(),
+        }
+    }
+}
+
 impl<T: CoordinateType> Coordinate<T> {
     pub fn new(x: T, y: T) -> Coordinate<T> {
         Coordinate { x: x, y: y }
@@ -31,6 +41,12 @@ impl<T: CoordinateType> Coordinate<T> {
             return Err("y is not finite");
         };
         Ok(())
+    }
+
+    pub fn to_hashable(&self) -> Result<(NotNan<T>, NotNan<T>), FloatIsNan> {
+        let x = NotNan::new(self.x)?;
+        let y = NotNan::new(self.y)?;
+        Ok((x, y))
     }
 }
 

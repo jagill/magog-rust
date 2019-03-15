@@ -14,8 +14,7 @@ impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<IC> for Point<T> {
 
 impl<T: CoordinateType> Point<T> {
     pub fn new(coord: Coordinate<T>) -> Point<T> {
-        let p = Point(coord);
-        p
+        Point(coord)
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
