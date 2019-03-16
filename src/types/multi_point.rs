@@ -47,7 +47,7 @@ impl<T: CoordinateType> MultiPoint<T> {
     pub fn is_simple(&self) -> bool {
         let mut coord_set = HashSet::new();
         for point in &self.points {
-            if let Err(_) = point.validate() {
+            if point.validate().is_err() {
                 return false;
             }
             match point.0.to_hashable() {
@@ -68,7 +68,7 @@ impl<T: CoordinateType> MultiPoint<T> {
     pub fn make_simple(&self) -> Self {
         let mut coord_set = HashSet::new();
         for point in &self.points {
-            if let Err(_) = point.validate() {
+            if point.validate().is_err() {
                 continue;
             }
             match point.0.to_hashable() {
@@ -89,6 +89,8 @@ impl<T: CoordinateType> MultiPoint<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::Rect;
+    use core::f32;
 
     #[test]
     fn check_is_simple() {
@@ -97,9 +99,22 @@ mod tests {
     }
 
     #[test]
-    fn check_not_is_simple() {
+    fn check_not_is_simple_duplicate() {
         let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0), (0.0, 0.0)]);
         assert!(!mp.is_simple());
+    }
+
+    #[test]
+    fn check_is_not_simple_nan() {
+        let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, f32::NAN)]);
+        assert!(!mp.is_simple());
+    }
+
+    #[test]
+    fn check_envelope_nan() {
+        let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, f32::NAN)]);
+        let env = Envelope::from(Rect::from(((0.0, 0.0), (1.0, 0.0))));
+        assert_eq!(mp.envelope(), env);
     }
 
 }
