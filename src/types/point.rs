@@ -50,7 +50,10 @@ impl<T: CoordinateType> Point<T> {
     }
 
     pub fn is_simple(&self) -> bool {
-        true
+        match self.validate() {
+            Err(_) => false,
+            Ok(_) => true,
+        }
     }
 
     pub fn boundary(&self) -> Geometry<T> {
@@ -61,12 +64,28 @@ impl<T: CoordinateType> Point<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::f32;
 
     #[test]
     fn check_constructor() {
         let p = Point(Coordinate { x: 0.1, y: 1.0 });
         assert_eq!(p.x(), 0.1);
         assert_eq!(p.y(), 1.0);
+    }
+
+    #[test]
+    fn check_is_simple() {
+        let p = Point(Coordinate { x: 0.1, y: 1.0 });
+        assert!(p.is_simple());
+    }
+
+    #[test]
+    fn check_is_not_simple() {
+        let p = Point(Coordinate {
+            x: 0.1,
+            y: f32::NAN,
+        });
+        assert!(!p.is_simple());
     }
 
 }
