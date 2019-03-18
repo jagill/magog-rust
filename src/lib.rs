@@ -9,8 +9,6 @@ pub use crate::types::*;
 // mod properties;
 // pub use crate::properties::*;
 
-mod utils;
-
 #[cfg(test)]
 mod tests {
 

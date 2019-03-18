@@ -1,5 +1,6 @@
 use crate::types::CoordinateType;
 use ordered_float::{FloatIsNan, NotNan};
+use std::ops::{Add, Sub};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Coordinate<T>
@@ -33,6 +34,14 @@ impl<T: CoordinateType> Coordinate<T> {
         Coordinate { x: x, y: y }
     }
 
+    /// Cross product of the vector c1 x c2
+    pub fn cross(c1: Coordinate<T>, c2: Coordinate<T>) -> T
+    where
+        T: CoordinateType,
+    {
+        c1.x * c2.y - c1.y * c2.x
+    }
+
     pub fn validate(&self) -> Result<(), &'static str> {
         if !&self.x.is_finite() {
             return Err("x is not finite");
@@ -48,6 +57,27 @@ impl<T: CoordinateType> Coordinate<T> {
         let y = NotNan::new(self.y)?;
         Ok((x, y))
     }
+
+}
+
+impl<T: CoordinateType> Sub for Coordinate<T>
+{
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Coordinate::new(self.x - rhs.x, self.y - rhs.y)
+    }
+
+}
+
+impl<T: CoordinateType> Add for Coordinate<T>
+{
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Coordinate::new(self.x + rhs.x, self.y + rhs.y)
+    }
+
 }
 
 #[cfg(test)]
