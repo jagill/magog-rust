@@ -1,6 +1,6 @@
 use crate::types::CoordinateType;
 use ordered_float::{FloatIsNan, NotNan};
-use std::ops::{Add, Sub};
+use std::ops::{Add, Mul, Sub};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Coordinate<T>
@@ -42,6 +42,24 @@ impl<T: CoordinateType> Coordinate<T> {
         c1.x * c2.y - c1.y * c2.x
     }
 
+    /// Dot product of the vector c1 . c2
+    pub fn dot(c1: Coordinate<T>, c2: Coordinate<T>) -> T
+    where
+        T: CoordinateType,
+    {
+        c1.x * c2.x + c1.y * c2.y
+    }
+
+    /**
+     * Order z1, z2 into (min, max).
+     *
+     * If z1 or z2 is NAN, set min/max to be the other.
+     * If both are NAN, return (NAN, NAN).
+     */
+    pub fn min_max(z1: T, z2: T) -> (T, T) {
+        (z1.min(z2), z1.max(z2))
+    }
+
     pub fn validate(&self) -> Result<(), &'static str> {
         if !&self.x.is_finite() {
             return Err("x is not finite");
@@ -57,27 +75,30 @@ impl<T: CoordinateType> Coordinate<T> {
         let y = NotNan::new(self.y)?;
         Ok((x, y))
     }
-
 }
 
-impl<T: CoordinateType> Sub for Coordinate<T>
-{
+impl<T: CoordinateType> Sub for Coordinate<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Coordinate::new(self.x - rhs.x, self.y - rhs.y)
     }
-
 }
 
-impl<T: CoordinateType> Add for Coordinate<T>
-{
+impl<T: CoordinateType> Add for Coordinate<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
         Coordinate::new(self.x + rhs.x, self.y + rhs.y)
     }
+}
 
+impl<T: CoordinateType> Mul<T> for Coordinate<T> {
+    type Output = Self;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        Coordinate::new(self.x * rhs, self.y * rhs)
+    }
 }
 
 #[cfg(test)]

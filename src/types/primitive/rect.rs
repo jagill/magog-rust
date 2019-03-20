@@ -11,16 +11,6 @@ where
 
 //// From Conversions
 
-/**
- * Order z1, z2 into (min, max).
- *
- * If z1 or z2 is NAN, set min/max to be the other.
- * If both are NAN, return (NAN, NAN).
- */
-fn min_max<T: CoordinateType>(z1: T, z2: T) -> (T, T) {
-    (z1.min(z2), z1.max(z2))
-}
-
 // (Coordinate, Coordinate) -> Rect
 impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<(IC, IC)> for Rect<T> {
     fn from(coords: (IC, IC)) -> Self {
@@ -30,8 +20,8 @@ impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<(IC, IC)> for Rect<T> {
 
 impl<T: CoordinateType> Rect<T> {
     pub fn new(c1: Coordinate<T>, c2: Coordinate<T>) -> Rect<T> {
-        let (min_x, max_x) = min_max(c1.x, c2.x);
-        let (min_y, max_y) = min_max(c1.y, c2.y);
+        let (min_x, max_x) = Coordinate::min_max(c1.x, c2.x);
+        let (min_y, max_y) = Coordinate::min_max(c1.y, c2.y);
         Rect {
             min: Coordinate::from((min_x, min_y)),
             max: Coordinate::from((max_x, max_y)),
