@@ -17,6 +17,15 @@ pub enum PointLocation {
     Right,
 }
 
+/// Intersection type of two segments.
+/// Two segments can be disjoint, intersect at a point, or overlap in a segment.
+#[derive(PartialEq, Clone, Debug)]
+pub enum SegmentIntersection<T: CoordinateType> {
+    None,
+    Coordinate(Coordinate<T>),
+    Segment(Segment<T>),
+}
+
 // (T, T) -> Segment
 impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<(IC, IC)> for Segment<T> {
     fn from(coords: (IC, IC)) -> Self {
@@ -76,11 +85,62 @@ impl<T: CoordinateType> Segment<T> {
     pub fn contains(self, c: Coordinate<T>) -> bool {
         Rect::from(self).contains(c) && self.coord_position(c) == PointLocation::On
     }
+
+    /**
+     * Check the intersection of two segments.
+     *
+     * NB: This does not do an initial check with Envelopes; the caller should do that.
+     */
+    pub fn intersect_segment(&self, other: Segment<T>) -> SegmentIntersection<T> {
+        // check intersection
+        if self == &other {
+            return SegmentIntersection::Segment(*self);
+        }
+
+        let da = self.end - self.start; // The vector for the segment
+        let db = other.end - other.start; // The vector for the other segment
+        let offset = other.start - self.start; // The offset between segments (starts)
+
+        let da_x_db = Coordinate::cross(da, db);
+        let offset_x_da = Coordinate::cross(offset, da);
+
+        if da_x_db == T::zero() {
+            // This means the two segments are parallel.
+            // If the offset is not also parallel, they must be disjoint.
+            if offset_x_da != T::zero() {
+                return SegmentIntersection::None;
+            } else {
+                // If the offset is also parallel, check for overlap.
+                let da_2 = Coordinate::dot(da, da);
+                // Offset, in units of da.
+                let t0 = Coordinate::dot(offset, da) / da_2;
+                // self.start to other end, in units of da.
+                let t1 = t0 + Coordinate::dot(da, db) / da_2;
+                let (t_min, t_max) = Coordinate::min_max(t0, t1);
+                if t_min > T::one() || t_max < T::zero() {
+                    // if min(t0, t1) > 1 or max(t0, t1) < 0, they don't intersect.
+                    return SegmentIntersection::None;
+                } else {
+                    // Else, the intersect
+                    return SegmentIntersection::Segment(Segment::new(
+                        self.start + da * t_min.max(T::zero()),
+                        self.start + da * t_max.min(T::one()),
+                    ));
+                }
+            }
+        } else {
+            // The segments are not parallel, so they are disjoint or intersect at a point
+            // Calculate where the infinite lines would intersect; if these are on the segments
+            // then the segments intersect.
+            let ta = Coordinate::cross(offset, db) / da_x_db;
+            let tb = offset_x_da / da_x_db;
+            if T::zero() <= ta && ta <= T::one() && T::zero() <= tb && tb <= T::one() {
+                return SegmentIntersection::Coordinate(self.start + da * ta);
+            }
+        }
+        SegmentIntersection::None
+    }
 }
-
-
-
-
 
 #[cfg(test)]
 mod tests {
@@ -158,6 +218,90 @@ mod tests {
         assert_eq!(e.min.y, 2.0);
         assert_eq!(e.max.x, 1.0);
         assert_eq!(e.max.y, 3.0);
+    }
+
+    // Intersection tests
+    /////////
+
+    #[test]
+    fn check_intersect_segment_self() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 1.0)));
+        let s2 = Segment::from(((0.0, 0.0), (1.0, 1.0)));
+        assert_eq!(
+            s1.intersect_segment(s2),
+            SegmentIntersection::Segment(((0.0, 0.0), (1.0, 1.0)).into())
+        );
+    }
+
+    #[test]
+    fn check_intersect_segment_skew_disjoint() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 1.0)));
+        let s2 = Segment::from(((1.0, 0.0), (0.5, 0.4)));
+        assert_eq!(s1.intersect_segment(s2), SegmentIntersection::None,);
+    }
+
+    #[test]
+    fn check_intersect_segment_parallel_disjoint() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 0.0)));
+        let s2 = Segment::from(((0.0, 1.0), (1.0, 1.0)));
+        assert_eq!(s1.intersect_segment(s2), SegmentIntersection::None);
+    }
+
+    #[test]
+    fn check_intersect_segment_endpoint() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 0.0)));
+        let s2 = Segment::from(((1.0, 0.0), (1.0, 1.0)));
+        assert_eq!(
+            s1.intersect_segment(s2),
+            SegmentIntersection::Coordinate((1.0, 0.0).into())
+        );
+    }
+
+    #[test]
+    fn check_intersect_segment_midpoint() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 1.0)));
+        let s2 = Segment::from(((1.0, 0.0), (0.0, 1.0)));
+        assert_eq!(
+            s1.intersect_segment(s2),
+            SegmentIntersection::Coordinate((0.5, 0.5).into())
+        );
+    }
+
+    #[test]
+    fn check_intersect_segment_colinear_disjoint() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 1.0)));
+        let s2 = Segment::from(((1.1, 1.1), (2.0, 2.0)));
+        assert_eq!(s1.intersect_segment(s2), SegmentIntersection::None);
+    }
+
+    #[test]
+    fn check_intersect_segment_colinear_half() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 1.0)));
+        let s2 = Segment::from(((0.5, 0.5), (2.0, 2.0)));
+        assert_eq!(
+            s1.intersect_segment(s2),
+            SegmentIntersection::Segment(((0.5, 0.5), (1.0, 1.0)).into())
+        );
+    }
+
+    #[test]
+    fn check_intersect_segment_colinear_half_antiparallel() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 1.0)));
+        let s2 = Segment::from(((2.0, 2.0), (0.5, 0.5)));
+        assert_eq!(
+            s1.intersect_segment(s2),
+            SegmentIntersection::Segment(((0.5, 0.5), (1.0, 1.0)).into())
+        );
+    }
+
+    #[test]
+    fn check_intersect_segment_colinear_contained() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 1.0)));
+        let s2 = Segment::from(((0.2, 0.2), (0.5, 0.5)));
+        assert_eq!(
+            s1.intersect_segment(s2),
+            SegmentIntersection::Segment(((0.2, 0.2), (0.5, 0.5)).into())
+        );
     }
 
 }
