@@ -1,3 +1,5 @@
+use crate::rtree::{RTree, RTreeObject, RTreeSegment};
+use crate::types::primitive::SegmentIntersection;
 use crate::types::{Coordinate, CoordinateType, Envelope, Geometry, MultiPoint, Point, Segment};
 
 #[derive(Debug, PartialEq)]
@@ -117,12 +119,6 @@ impl<T: CoordinateType> LineString<T> {
         self.coords.is_empty()
     }
 
-    /// A LineString is simple if it has no self-intersections.
-    pub fn is_simple(&self) -> bool {
-        // TODO STUB
-        true
-    }
-
     pub fn boundary(&self) -> Geometry<T> {
         if self.is_closed() {
             Geometry::Empty
@@ -132,6 +128,50 @@ impl<T: CoordinateType> LineString<T> {
                 (Some(s), Some(e)) => Geometry::from(MultiPoint::from(vec![s, e])),
             }
         }
+    }
+
+    /// A LineString is simple if it has no self-intersections.
+    pub fn is_simple(&self) -> bool {
+        // Must have at least 2 points to be 1-dimensional.
+        if self.num_points() < 2 {
+            return false;
+        }
+        let mut rtree: RTree<RTreeSegment<T>> = RTree::new();
+        for (i, seg) in self.segments_iter().enumerate() {
+            // First check: should not have two same adjacent points.
+            if seg.start == seg.end {
+                return false;
+            }
+            // Second check: Should not intersect any previous segment.
+            // Exception 1: The last point can be the first point; ie a loop.
+            // Exception 2: The seg.start == last_seg.end, by construction.
+            let rtree_seg = RTreeSegment {
+                index: i,
+                segment: seg,
+            };
+            for found in rtree.locate_in_envelope_intersecting(&rtree_seg.envelope()) {
+                match seg.intersect_segment(found.segment) {
+                    SegmentIntersection::None => continue,
+                    SegmentIntersection::Coordinate(c) => {
+                        if found.index == i - 1 {
+                            // Point intersxns are fine for adjacent segments (must be end-start)
+                            continue;
+                        } else if i == self.num_points() - 2 && found.index == 0 && c == seg.end {
+                            // or the final segment ending at the first segment's beginning.
+                            continue;
+                        }
+                        // Otherwise they are invalid.
+                        return false;
+                    }
+                    SegmentIntersection::Segment(_) => {
+                        // Segment intersxns are always bad
+                        return false;
+                    }
+                }
+            }
+            rtree.insert(rtree_seg);
+        }
+        true
     }
 }
 
@@ -227,4 +267,87 @@ mod tests {
         let ls = LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
         assert_eq!(Some(Point::from((0.0, 1.0))), ls.get_point(1));
     }
+
+    // is_simple checks
+    #[test]
+    fn check_empty_not_simple() {
+        let empty_vec: Vec<Coordinate<f32>> = Vec::new();
+        let ls = LineString::new(empty_vec);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_single_not_simple() {
+        let ls = LineString::from(vec![(0.0, 0.0)]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_open_simple() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+        assert!(ls.is_simple());
+    }
+
+    #[test]
+    fn check_repeated_point_not_simple() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0), (1.0, 1.0), (1.0, 0.0)]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_loop_simple() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
+        assert!(ls.is_simple());
+    }
+
+    #[test]
+    fn check_self_isxn_not_simple() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0), (1.0, 0.0), (0.0, 1.0)]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_backtrack_not_simple() {
+        let ls = LineString::from(vec![(0.0, 0.0), (1.0, 1.0), (0.5, 0.5)]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_tail_not_simple() {
+        let ls = LineString::from(vec![
+            (0.0, 0.0),
+            (1.0, 1.0),
+            (1.0, 0.0),
+            (0.0, 0.0),
+            (0.0, 1.0),
+        ]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_loop_overlap_not_simple() {
+        let ls = LineString::from(vec![
+            (0.0, 0.0),
+            (1.0, 1.0),
+            (1.0, 0.0),
+            (-1.0, -1.0),
+            (0.2, 0.2),
+        ]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_internal_tangent_loop_not_simple() {
+        let ls = LineString::from(vec![
+            (0.0, 0.0),
+            (1.0, 0.0),
+            (0.5, 0.5),
+            (1.0, 1.0),
+            (1.0, 0.0),
+            (0.5, 0.5),
+            (0.0, 0.0),
+        ]);
+        assert!(!ls.is_simple());
+    }
+
 }

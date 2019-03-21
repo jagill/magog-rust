@@ -3,6 +3,8 @@ extern crate num_traits;
 mod types;
 pub use crate::types::*;
 
+mod rtree;
+
 // mod relation;
 // pub use crate::relation::*;
 //
