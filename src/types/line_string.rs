@@ -1,31 +1,31 @@
 use crate::rtree::{RTree, RTreeObject, RTreeSegment};
 use crate::types::primitive::SegmentIntersection;
-use crate::types::{Coordinate, CoordinateType, Envelope, Geometry, MultiPoint, Point, Segment};
+use crate::types::{Coord2, CoordinateType, Envelope, Geometry, MultiPoint, Point, Segment};
 
 #[derive(Debug, PartialEq)]
 pub struct LineString<T>
 where
     T: CoordinateType,
 {
-    pub coords: Vec<Coordinate<T>>,
+    pub coords: Vec<Coord2<T>>,
     _envelope: Envelope<T>,
 }
 
-/// Turn a `Vec` of `Coordinate`-ish objects into a `LineString`.
-impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<Vec<IC>> for LineString<T> {
+/// Turn a `Vec` of `Coord2`-ish objects into a `LineString`.
+impl<T: CoordinateType, IC: Into<Coord2<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
         LineString::new(v.into_iter().map(|c| c.into()).collect())
     }
 }
 
 impl<T: CoordinateType> LineString<T> {
-    pub fn new(coords: Vec<Coordinate<T>>) -> LineString<T> {
+    pub fn new(coords: Vec<Coord2<T>>) -> LineString<T> {
         let _envelope = Envelope::from(&coords);
         LineString { coords, _envelope }
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
-        let mut last_coord: Option<Coordinate<T>> = None;
+        let mut last_coord: Option<Coord2<T>> = None;
         for &coord in &self.coords {
             coord.validate()?;
             // According to the spec this function must fail if any two consecutive points are the same.
@@ -85,7 +85,7 @@ impl<T: CoordinateType> LineString<T> {
     }
 
     /// Return the first coordinate of the linestring
-    pub fn start_point(&self) -> Option<Coordinate<T>> {
+    pub fn start_point(&self) -> Option<Coord2<T>> {
         if self.coords.len() == 0 {
             return None;
         }
@@ -93,7 +93,7 @@ impl<T: CoordinateType> LineString<T> {
     }
 
     /// Return the last coordinate of the linestring
-    pub fn end_point(&self) -> Option<Coordinate<T>> {
+    pub fn end_point(&self) -> Option<Coord2<T>> {
         if self.coords.len() == 0 {
             return None;
         }
@@ -152,7 +152,7 @@ impl<T: CoordinateType> LineString<T> {
             for found in rtree.locate_in_envelope_intersecting(&rtree_seg.envelope()) {
                 match seg.intersect_segment(found.segment) {
                     SegmentIntersection::None => continue,
-                    SegmentIntersection::Coordinate(c) => {
+                    SegmentIntersection::Coord2(c) => {
                         if found.index == i - 1 {
                             // Point intersxns are fine for adjacent segments (must be end-start)
                             continue;
@@ -182,18 +182,18 @@ mod tests {
 
     #[test]
     fn check_basic_linestring() {
-        let c0: Coordinate<f64> = Coordinate { x: 0.0, y: 0.1 };
-        let c1: Coordinate<f64> = Coordinate { x: 1.0, y: 1.1 };
+        let c0: Coord2<f64> = Coord2 { x: 0.0, y: 0.1 };
+        let c1: Coord2<f64> = Coord2 { x: 1.0, y: 1.1 };
         let ls = LineString::new(vec![c0, c1]);
-        let results: Vec<Coordinate<f64>> = ls.coords.into_iter().collect();
+        let results: Vec<Coord2<f64>> = ls.coords.into_iter().collect();
         assert_eq!(results, vec![c0, c1])
     }
 
     #[test]
     fn check_linestring_segments_iter() {
-        let c0: Coordinate<f64> = Coordinate { x: 0.0, y: 0.1 };
-        let c1: Coordinate<f64> = Coordinate { x: 1.0, y: 1.1 };
-        let c2: Coordinate<f64> = Coordinate { x: 2.0, y: 2.1 };
+        let c0: Coord2<f64> = Coord2 { x: 0.0, y: 0.1 };
+        let c1: Coord2<f64> = Coord2 { x: 1.0, y: 1.1 };
+        let c2: Coord2<f64> = Coord2 { x: 2.0, y: 2.1 };
         let ls = LineString::new(vec![c0, c1, c2]);
         let results: Vec<Segment<f64>> = ls.segments_iter().collect();
         assert_eq!(
@@ -271,7 +271,7 @@ mod tests {
     // is_simple checks
     #[test]
     fn check_empty_not_simple() {
-        let empty_vec: Vec<Coordinate<f32>> = Vec::new();
+        let empty_vec: Vec<Coord2<f32>> = Vec::new();
         let ls = LineString::new(empty_vec);
         assert!(!ls.is_simple());
     }

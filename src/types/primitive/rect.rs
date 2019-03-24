@@ -1,30 +1,30 @@
-use crate::types::primitive::{Coordinate, CoordinateType};
+use crate::types::primitive::{Coord2, CoordinateType};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Rect<T>
 where
     T: CoordinateType,
 {
-    pub min: Coordinate<T>,
-    pub max: Coordinate<T>,
+    pub min: Coord2<T>,
+    pub max: Coord2<T>,
 }
 
 //// From Conversions
 
-// (Coordinate, Coordinate) -> Rect
-impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<(IC, IC)> for Rect<T> {
+// (Coord2, Coord2) -> Rect
+impl<T: CoordinateType, IC: Into<Coord2<T>>> From<(IC, IC)> for Rect<T> {
     fn from(coords: (IC, IC)) -> Self {
         Rect::new(coords.0.into(), coords.1.into())
     }
 }
 
 impl<T: CoordinateType> Rect<T> {
-    pub fn new(c1: Coordinate<T>, c2: Coordinate<T>) -> Rect<T> {
-        let (min_x, max_x) = Coordinate::min_max(c1.x, c2.x);
-        let (min_y, max_y) = Coordinate::min_max(c1.y, c2.y);
+    pub fn new(c1: Coord2<T>, c2: Coord2<T>) -> Rect<T> {
+        let (min_x, max_x) = Coord2::min_max(c1.x, c2.x);
+        let (min_y, max_y) = Coord2::min_max(c1.y, c2.y);
         Rect {
-            min: Coordinate::from((min_x, min_y)),
-            max: Coordinate::from((max_x, max_y)),
+            min: Coord2::from((min_x, min_y)),
+            max: Coord2::from((max_x, max_y)),
         }
     }
 
@@ -41,26 +41,26 @@ impl<T: CoordinateType> Rect<T> {
         Ok(())
     }
 
-    pub fn contains(&self, c: Coordinate<T>) -> bool {
+    pub fn contains(&self, c: Coord2<T>) -> bool {
         self.min.x <= c.x && self.max.x >= c.x && self.min.y <= c.y && self.max.y >= c.y
     }
 
     /// Return a rect expanded by c.  Nans absorbed when possible.
-    pub fn add_coord(&self, c: Coordinate<T>) -> Rect<T> {
+    pub fn add_coord(&self, c: Coord2<T>) -> Rect<T> {
         Rect::new(
-            Coordinate::new(self.min.x.min(c.x), self.min.y.min(c.y)),
-            Coordinate::new(self.max.x.max(c.x), self.max.y.max(c.y)),
+            Coord2::new(self.min.x.min(c.x), self.min.y.min(c.y)),
+            Coord2::new(self.max.x.max(c.x), self.max.y.max(c.y)),
         )
     }
 
     /// Return a rect expanded by an other rect.  Nans absorbed when possible.
     pub fn merge(&self, other: Rect<T>) -> Rect<T> {
         Rect {
-            min: Coordinate {
+            min: Coord2 {
                 x: self.min.x.min(other.min.x),
                 y: self.min.y.min(other.min.y),
             },
-            max: Coordinate {
+            max: Coord2 {
                 x: self.max.x.max(other.max.x),
                 y: self.max.y.max(other.max.y),
             },
@@ -80,8 +80,8 @@ mod tests {
         let max_x: f32 = 3.;
         let max_y: f32 = 4.;
         let e = Rect {
-            min: Coordinate { x: min_x, y: min_y },
-            max: Coordinate { x: max_x, y: max_y },
+            min: Coord2 { x: min_x, y: min_y },
+            max: Coord2 { x: max_x, y: max_y },
         };
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
@@ -96,8 +96,8 @@ mod tests {
         let max_x: f64 = 3.;
         let max_y: f64 = 4.;
         let e = Rect {
-            min: Coordinate { x: min_x, y: min_y },
-            max: Coordinate { x: max_x, y: max_y },
+            min: Coord2 { x: min_x, y: min_y },
+            max: Coord2 { x: max_x, y: max_y },
         };
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
@@ -108,12 +108,12 @@ mod tests {
     #[test]
     fn check_rect_equals() {
         let e1 = Rect {
-            min: Coordinate { x: 1., y: 2. },
-            max: Coordinate { x: 3., y: 4. },
+            min: Coord2 { x: 1., y: 2. },
+            max: Coord2 { x: 3., y: 4. },
         };
         let e2 = Rect {
-            min: Coordinate { x: 1., y: 2. },
-            max: Coordinate { x: 3., y: 4. },
+            min: Coord2 { x: 1., y: 2. },
+            max: Coord2 { x: 3., y: 4. },
         };
         assert_eq!(e1, e2);
     }
@@ -121,12 +121,12 @@ mod tests {
     #[test]
     fn check_rect_not_equals() {
         let e1 = Rect {
-            min: Coordinate { x: 1., y: 2.1 },
-            max: Coordinate { x: 3., y: 4. },
+            min: Coord2 { x: 1., y: 2.1 },
+            max: Coord2 { x: 3., y: 4. },
         };
         let e2 = Rect {
-            min: Coordinate { x: 1., y: 2.2 },
-            max: Coordinate { x: 3., y: 4. },
+            min: Coord2 { x: 1., y: 2.2 },
+            max: Coord2 { x: 3., y: 4. },
         };
         assert_ne!(e1, e2);
     }
@@ -138,8 +138,8 @@ mod tests {
         let max_x: f32 = 3.;
         let max_y: f32 = 4.;
         let e = Rect::new(
-            Coordinate { x: min_x, y: min_y },
-            Coordinate { x: max_x, y: max_y },
+            Coord2 { x: min_x, y: min_y },
+            Coord2 { x: max_x, y: max_y },
         );
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
@@ -154,8 +154,8 @@ mod tests {
         let max_x: f64 = 3.;
         let max_y: f64 = 4.;
         let e = Rect::new(
-            Coordinate { x: min_x, y: min_y },
-            Coordinate { x: max_x, y: max_y },
+            Coord2 { x: min_x, y: min_y },
+            Coord2 { x: max_x, y: max_y },
         );
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
@@ -170,8 +170,8 @@ mod tests {
         let max_x: f64 = 1.;
         let max_y: f64 = 4.;
         let r = Rect {
-            min: Coordinate { x: min_x, y: min_y },
-            max: Coordinate { x: max_x, y: max_y },
+            min: Coord2 { x: min_x, y: min_y },
+            max: Coord2 { x: max_x, y: max_y },
         };
         assert!(r.validate().is_err(), "Min_x > max_x");
     }
@@ -183,8 +183,8 @@ mod tests {
         let max_x: f64 = 3.;
         let max_y: f64 = 2.;
         let r = Rect {
-            min: Coordinate { x: min_x, y: min_y },
-            max: Coordinate { x: max_x, y: max_y },
+            min: Coord2 { x: min_x, y: min_y },
+            max: Coord2 { x: max_x, y: max_y },
         };
         assert!(r.validate().is_err(), "Min_y > max_y");
     }
@@ -192,37 +192,37 @@ mod tests {
     #[test]
     fn check_new_absorb_nans() {
         let r1 = Rect::new(
-            Coordinate::new(0.0, f32::NAN),
-            Coordinate::new(f32::NAN, 0.0),
+            Coord2::new(0.0, f32::NAN),
+            Coord2::new(f32::NAN, 0.0),
         );
-        let r2 = Rect::new(Coordinate::new(0.0, 0.0), Coordinate::new(0.0, 0.0));
+        let r2 = Rect::new(Coord2::new(0.0, 0.0), Coord2::new(0.0, 0.0));
         assert_eq!(r1, r2)
     }
 
     #[test]
     fn check_contains_coord() {
         let e = Rect {
-            min: Coordinate { x: 0., y: 0. },
-            max: Coordinate { x: 1., y: 1. },
+            min: Coord2 { x: 0., y: 0. },
+            max: Coord2 { x: 1., y: 1. },
         };
-        let p = Coordinate { x: 0.5, y: 0.5 };
+        let p = Coord2 { x: 0.5, y: 0.5 };
         assert!(e.contains(p));
     }
 
     #[test]
     fn check_not_contains_coord() {
         let e = Rect {
-            min: Coordinate { x: 0., y: 0. },
-            max: Coordinate { x: 1., y: 1. },
+            min: Coord2 { x: 0., y: 0. },
+            max: Coord2 { x: 1., y: 1. },
         };
-        let p = Coordinate { x: 1.5, y: 0.5 };
+        let p = Coord2 { x: 1.5, y: 0.5 };
         assert!(!e.contains(p));
     }
 
     #[test]
     fn check_from_coord_tuple() {
-        let c0 = Coordinate { x: 0.0, y: 3.0 };
-        let c1 = Coordinate { x: 1.0, y: 2.0 };
+        let c0 = Coord2 { x: 0.0, y: 3.0 };
+        let c1 = Coord2 { x: 1.0, y: 2.0 };
         let e = Rect::from((c0, c1));
         assert_eq!(e.min.x, 0.0);
         assert_eq!(e.min.y, 2.0);
@@ -241,20 +241,20 @@ mod tests {
 
     #[test]
     fn check_add_coord() {
-        let mut r = Rect::new(Coordinate::new(0.0, 0.0), Coordinate::new(2.0, 0.0));
-        r = r.add_coord(Coordinate::new(1.0, 1.0));
-        let r2 = Rect::new(Coordinate::new(0.0, 0.0), Coordinate::new(2.0, 1.0));
+        let mut r = Rect::new(Coord2::new(0.0, 0.0), Coord2::new(2.0, 0.0));
+        r = r.add_coord(Coord2::new(1.0, 1.0));
+        let r2 = Rect::new(Coord2::new(0.0, 0.0), Coord2::new(2.0, 1.0));
         assert_eq!(r, r2)
     }
 
     #[test]
     fn check_add_coord_nan() {
         let mut r = Rect::new(
-            Coordinate::new(0.0, f32::NAN),
-            Coordinate::new(2.0, f32::NAN),
+            Coord2::new(0.0, f32::NAN),
+            Coord2::new(2.0, f32::NAN),
         );
-        r = r.add_coord(Coordinate::new(1.0, 1.0));
-        let r2 = Rect::new(Coordinate::new(0.0, 1.0), Coordinate::new(2.0, 1.0));
+        r = r.add_coord(Coord2::new(1.0, 1.0));
+        let r2 = Rect::new(Coord2::new(0.0, 1.0), Coord2::new(2.0, 1.0));
         assert_eq!(r, r2)
     }
 }

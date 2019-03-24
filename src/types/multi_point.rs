@@ -1,4 +1,4 @@
-use crate::types::{Coordinate, CoordinateType, Envelope, Geometry, Point};
+use crate::types::{Coord2, CoordinateType, Envelope, Geometry, Point};
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]
@@ -10,8 +10,8 @@ where
     _envelope: Envelope<T>,
 }
 
-/// Turn a `Vec` of `Coordinate`-ish objects into a `LineString`.
-impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<Vec<IC>> for MultiPoint<T> {
+/// Turn a `Vec` of `Coord2`-ish objects into a `LineString`.
+impl<T: CoordinateType, IC: Into<Coord2<T>>> From<Vec<IC>> for MultiPoint<T> {
     fn from(v: Vec<IC>) -> Self {
         MultiPoint::new(v.into_iter().map(|c| Point(c.into())).collect())
     }
@@ -19,7 +19,7 @@ impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<Vec<IC>> for MultiPoint<T>
 
 impl<T: CoordinateType> MultiPoint<T> {
     pub fn new(points: Vec<Point<T>>) -> Self {
-        let coords: Vec<Coordinate<T>> = points.iter().map(|p| p.0).collect();
+        let coords: Vec<Coord2<T>> = points.iter().map(|p| p.0).collect();
         let _envelope: Envelope<T> = Envelope::from(&coords);
         MultiPoint { points, _envelope }
     }

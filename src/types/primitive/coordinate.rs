@@ -3,7 +3,7 @@ use ordered_float::{FloatIsNan, NotNan};
 use std::ops::{Add, Mul, Sub};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Coordinate<T>
+pub struct Coord2<T>
 where
     T: CoordinateType,
 {
@@ -11,31 +11,31 @@ where
     pub y: T,
 }
 
-impl<T: CoordinateType> From<(T, T)> for Coordinate<T> {
+impl<T: CoordinateType> From<(T, T)> for Coord2<T> {
     fn from(coords: (T, T)) -> Self {
-        Coordinate {
+        Coord2 {
             x: coords.0,
             y: coords.1,
         }
     }
 }
 
-impl<T: CoordinateType> From<(NotNan<T>, NotNan<T>)> for Coordinate<T> {
+impl<T: CoordinateType> From<(NotNan<T>, NotNan<T>)> for Coord2<T> {
     fn from(coords: (NotNan<T>, NotNan<T>)) -> Self {
-        Coordinate {
+        Coord2 {
             x: coords.0.into_inner(),
             y: coords.1.into_inner(),
         }
     }
 }
 
-impl<T: CoordinateType> Coordinate<T> {
-    pub fn new(x: T, y: T) -> Coordinate<T> {
-        Coordinate { x: x, y: y }
+impl<T: CoordinateType> Coord2<T> {
+    pub fn new(x: T, y: T) -> Coord2<T> {
+        Coord2 { x: x, y: y }
     }
 
     /// Cross product of the vector c1 x c2
-    pub fn cross(c1: Coordinate<T>, c2: Coordinate<T>) -> T
+    pub fn cross(c1: Coord2<T>, c2: Coord2<T>) -> T
     where
         T: CoordinateType,
     {
@@ -43,7 +43,7 @@ impl<T: CoordinateType> Coordinate<T> {
     }
 
     /// Dot product of the vector c1 . c2
-    pub fn dot(c1: Coordinate<T>, c2: Coordinate<T>) -> T
+    pub fn dot(c1: Coord2<T>, c2: Coord2<T>) -> T
     where
         T: CoordinateType,
     {
@@ -77,27 +77,27 @@ impl<T: CoordinateType> Coordinate<T> {
     }
 }
 
-impl<T: CoordinateType> Sub for Coordinate<T> {
+impl<T: CoordinateType> Sub for Coord2<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Coordinate::new(self.x - rhs.x, self.y - rhs.y)
+        Coord2::new(self.x - rhs.x, self.y - rhs.y)
     }
 }
 
-impl<T: CoordinateType> Add for Coordinate<T> {
+impl<T: CoordinateType> Add for Coord2<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Coordinate::new(self.x + rhs.x, self.y + rhs.y)
+        Coord2::new(self.x + rhs.x, self.y + rhs.y)
     }
 }
 
-impl<T: CoordinateType> Mul<T> for Coordinate<T> {
+impl<T: CoordinateType> Mul<T> for Coord2<T> {
     type Output = Self;
 
     fn mul(self, rhs: T) -> Self::Output {
-        Coordinate::new(self.x * rhs, self.y * rhs)
+        Coord2::new(self.x * rhs, self.y * rhs)
     }
 }
 
@@ -109,7 +109,7 @@ mod tests {
     fn check_basic_coordinate_f32() {
         let x: f32 = 1.;
         let y: f32 = 2.;
-        let c = Coordinate { x: x, y: y };
+        let c = Coord2 { x: x, y: y };
         assert_eq!(c.x, x);
         assert_eq!(c.y, y);
     }
@@ -118,22 +118,22 @@ mod tests {
     fn check_basic_coordinate_f64() {
         let x: f64 = 1.;
         let y: f64 = 2.;
-        let c = Coordinate { x: x, y: y };
+        let c = Coord2 { x: x, y: y };
         assert_eq!(c.x, x);
         assert_eq!(c.y, y);
     }
 
     #[test]
     fn check_coordinate_equals() {
-        let c1 = Coordinate { x: 1., y: 2. };
-        let c2 = Coordinate { x: 1., y: 2. };
+        let c1 = Coord2 { x: 1., y: 2. };
+        let c2 = Coord2 { x: 1., y: 2. };
         assert_eq!(c1, c2);
     }
 
     #[test]
     fn check_coordinate_not_equals() {
-        let c1 = Coordinate { x: 1., y: 2. };
-        let c2 = Coordinate { x: 2., y: 1. };
+        let c1 = Coord2 { x: 1., y: 2. };
+        let c2 = Coord2 { x: 2., y: 1. };
         assert_ne!(c1, c2);
     }
 
@@ -141,7 +141,7 @@ mod tests {
     fn check_new_coordinate_f32() {
         let x: f32 = 1.;
         let y: f32 = 2.;
-        let c = Coordinate::new(x, y);
+        let c = Coord2::new(x, y);
         assert_eq!(c.x, x);
         assert_eq!(c.y, y);
     }
@@ -150,14 +150,14 @@ mod tests {
     fn check_new_coordinate_f64() {
         let x: f64 = 1.;
         let y: f64 = 2.;
-        let c = Coordinate::new(x, y);
+        let c = Coord2::new(x, y);
         assert_eq!(c.x, x);
         assert_eq!(c.y, y);
     }
 
     #[test]
     fn check_from_tuple() {
-        let c = Coordinate::from((0.0, 1.0));
+        let c = Coord2::from((0.0, 1.0));
         assert_eq!(c.x, 0.0);
         assert_eq!(c.y, 1.0);
     }

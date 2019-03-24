@@ -1,4 +1,4 @@
-use crate::types::primitive::{Coordinate, CoordinateType, Rect};
+use crate::types::primitive::{Coord2, CoordinateType, Rect};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Envelope<T>
@@ -17,9 +17,9 @@ impl<T: CoordinateType, IR: Into<Rect<T>>> From<IR> for Envelope<T> {
     }
 }
 
-// Vec<Coordinate> -> Envelope
-impl<'a, T: CoordinateType> From<&'a Vec<Coordinate<T>>> for Envelope<T> {
-    fn from(coords: &'a Vec<Coordinate<T>>) -> Self {
+// Vec<Coord2> -> Envelope
+impl<'a, T: CoordinateType> From<&'a Vec<Coord2<T>>> for Envelope<T> {
+    fn from(coords: &'a Vec<Coord2<T>>) -> Self {
         let empty_env = Envelope { rect: None };
         coords.iter().fold(empty_env, |env, c| env.add_coord(*c))
     }
@@ -53,14 +53,14 @@ impl<T: CoordinateType> Envelope<T> {
         self.rect == None
     }
 
-    pub fn contains(&self, c: Coordinate<T>) -> bool {
+    pub fn contains(&self, c: Coord2<T>) -> bool {
         match &self.rect {
             None => false,
             Some(r) => r.contains(c),
         }
     }
 
-    pub fn add_coord(&self, c: Coordinate<T>) -> Envelope<T> {
+    pub fn add_coord(&self, c: Coord2<T>) -> Envelope<T> {
         match &self.rect {
             None => Envelope {
                 rect: Some(Rect::new(c.clone(), c.clone())),
@@ -92,9 +92,9 @@ mod tests {
 
     #[test]
     fn check_from_vec_coords() {
-        let e = Envelope::from(&vec![Coordinate::new(0., 1.), Coordinate::new(2., 0.)]);
-        let min: Coordinate<f64> = Coordinate { x: 0., y: 0. };
-        let max: Coordinate<f64> = Coordinate { x: 2., y: 1. };
+        let e = Envelope::from(&vec![Coord2::new(0., 1.), Coord2::new(2., 0.)]);
+        let min: Coord2<f64> = Coord2 { x: 0., y: 0. };
+        let max: Coord2<f64> = Coord2 { x: 2., y: 1. };
         assert_eq!(
             e,
             Envelope {
@@ -109,8 +109,8 @@ mod tests {
             Envelope::from(((0., 1.), (2., 0.))),
             Envelope::from(((0., 2.), (3., 0.))),
         ]);
-        let min: Coordinate<f64> = Coordinate { x: 0., y: 0. };
-        let max: Coordinate<f64> = Coordinate { x: 3., y: 2. };
+        let min: Coord2<f64> = Coord2 { x: 0., y: 0. };
+        let max: Coord2<f64> = Coord2 { x: 3., y: 2. };
         assert_eq!(
             e,
             Envelope {

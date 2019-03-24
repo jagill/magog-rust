@@ -14,7 +14,7 @@ mod point;
 mod polygon;
 mod primitive;
 
-pub use crate::types::primitive::{Coordinate, Envelope, PointLocation, Rect, Segment, Triangle};
+pub use crate::types::primitive::{Coord2, Envelope, PointLocation, Rect, Segment, Triangle};
 
 pub use crate::types::{
     geometry::Geometry, line_string::LineString, multi_line_string::MultiLineString,

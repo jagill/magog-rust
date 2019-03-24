@@ -1,12 +1,12 @@
-use crate::types::primitive::{Coordinate, CoordinateType, Rect};
+use crate::types::primitive::{Coord2, CoordinateType, Rect};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Segment<T>
 where
     T: CoordinateType,
 {
-    pub start: Coordinate<T>,
-    pub end: Coordinate<T>,
+    pub start: Coord2<T>,
+    pub end: Coord2<T>,
 }
 
 /// Location of a point in relation to a line
@@ -22,12 +22,12 @@ pub enum PointLocation {
 #[derive(PartialEq, Clone, Debug)]
 pub enum SegmentIntersection<T: CoordinateType> {
     None,
-    Coordinate(Coordinate<T>),
+    Coord2(Coord2<T>),
     Segment(Segment<T>),
 }
 
 // (T, T) -> Segment
-impl<T: CoordinateType, IC: Into<Coordinate<T>>> From<(IC, IC)> for Segment<T> {
+impl<T: CoordinateType, IC: Into<Coord2<T>>> From<(IC, IC)> for Segment<T> {
     fn from(coords: (IC, IC)) -> Self {
         Segment {
             start: coords.0.into(),
@@ -44,7 +44,7 @@ impl<T: CoordinateType> From<Segment<T>> for Rect<T> {
 }
 
 impl<T: CoordinateType> Segment<T> {
-    pub fn new(start: Coordinate<T>, end: Coordinate<T>) -> Segment<T> {
+    pub fn new(start: Coord2<T>, end: Coord2<T>) -> Segment<T> {
         Segment { start, end }
     }
 
@@ -66,8 +66,8 @@ impl<T: CoordinateType> Segment<T> {
 
     /// Tests if a coordinate is Left|On|Right of the infinite line determined by the segment.
     ///    Return: PointLocation for location of c relative to [start, end]
-    pub fn coord_position(&self, coord: Coordinate<T>) -> PointLocation {
-        let test = Coordinate::cross(self.end - self.start, coord - self.start);
+    pub fn coord_position(&self, coord: Coord2<T>) -> PointLocation {
+        let test = Coord2::cross(self.end - self.start, coord - self.start);
         if test > T::zero() {
             PointLocation::Left
         } else if test == T::zero() {
@@ -82,7 +82,7 @@ impl<T: CoordinateType> Segment<T> {
         self.start.x * self.end.y - self.start.y * self.end.x
     }
 
-    pub fn contains(self, c: Coordinate<T>) -> bool {
+    pub fn contains(self, c: Coord2<T>) -> bool {
         Rect::from(self).contains(c) && self.coord_position(c) == PointLocation::On
     }
 
@@ -101,8 +101,8 @@ impl<T: CoordinateType> Segment<T> {
         let db = other.end - other.start; // The vector for the other segment
         let offset = other.start - self.start; // The offset between segments (starts)
 
-        let da_x_db = Coordinate::cross(da, db);
-        let offset_x_da = Coordinate::cross(offset, da);
+        let da_x_db = Coord2::cross(da, db);
+        let offset_x_da = Coord2::cross(offset, da);
 
         if da_x_db == T::zero() {
             // This means the two segments are parallel.
@@ -111,12 +111,12 @@ impl<T: CoordinateType> Segment<T> {
                 return SegmentIntersection::None;
             } else {
                 // If the offset is also parallel, check for overlap.
-                let da_2 = Coordinate::dot(da, da);
+                let da_2 = Coord2::dot(da, da);
                 // Offset, in units of da.
-                let t0 = Coordinate::dot(offset, da) / da_2;
+                let t0 = Coord2::dot(offset, da) / da_2;
                 // self.start to other end, in units of da.
-                let t1 = t0 + Coordinate::dot(da, db) / da_2;
-                let (t_min, t_max) = Coordinate::min_max(t0, t1);
+                let t1 = t0 + Coord2::dot(da, db) / da_2;
+                let (t_min, t_max) = Coord2::min_max(t0, t1);
                 if t_min > T::one() || t_max < T::zero() {
                     // if min(t0, t1) > 1 or max(t0, t1) < 0, they don't intersect.
                     return SegmentIntersection::None;
@@ -132,10 +132,10 @@ impl<T: CoordinateType> Segment<T> {
             // The segments are not parallel, so they are disjoint or intersect at a point
             // Calculate where the infinite lines would intersect; if these are on the segments
             // then the segments intersect.
-            let ta = Coordinate::cross(offset, db) / da_x_db;
+            let ta = Coord2::cross(offset, db) / da_x_db;
             let tb = offset_x_da / da_x_db;
             if T::zero() <= ta && ta <= T::one() && T::zero() <= tb && tb <= T::one() {
-                return SegmentIntersection::Coordinate(self.start + da * ta);
+                return SegmentIntersection::Coord2(self.start + da * ta);
             }
         }
         SegmentIntersection::None
@@ -153,11 +153,11 @@ mod tests {
         let end_x: f32 = 3.;
         let end_y: f32 = 4.;
         let s = Segment {
-            start: Coordinate {
+            start: Coord2 {
                 x: start_x,
                 y: start_y,
             },
-            end: Coordinate { x: end_x, y: end_y },
+            end: Coord2 { x: end_x, y: end_y },
         };
         assert_eq!(s.start.x, start_x);
         assert_eq!(s.start.y, start_y);
@@ -172,11 +172,11 @@ mod tests {
         let end_x: f64 = 3.;
         let end_y: f64 = 4.;
         let s = Segment {
-            start: Coordinate {
+            start: Coord2 {
                 x: start_x,
                 y: start_y,
             },
-            end: Coordinate { x: end_x, y: end_y },
+            end: Coord2 { x: end_x, y: end_y },
         };
         assert_eq!(s.start.x, start_x);
         assert_eq!(s.start.y, start_y);
@@ -187,12 +187,12 @@ mod tests {
     #[test]
     fn check_segment_equals() {
         let s1 = Segment {
-            start: Coordinate { x: 1., y: 2. },
-            end: Coordinate { x: 3., y: 4. },
+            start: Coord2 { x: 1., y: 2. },
+            end: Coord2 { x: 3., y: 4. },
         };
         let s2 = Segment {
-            start: Coordinate { x: 1., y: 2. },
-            end: Coordinate { x: 3., y: 4. },
+            start: Coord2 { x: 1., y: 2. },
+            end: Coord2 { x: 3., y: 4. },
         };
         assert_eq!(s1, s2);
     }
@@ -200,12 +200,12 @@ mod tests {
     #[test]
     fn check_segment_not_equals() {
         let s1 = Segment {
-            start: Coordinate { x: 1., y: 2.1 },
-            end: Coordinate { x: 3., y: 4. },
+            start: Coord2 { x: 1., y: 2.1 },
+            end: Coord2 { x: 3., y: 4. },
         };
         let s2 = Segment {
-            start: Coordinate { x: 1., y: 2.2 },
-            end: Coordinate { x: 3., y: 4. },
+            start: Coord2 { x: 1., y: 2.2 },
+            end: Coord2 { x: 3., y: 4. },
         };
         assert_ne!(s1, s2);
     }
@@ -253,7 +253,7 @@ mod tests {
         let s2 = Segment::from(((1.0, 0.0), (1.0, 1.0)));
         assert_eq!(
             s1.intersect_segment(s2),
-            SegmentIntersection::Coordinate((1.0, 0.0).into())
+            SegmentIntersection::Coord2((1.0, 0.0).into())
         );
     }
 
@@ -263,7 +263,7 @@ mod tests {
         let s2 = Segment::from(((1.0, 0.0), (0.0, 1.0)));
         assert_eq!(
             s1.intersect_segment(s2),
-            SegmentIntersection::Coordinate((0.5, 0.5).into())
+            SegmentIntersection::Coord2((0.5, 0.5).into())
         );
     }
 

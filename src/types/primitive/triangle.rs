@@ -1,22 +1,22 @@
-use crate::types::primitive::{Coordinate, CoordinateType};
+use crate::types::primitive::{Coord2, CoordinateType};
 
 #[derive(Copy, Clone, Debug)]
-pub struct Triangle<T: CoordinateType>(pub Coordinate<T>, pub Coordinate<T>, pub Coordinate<T>);
+pub struct Triangle<T: CoordinateType>(pub Coord2<T>, pub Coord2<T>, pub Coord2<T>);
 
 impl<T: CoordinateType> Triangle<T> {
-    pub fn to_array(&self) -> [Coordinate<T>; 3] {
+    pub fn to_array(&self) -> [Coord2<T>; 3] {
         [self.0, self.1, self.2]
     }
 }
 
-impl<IC: Into<Coordinate<T>> + Copy, T: CoordinateType> From<(IC, IC, IC)> for Triangle<T> {
+impl<IC: Into<Coord2<T>> + Copy, T: CoordinateType> From<(IC, IC, IC)> for Triangle<T> {
     fn from(coords: (IC, IC, IC)) -> Triangle<T> {
         Triangle(coords.0.into(), coords.1.into(), coords.2.into())
     }
 }
 
 impl<T: CoordinateType> Triangle<T> {
-    pub fn new(c0: Coordinate<T>, c1: Coordinate<T>, c2: Coordinate<T>) -> Self {
+    pub fn new(c0: Coord2<T>, c1: Coord2<T>, c2: Coord2<T>) -> Self {
         Triangle(c0, c1, c2)
     }
 
