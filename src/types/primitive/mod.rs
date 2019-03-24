@@ -25,7 +25,7 @@ mod tests {
 
     #[test]
     fn check_segment() {
-        let s = Segment::new(Coord2::from((0.0, 1.0)), Coord2::from((2.0, 3.0)));
+        let s = Segment::from(((0.0, 1.0), (2.0, 3.0)));
         assert_eq!(s.start, Coord2::new(0.0, 1.0));
         assert_eq!(s.end, Coord2::new(2.0, 3.0));
     }

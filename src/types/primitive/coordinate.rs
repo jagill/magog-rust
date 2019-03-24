@@ -25,6 +25,15 @@ impl<T: Coordinate> From<(T, T)> for Coord2<T> {
     }
 }
 
+impl<T: Coordinate> From<[T; 2]> for Coord2<T> {
+    fn from(coords: [T; 2]) -> Self {
+        Coord2 {
+            x: coords[0],
+            y: coords[1],
+        }
+    }
+}
+
 impl<T: Coordinate> From<(NotNan<T>, NotNan<T>)> for Coord2<T> {
     fn from(coords: (NotNan<T>, NotNan<T>)) -> Self {
         Coord2 {
@@ -163,6 +172,13 @@ mod tests {
     #[test]
     fn check_from_tuple() {
         let c = Coord2::from((0.0, 1.0));
+        assert_eq!(c.x, 0.0);
+        assert_eq!(c.y, 1.0);
+    }
+
+    #[test]
+    fn check_from_array() {
+        let c = Coord2::from([0.0, 1.0]);
         assert_eq!(c.x, 0.0);
         assert_eq!(c.y, 1.0);
     }
