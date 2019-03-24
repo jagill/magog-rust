@@ -137,10 +137,7 @@ mod tests {
         let min_y: f32 = 2.;
         let max_x: f32 = 3.;
         let max_y: f32 = 4.;
-        let e = Rect::new(
-            Coord2 { x: min_x, y: min_y },
-            Coord2 { x: max_x, y: max_y },
-        );
+        let e = Rect::new(Coord2 { x: min_x, y: min_y }, Coord2 { x: max_x, y: max_y });
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
         assert_eq!(e.max.x, max_x);
@@ -153,10 +150,7 @@ mod tests {
         let min_y: f64 = 2.;
         let max_x: f64 = 3.;
         let max_y: f64 = 4.;
-        let e = Rect::new(
-            Coord2 { x: min_x, y: min_y },
-            Coord2 { x: max_x, y: max_y },
-        );
+        let e = Rect::new(Coord2 { x: min_x, y: min_y }, Coord2 { x: max_x, y: max_y });
         assert_eq!(e.min.x, min_x);
         assert_eq!(e.min.y, min_y);
         assert_eq!(e.max.x, max_x);
@@ -191,10 +185,7 @@ mod tests {
 
     #[test]
     fn check_new_absorb_nans() {
-        let r1 = Rect::new(
-            Coord2::new(0.0, f32::NAN),
-            Coord2::new(f32::NAN, 0.0),
-        );
+        let r1 = Rect::new(Coord2::new(0.0, f32::NAN), Coord2::new(f32::NAN, 0.0));
         let r2 = Rect::new(Coord2::new(0.0, 0.0), Coord2::new(0.0, 0.0));
         assert_eq!(r1, r2)
     }
@@ -249,10 +240,7 @@ mod tests {
 
     #[test]
     fn check_add_coord_nan() {
-        let mut r = Rect::new(
-            Coord2::new(0.0, f32::NAN),
-            Coord2::new(2.0, f32::NAN),
-        );
+        let mut r = Rect::new(Coord2::new(0.0, f32::NAN), Coord2::new(2.0, f32::NAN));
         r = r.add_coord(Coord2::new(1.0, 1.0));
         let r2 = Rect::new(Coord2::new(0.0, 1.0), Coord2::new(2.0, 1.0));
         assert_eq!(r, r2)
