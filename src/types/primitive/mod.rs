@@ -5,13 +5,12 @@ mod segment;
 mod triangle;
 
 pub use crate::types::primitive::{
-    coordinate::Coord2,
+    coordinate::{Coord2, Coordinate},
     envelope::Envelope,
     rect::Rect,
     segment::{PointLocation, Segment, SegmentIntersection},
     triangle::Triangle,
 };
-pub use crate::types::Coordinate;
 
 #[cfg(test)]
 mod tests {

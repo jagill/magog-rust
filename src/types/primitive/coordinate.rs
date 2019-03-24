@@ -1,6 +1,11 @@
-use crate::types::Coordinate;
+use num_traits::{Bounded, Float, Signed};
 use ordered_float::{FloatIsNan, NotNan};
+use std::fmt::Debug;
+use std::iter::Sum;
 use std::ops::{Add, Mul, Sub};
+
+pub trait Coordinate: Float + Sum + Bounded + Signed + Debug + 'static {}
+impl<T: Float + Sum + Bounded + Signed + Debug + 'static> Coordinate for T {}
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Coord2<T>
