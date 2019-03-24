@@ -1,4 +1,4 @@
-use crate::types::CoordinateType;
+use crate::types::Coordinate;
 // use crate::types::Envelope;
 use crate::relation::Relation;
 use crate::relation::Relation::*;
@@ -8,7 +8,7 @@ use crate::types::Point;
 
 pub fn check_relation_point_point<T>(p1: &Point<T>, p2: &Point<T>, relation: Relation) -> bool
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     match relation {
         Contains | Intersects | Within => p1 == p2,
@@ -22,7 +22,7 @@ pub fn check_relation_multi_point_point<T>(
     relation: Relation,
 ) -> bool
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     let coord = p2.0;
     match relation {

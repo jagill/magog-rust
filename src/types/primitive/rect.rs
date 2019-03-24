@@ -1,9 +1,9 @@
-use crate::types::primitive::{Coord2, CoordinateType};
+use crate::types::primitive::{Coord2, Coordinate};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Rect<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub min: Coord2<T>,
     pub max: Coord2<T>,
@@ -12,13 +12,13 @@ where
 //// From Conversions
 
 // (Coord2, Coord2) -> Rect
-impl<T: CoordinateType, IC: Into<Coord2<T>>> From<(IC, IC)> for Rect<T> {
+impl<T: Coordinate, IC: Into<Coord2<T>>> From<(IC, IC)> for Rect<T> {
     fn from(coords: (IC, IC)) -> Self {
         Rect::new(coords.0.into(), coords.1.into())
     }
 }
 
-impl<T: CoordinateType> Rect<T> {
+impl<T: Coordinate> Rect<T> {
     pub fn new(c1: Coord2<T>, c2: Coord2<T>) -> Rect<T> {
         let (min_x, max_x) = Coord2::min_max(c1.x, c2.x);
         let (min_y, max_y) = Coord2::min_max(c1.y, c2.y);

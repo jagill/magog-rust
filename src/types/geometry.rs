@@ -1,5 +1,5 @@
 use crate::types::{
-    CoordinateType, Envelope, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Coordinate, Envelope, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 
 /// An enum representing any possible geometry type.
@@ -9,7 +9,7 @@ use crate::types::{
 #[derive(PartialEq, Debug)]
 pub enum Geometry<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     Empty,
     Point(Point<T>),
@@ -22,38 +22,38 @@ where
 }
 
 // FROM constructors
-impl<T: CoordinateType> From<Point<T>> for Geometry<T> {
+impl<T: Coordinate> From<Point<T>> for Geometry<T> {
     fn from(x: Point<T>) -> Geometry<T> {
         Geometry::Point(x)
     }
 }
-impl<T: CoordinateType> From<LineString<T>> for Geometry<T> {
+impl<T: Coordinate> From<LineString<T>> for Geometry<T> {
     fn from(x: LineString<T>) -> Geometry<T> {
         Geometry::LineString(x)
     }
 }
-impl<T: CoordinateType> From<Polygon<T>> for Geometry<T> {
+impl<T: Coordinate> From<Polygon<T>> for Geometry<T> {
     fn from(x: Polygon<T>) -> Geometry<T> {
         Geometry::Polygon(x)
     }
 }
-impl<T: CoordinateType> From<MultiPoint<T>> for Geometry<T> {
+impl<T: Coordinate> From<MultiPoint<T>> for Geometry<T> {
     fn from(x: MultiPoint<T>) -> Geometry<T> {
         Geometry::MultiPoint(x)
     }
 }
-impl<T: CoordinateType> From<MultiLineString<T>> for Geometry<T> {
+impl<T: Coordinate> From<MultiLineString<T>> for Geometry<T> {
     fn from(x: MultiLineString<T>) -> Geometry<T> {
         Geometry::MultiLineString(x)
     }
 }
-impl<T: CoordinateType> From<MultiPolygon<T>> for Geometry<T> {
+impl<T: Coordinate> From<MultiPolygon<T>> for Geometry<T> {
     fn from(x: MultiPolygon<T>) -> Geometry<T> {
         Geometry::MultiPolygon(x)
     }
 }
 
-impl<T: CoordinateType> Geometry<T> {
+impl<T: Coordinate> Geometry<T> {
     /// Convert empty Geometries to an official Empty.
     pub fn maybe_to_empty(self) -> Geometry<T> {
         if self.is_empty() {
@@ -118,7 +118,7 @@ impl<T: CoordinateType> Geometry<T> {
     }
 }
 
-impl<T: CoordinateType> Geometry<T> {
+impl<T: Coordinate> Geometry<T> {
     // Basic accessors
     pub fn dimension(&self) -> u8 {
         match self {

@@ -1,9 +1,9 @@
-use crate::types::primitive::{Coord2, CoordinateType, Rect};
+use crate::types::primitive::{Coord2, Coordinate, Rect};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Segment<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub start: Coord2<T>,
     pub end: Coord2<T>,
@@ -20,14 +20,14 @@ pub enum PointLocation {
 /// Intersection type of two segments.
 /// Two segments can be disjoint, intersect at a point, or overlap in a segment.
 #[derive(PartialEq, Clone, Debug)]
-pub enum SegmentIntersection<T: CoordinateType> {
+pub enum SegmentIntersection<T: Coordinate> {
     None,
     Coord2(Coord2<T>),
     Segment(Segment<T>),
 }
 
 // (T, T) -> Segment
-impl<T: CoordinateType, IC: Into<Coord2<T>>> From<(IC, IC)> for Segment<T> {
+impl<T: Coordinate, IC: Into<Coord2<T>>> From<(IC, IC)> for Segment<T> {
     fn from(coords: (IC, IC)) -> Self {
         Segment {
             start: coords.0.into(),
@@ -37,13 +37,13 @@ impl<T: CoordinateType, IC: Into<Coord2<T>>> From<(IC, IC)> for Segment<T> {
 }
 
 // Segment -> Rect
-impl<T: CoordinateType> From<Segment<T>> for Rect<T> {
+impl<T: Coordinate> From<Segment<T>> for Rect<T> {
     fn from(seg: Segment<T>) -> Self {
         Rect::from((seg.start, seg.end))
     }
 }
 
-impl<T: CoordinateType> Segment<T> {
+impl<T: Coordinate> Segment<T> {
     pub fn new(start: Coord2<T>, end: Coord2<T>) -> Segment<T> {
         Segment { start, end }
     }

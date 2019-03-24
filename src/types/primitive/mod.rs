@@ -11,7 +11,7 @@ pub use crate::types::primitive::{
     segment::{PointLocation, Segment, SegmentIntersection},
     triangle::Triangle,
 };
-pub use crate::types::CoordinateType;
+pub use crate::types::Coordinate;
 
 #[cfg(test)]
 mod tests {

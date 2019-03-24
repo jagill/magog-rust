@@ -1,15 +1,15 @@
-use crate::types::{CoordinateType, Envelope, Geometry, LineString};
+use crate::types::{Coordinate, Envelope, Geometry, LineString};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiLineString<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub line_strings: Vec<LineString<T>>,
     _envelope: Envelope<T>,
 }
 
-impl<T: CoordinateType> MultiLineString<T> {
+impl<T: Coordinate> MultiLineString<T> {
     pub fn new(line_strings: Vec<LineString<T>>) -> Self {
         let envs: Vec<Envelope<T>> = line_strings.iter().map(|ls| ls.envelope()).collect();
         let _envelope = Envelope::from(&envs);
@@ -21,7 +21,7 @@ impl<T: CoordinateType> MultiLineString<T> {
 }
 
 // MultiLineString implementation
-impl<T: CoordinateType> MultiLineString<T> {
+impl<T: Coordinate> MultiLineString<T> {
     pub fn is_closed(&self) -> bool {
         self.line_strings.iter().all(|ls| ls.is_closed())
     }
@@ -32,7 +32,7 @@ impl<T: CoordinateType> MultiLineString<T> {
 }
 
 // GEOMETRY implementation
-impl<T: CoordinateType> MultiLineString<T> {
+impl<T: Coordinate> MultiLineString<T> {
     pub fn dimension(&self) -> u8 {
         1
     }

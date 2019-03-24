@@ -2,8 +2,8 @@ use num_traits::{Bounded, Float, Signed};
 use std::fmt::Debug;
 use std::iter::Sum;
 
-pub trait CoordinateType: Float + Sum + Bounded + Signed + Debug + 'static {}
-impl<T: Float + Sum + Bounded + Signed + Debug + 'static> CoordinateType for T {}
+pub trait Coordinate: Float + Sum + Bounded + Signed + Debug + 'static {}
+impl<T: Float + Sum + Bounded + Signed + Debug + 'static> Coordinate for T {}
 
 mod geometry;
 mod line_string;

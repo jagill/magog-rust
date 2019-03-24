@@ -1,15 +1,15 @@
-use crate::types::primitive::{Coord2, CoordinateType, Rect};
+use crate::types::primitive::{Coord2, Coordinate, Rect};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Envelope<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub rect: Option<Rect<T>>,
 }
 
 // Rect -> Envelope
-impl<T: CoordinateType, IR: Into<Rect<T>>> From<IR> for Envelope<T> {
+impl<T: Coordinate, IR: Into<Rect<T>>> From<IR> for Envelope<T> {
     fn from(rectish: IR) -> Self {
         Envelope {
             rect: Some(rectish.into()),
@@ -18,7 +18,7 @@ impl<T: CoordinateType, IR: Into<Rect<T>>> From<IR> for Envelope<T> {
 }
 
 // Vec<Coord2> -> Envelope
-impl<'a, T: CoordinateType> From<&'a Vec<Coord2<T>>> for Envelope<T> {
+impl<'a, T: Coordinate> From<&'a Vec<Coord2<T>>> for Envelope<T> {
     fn from(coords: &'a Vec<Coord2<T>>) -> Self {
         let empty_env = Envelope { rect: None };
         coords.iter().fold(empty_env, |env, c| env.add_coord(*c))
@@ -26,14 +26,14 @@ impl<'a, T: CoordinateType> From<&'a Vec<Coord2<T>>> for Envelope<T> {
 }
 
 // Vec<Envelope> -> Envelope
-impl<'a, T: CoordinateType> From<&'a Vec<Envelope<T>>> for Envelope<T> {
+impl<'a, T: Coordinate> From<&'a Vec<Envelope<T>>> for Envelope<T> {
     fn from(envelopes: &'a Vec<Envelope<T>>) -> Self {
         let env = Envelope { rect: None };
         envelopes.iter().fold(env, |base_env, e| base_env.merge(e))
     }
 }
 
-impl<T: CoordinateType> Envelope<T> {
+impl<T: Coordinate> Envelope<T> {
     pub fn new(rect: Option<Rect<T>>) -> Envelope<T> {
         Envelope { rect }
     }

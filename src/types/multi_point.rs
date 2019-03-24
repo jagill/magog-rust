@@ -1,23 +1,23 @@
-use crate::types::{Coord2, CoordinateType, Envelope, Geometry, Point};
+use crate::types::{Coord2, Coordinate, Envelope, Geometry, Point};
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]
 pub struct MultiPoint<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub points: Vec<Point<T>>,
     _envelope: Envelope<T>,
 }
 
 /// Turn a `Vec` of `Coord2`-ish objects into a `LineString`.
-impl<T: CoordinateType, IC: Into<Coord2<T>>> From<Vec<IC>> for MultiPoint<T> {
+impl<T: Coordinate, IC: Into<Coord2<T>>> From<Vec<IC>> for MultiPoint<T> {
     fn from(v: Vec<IC>) -> Self {
         MultiPoint::new(v.into_iter().map(|c| Point(c.into())).collect())
     }
 }
 
-impl<T: CoordinateType> MultiPoint<T> {
+impl<T: Coordinate> MultiPoint<T> {
     pub fn new(points: Vec<Point<T>>) -> Self {
         let coords: Vec<Coord2<T>> = points.iter().map(|p| p.0).collect();
         let _envelope: Envelope<T> = Envelope::from(&coords);
@@ -26,7 +26,7 @@ impl<T: CoordinateType> MultiPoint<T> {
 }
 
 // GEOMETRY implementation
-impl<T: CoordinateType> MultiPoint<T> {
+impl<T: Coordinate> MultiPoint<T> {
     pub fn dimension(&self) -> u8 {
         0
     }

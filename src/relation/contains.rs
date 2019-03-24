@@ -1,12 +1,12 @@
 use crate::relation::Intersection;
-use crate::types::{CoordinateType, Geometry, LineString, Point, PointLocation, Polygon, Rect};
+use crate::types::{Coordinate, Geometry, LineString, Point, PointLocation, Polygon, Rect};
 
 pub fn intersection_linestring_point<T>(
     linestring: &LineString<T>,
     point: &Point<T>,
 ) -> Intersection
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     let coord = point.0;
     if !linestring.envelope().contains(coord) {
@@ -50,7 +50,7 @@ pub fn intersection_polygon_point<T>(
     point: &Point<T>,
 ) -> Result<Intersection, &'static str>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     // If it's not in the envelope, it's not in the polygon.
     if !polygon.envelope.contains(point.0) {
@@ -85,7 +85,7 @@ fn _intersection_simple_polygon_point<T>(
     point: &Point<T>,
 ) -> Result<Intersection, &'static str>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     if !ls.is_closed() {
         return Err("Simple polygons must be defined by a closed LineString.");

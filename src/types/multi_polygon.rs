@@ -1,15 +1,15 @@
-use crate::types::{CoordinateType, Envelope, Geometry, Point, Polygon};
+use crate::types::{Coordinate, Envelope, Geometry, Point, Polygon};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiPolygon<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub polygons: Vec<Polygon<T>>,
     _envelope: Envelope<T>,
 }
 
-impl<T: CoordinateType> MultiPolygon<T> {
+impl<T: Coordinate> MultiPolygon<T> {
     pub fn new(polygons: Vec<Polygon<T>>) -> Self {
         let envs: Vec<Envelope<T>> = polygons.iter().map(|p| p.envelope()).collect();
         let _envelope = Envelope::from(&envs);
@@ -21,7 +21,7 @@ impl<T: CoordinateType> MultiPolygon<T> {
 }
 
 // MultiPolygon implementation
-impl<T: CoordinateType> MultiPolygon<T> {
+impl<T: Coordinate> MultiPolygon<T> {
     pub fn centroid(&self) -> Point<T> {
         // TODO: STUB
         Point::from((T::zero(), T::zero()))
@@ -34,7 +34,7 @@ impl<T: CoordinateType> MultiPolygon<T> {
 }
 
 // GEOMETRY implementation
-impl<T: CoordinateType> MultiPolygon<T> {
+impl<T: Coordinate> MultiPolygon<T> {
     pub fn dimension(&self) -> u8 {
         2
     }

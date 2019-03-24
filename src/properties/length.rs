@@ -1,4 +1,4 @@
-use crate::types::{CoordinateType, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use crate::types::{Coordinate, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 pub trait Length<T> {
     fn length(&self) -> T;
@@ -6,7 +6,7 @@ pub trait Length<T> {
 
 impl<T> Length<T> for Point<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn length(&self) -> T {
         T::zero()
@@ -15,7 +15,7 @@ where
 
 impl<T> Length<T> for MultiPoint<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn length(&self) -> T {
         T::zero()
@@ -25,7 +25,7 @@ where
 /// Calculate the sum of the lengths of its LineStrings.
 impl<T> Length<T> for MultiLineString<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn length(&self) -> T {
         self.line_strings.iter().map(|ls| ls.length()).sum()
@@ -35,7 +35,7 @@ where
 /// Calculate the length of its exterior, plus the sum of that of the interiors.
 impl<T> Length<T> for Polygon<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn length(&self) -> T {
         self.exterior.length() + self.interiors.iter().map(|ls| ls.length()).sum()
@@ -45,7 +45,7 @@ where
 /// Calculate the sum of the lengths of its polygons.
 impl<T> Length<T> for MultiPolygon<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn length(&self) -> T {
         self.polygons.iter().map(|p| p.length()).sum()

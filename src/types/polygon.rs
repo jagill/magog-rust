@@ -1,9 +1,9 @@
-use crate::types::{CoordinateType, Envelope, Geometry, LineString, Point};
+use crate::types::{Coordinate, Envelope, Geometry, LineString, Point};
 
 #[derive(Debug, PartialEq)]
 pub struct Polygon<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub exterior: LineString<T>,
     pub interiors: Vec<LineString<T>>,
@@ -11,7 +11,7 @@ where
 }
 
 /// Turn a `Vec` of `Coord2`-ish objects into a `Polygon`.
-impl<T: CoordinateType, ILS: Into<LineString<T>>> From<ILS> for Polygon<T> {
+impl<T: Coordinate, ILS: Into<LineString<T>>> From<ILS> for Polygon<T> {
     fn from(ext: ILS) -> Self {
         let exterior: LineString<T> = ext.into();
         let _envelope = exterior.envelope().clone();
@@ -25,7 +25,7 @@ impl<T: CoordinateType, ILS: Into<LineString<T>>> From<ILS> for Polygon<T> {
 
 impl<T> Polygon<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
         let _envelope = exterior.envelope().clone();
@@ -52,7 +52,7 @@ where
 }
 
 // Polygon implementation
-impl<T: CoordinateType> Polygon<T> {
+impl<T: Coordinate> Polygon<T> {
     pub fn centroid(&self) -> Point<T> {
         // TODO: STUB
         Point::from((T::zero(), T::zero()))
@@ -65,9 +65,9 @@ impl<T: CoordinateType> Polygon<T> {
 }
 
 // GEOMETRY implementation
-impl<T: CoordinateType> Polygon<T>
+impl<T: Coordinate> Polygon<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub fn dimension(&self) -> u8 {
         2

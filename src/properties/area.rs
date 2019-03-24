@@ -1,8 +1,8 @@
 use crate::types::{
-    CoordinateType, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Coordinate, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 
-fn get_signed_loop_area<T: CoordinateType>(ls: &LineString<T>) -> T {
+fn get_signed_loop_area<T: Coordinate>(ls: &LineString<T>) -> T {
     if ls.num_points() < 4 {
         return T::zero();
     }
@@ -10,7 +10,7 @@ fn get_signed_loop_area<T: CoordinateType>(ls: &LineString<T>) -> T {
     twice_area / (T::one() + T::one())
 }
 
-fn get_loop_area<T: CoordinateType>(ls: &LineString<T>) -> T {
+fn get_loop_area<T: Coordinate>(ls: &LineString<T>) -> T {
     let signed_area = get_signed_loop_area(ls);
     if signed_area < T::zero() {
         -signed_area
@@ -25,7 +25,7 @@ pub trait Area<T> {
 
 impl<T> Area<T> for Point<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn area(&self) -> T {
         T::zero()
@@ -34,7 +34,7 @@ where
 
 impl<T> Area<T> for MultiPoint<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn area(&self) -> T {
         T::zero()
@@ -43,7 +43,7 @@ where
 
 impl<T> Area<T> for LineString<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn area(&self) -> T {
         T::zero()
@@ -52,7 +52,7 @@ where
 
 impl<T> Area<T> for MultiLineString<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn area(&self) -> T {
         T::zero()
@@ -62,7 +62,7 @@ where
 /// Calculate the area of its exterior, plus the sum of that of the interiors.
 impl<T> Area<T> for Polygon<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn area(&self) -> T {
         get_loop_area(&self.exterior) - self.interiors.iter().map(|ls| get_loop_area(ls)).sum()
@@ -72,7 +72,7 @@ where
 /// Calculate the sum of the areas of its polygons.
 impl<T> Area<T> for MultiPolygon<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     fn area(&self) -> T {
         self.polygons.iter().map(|p| p.area()).sum()

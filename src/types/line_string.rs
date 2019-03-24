@@ -1,24 +1,24 @@
 use crate::rtree::{RTree, RTreeObject, RTreeSegment};
 use crate::types::primitive::SegmentIntersection;
-use crate::types::{Coord2, CoordinateType, Envelope, Geometry, MultiPoint, Point, Segment};
+use crate::types::{Coord2, Coordinate, Envelope, Geometry, MultiPoint, Point, Segment};
 
 #[derive(Debug, PartialEq)]
 pub struct LineString<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub coords: Vec<Coord2<T>>,
     _envelope: Envelope<T>,
 }
 
 /// Turn a `Vec` of `Coord2`-ish objects into a `LineString`.
-impl<T: CoordinateType, IC: Into<Coord2<T>>> From<Vec<IC>> for LineString<T> {
+impl<T: Coordinate, IC: Into<Coord2<T>>> From<Vec<IC>> for LineString<T> {
     fn from(v: Vec<IC>) -> Self {
         LineString::new(v.into_iter().map(|c| c.into()).collect())
     }
 }
 
-impl<T: CoordinateType> LineString<T> {
+impl<T: Coordinate> LineString<T> {
     pub fn new(coords: Vec<Coord2<T>>) -> LineString<T> {
         let _envelope = Envelope::from(&coords);
         LineString { coords, _envelope }
@@ -55,7 +55,7 @@ impl<T: CoordinateType> LineString<T> {
 }
 
 // LineString Implementation
-impl<T: CoordinateType> LineString<T> {
+impl<T: Coordinate> LineString<T> {
     pub fn num_points(&self) -> usize {
         self.coords.len()
     }
@@ -102,7 +102,7 @@ impl<T: CoordinateType> LineString<T> {
 }
 
 // GEOMETRY implementation
-impl<T: CoordinateType> LineString<T> {
+impl<T: Coordinate> LineString<T> {
     pub fn dimension(&self) -> u8 {
         1
     }

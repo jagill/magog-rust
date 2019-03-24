@@ -1,17 +1,17 @@
-use crate::types::CoordinateType;
+use crate::types::Coordinate;
 use ordered_float::{FloatIsNan, NotNan};
 use std::ops::{Add, Mul, Sub};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Coord2<T>
 where
-    T: CoordinateType,
+    T: Coordinate,
 {
     pub x: T,
     pub y: T,
 }
 
-impl<T: CoordinateType> From<(T, T)> for Coord2<T> {
+impl<T: Coordinate> From<(T, T)> for Coord2<T> {
     fn from(coords: (T, T)) -> Self {
         Coord2 {
             x: coords.0,
@@ -20,7 +20,7 @@ impl<T: CoordinateType> From<(T, T)> for Coord2<T> {
     }
 }
 
-impl<T: CoordinateType> From<(NotNan<T>, NotNan<T>)> for Coord2<T> {
+impl<T: Coordinate> From<(NotNan<T>, NotNan<T>)> for Coord2<T> {
     fn from(coords: (NotNan<T>, NotNan<T>)) -> Self {
         Coord2 {
             x: coords.0.into_inner(),
@@ -29,7 +29,7 @@ impl<T: CoordinateType> From<(NotNan<T>, NotNan<T>)> for Coord2<T> {
     }
 }
 
-impl<T: CoordinateType> Coord2<T> {
+impl<T: Coordinate> Coord2<T> {
     pub fn new(x: T, y: T) -> Coord2<T> {
         Coord2 { x: x, y: y }
     }
@@ -37,7 +37,7 @@ impl<T: CoordinateType> Coord2<T> {
     /// Cross product of the vector c1 x c2
     pub fn cross(c1: Coord2<T>, c2: Coord2<T>) -> T
     where
-        T: CoordinateType,
+        T: Coordinate,
     {
         c1.x * c2.y - c1.y * c2.x
     }
@@ -45,7 +45,7 @@ impl<T: CoordinateType> Coord2<T> {
     /// Dot product of the vector c1 . c2
     pub fn dot(c1: Coord2<T>, c2: Coord2<T>) -> T
     where
-        T: CoordinateType,
+        T: Coordinate,
     {
         c1.x * c2.x + c1.y * c2.y
     }
@@ -77,7 +77,7 @@ impl<T: CoordinateType> Coord2<T> {
     }
 }
 
-impl<T: CoordinateType> Sub for Coord2<T> {
+impl<T: Coordinate> Sub for Coord2<T> {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
@@ -85,7 +85,7 @@ impl<T: CoordinateType> Sub for Coord2<T> {
     }
 }
 
-impl<T: CoordinateType> Add for Coord2<T> {
+impl<T: Coordinate> Add for Coord2<T> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
@@ -93,7 +93,7 @@ impl<T: CoordinateType> Add for Coord2<T> {
     }
 }
 
-impl<T: CoordinateType> Mul<T> for Coord2<T> {
+impl<T: Coordinate> Mul<T> for Coord2<T> {
     type Output = Self;
 
     fn mul(self, rhs: T) -> Self::Output {

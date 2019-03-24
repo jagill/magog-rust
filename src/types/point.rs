@@ -1,18 +1,18 @@
-use crate::types::{Coord2, CoordinateType, Envelope, Geometry};
+use crate::types::{Coord2, Coordinate, Envelope, Geometry};
 
 #[derive(Debug, PartialEq)]
 pub struct Point<T>(pub Coord2<T>)
 where
-    T: CoordinateType;
+    T: Coordinate;
 
 /// Turn a `Coord2`-ish object into a `Point`.
-impl<T: CoordinateType, IC: Into<Coord2<T>>> From<IC> for Point<T> {
+impl<T: Coordinate, IC: Into<Coord2<T>>> From<IC> for Point<T> {
     fn from(c: IC) -> Self {
         Point(c.into())
     }
 }
 
-impl<T: CoordinateType> Point<T> {
+impl<T: Coordinate> Point<T> {
     pub fn new(coord: Coord2<T>) -> Point<T> {
         Point(coord)
     }
@@ -32,7 +32,7 @@ impl<T: CoordinateType> Point<T> {
 }
 
 // GEOMETRY implementation
-impl<T: CoordinateType> Point<T> {
+impl<T: Coordinate> Point<T> {
     pub fn dimension(&self) -> u8 {
         0
     }
