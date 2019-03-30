@@ -5,7 +5,7 @@ reduce to operations on these.  They are all fixed size, cheaply copyable,
 and this safe and quick on the stack.
 
 The foundational types are:
-  * Coord2: An x-y pair.  Note that we let the actual value to be any float.
+  * Position: An x-y pair.  Note that we let the actual value to be any float.
   * Segment: A finite line between two points.
   * Triangle: Three points.  They may be colinear.
   * Rect: A bounding box with min/max-x/y values.  This will allow many
@@ -17,9 +17,9 @@ The second class of types are the "geometrical" types, which may contain many
 coordinates in various configurations.
 
 The geometrical types are:
-  * Point: A point on a 2-d plane.  This is basically a promoted Coord2.
+  * Point: A point on a 2-d plane.  This is basically a promoted Position.
   * LineString: A series of points on a 2-d plane, tracing out a root.  This
-    is basically a promoted Vec<Coord2>.
+    is basically a promoted Vec<Position>.
   * Polygon: A polygon is a solid region in the plane.  It may have holes.  It
     has a single exterior LineString, which must be a loop (the final coordinate
     should be the same as the first coordinate).  It may have 0 to many interior

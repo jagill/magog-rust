@@ -1,19 +1,19 @@
-use crate::types::{Coord2, Coordinate, Envelope, Geometry};
+use crate::types::{Position, Coordinate, Envelope, Geometry};
 
 #[derive(Debug, PartialEq)]
-pub struct Point<T>(pub Coord2<T>)
+pub struct Point<T>(pub Position<T>)
 where
     T: Coordinate;
 
-/// Turn a `Coord2`-ish object into a `Point`.
-impl<T: Coordinate, IC: Into<Coord2<T>>> From<IC> for Point<T> {
+/// Turn a `Position`-ish object into a `Point`.
+impl<T: Coordinate, IC: Into<Position<T>>> From<IC> for Point<T> {
     fn from(c: IC) -> Self {
         Point(c.into())
     }
 }
 
 impl<T: Coordinate> Point<T> {
-    pub fn new(coord: Coord2<T>) -> Point<T> {
+    pub fn new(coord: Position<T>) -> Point<T> {
         Point(coord)
     }
 
@@ -68,20 +68,20 @@ mod tests {
 
     #[test]
     fn check_constructor() {
-        let p = Point(Coord2 { x: 0.1, y: 1.0 });
+        let p = Point(Position { x: 0.1, y: 1.0 });
         assert_eq!(p.x(), 0.1);
         assert_eq!(p.y(), 1.0);
     }
 
     #[test]
     fn check_is_simple() {
-        let p = Point(Coord2 { x: 0.1, y: 1.0 });
+        let p = Point(Position { x: 0.1, y: 1.0 });
         assert!(p.is_simple());
     }
 
     #[test]
     fn check_is_not_simple() {
-        let p = Point(Coord2 {
+        let p = Point(Position {
             x: 0.1,
             y: f32::NAN,
         });

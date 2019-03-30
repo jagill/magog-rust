@@ -1,4 +1,4 @@
-use crate::types::{Coord2, Coordinate, Envelope, Geometry, Point};
+use crate::types::{Coordinate, Envelope, Geometry, Point, Position};
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]
@@ -10,8 +10,8 @@ where
     _envelope: Envelope<T>,
 }
 
-/// Turn a `Vec` of `Coord2`-ish objects into a `LineString`.
-impl<T: Coordinate, IC: Into<Coord2<T>>> From<Vec<IC>> for MultiPoint<T> {
+/// Turn a `Vec` of `Position`-ish objects into a `LineString`.
+impl<T: Coordinate, IC: Into<Position<T>>> From<Vec<IC>> for MultiPoint<T> {
     fn from(v: Vec<IC>) -> Self {
         MultiPoint::new(v.into_iter().map(|c| Point(c.into())).collect())
     }
@@ -19,9 +19,13 @@ impl<T: Coordinate, IC: Into<Coord2<T>>> From<Vec<IC>> for MultiPoint<T> {
 
 impl<T: Coordinate> MultiPoint<T> {
     pub fn new(points: Vec<Point<T>>) -> Self {
-        let coords: Vec<Coord2<T>> = points.iter().map(|p| p.0).collect();
+        let coords: Vec<Position<T>> = points.iter().map(|p| p.0).collect();
         let _envelope: Envelope<T> = Envelope::from(&coords);
         MultiPoint { points, _envelope }
+    }
+
+    pub fn num_points(&self) -> usize {
+        self.points.len()
     }
 }
 
@@ -43,8 +47,16 @@ impl<T: Coordinate> MultiPoint<T> {
         self.points.is_empty()
     }
 
-    /// A MultiPoint is simple if it has no duplicate points.
+    /**
+     * Check if the geometry is simple.
+     *
+     * A MultiPoint is simple if it is not empty, has no invalid points, and has
+     * no duplicate points.
+     */
     pub fn is_simple(&self) -> bool {
+        if self.points.is_empty() {
+            return false;
+        }
         let mut coord_set = HashSet::new();
         for point in &self.points {
             if point.validate().is_err() {
@@ -64,8 +76,14 @@ impl<T: Coordinate> MultiPoint<T> {
         true
     }
 
-    /// Remove bad or duplicate points.
-    pub fn make_simple(&self) -> Self {
+    /**
+     * Make this a simple Geometry.
+     *
+     * First, remove bad or duplicate points.
+     * Then, if there are no remaining points, return Geometry::Empty.
+     * Else, return MultiPoint with the remaining points.
+     */
+    pub fn make_simple(&self) -> Geometry<T> {
         let mut coord_set = HashSet::new();
         for point in &self.points {
             if point.validate().is_err() {
@@ -78,7 +96,14 @@ impl<T: Coordinate> MultiPoint<T> {
                 }
             }
         }
-        return MultiPoint::new(coord_set.iter().map(|&h| Point::from(h)).collect());
+
+        if coord_set.is_empty() {
+            Geometry::Empty
+        } else {
+            Geometry::from(MultiPoint::new(
+                coord_set.iter().map(|&h| Point::from(h)).collect(),
+            ))
+        }
     }
 
     pub fn boundary(&self) -> Geometry<T> {
@@ -116,5 +141,24 @@ mod tests {
         let env = Envelope::from(Rect::from(((0.0, 0.0), (1.0, 0.0))));
         assert_eq!(mp.envelope(), env);
     }
+
+    #[test]
+    fn check_make_simple_empty() {
+        let mp: MultiPoint<f32> = MultiPoint::new(Vec::new());
+        assert_eq!(mp.make_simple(), Geometry::Empty);
+    }
+
+    // #[test]
+    // fn check_make_simple_noop() {
+    //     let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+    //     assert_eq!(mp.make_simple(), Geometry::from(mp));
+    // }
+
+    // #[test]
+    // fn check_make_simple_dedup() {
+    //     let mp1 = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0), (0.0, 0.0)]);
+    //     let mp2 = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+    //     assert_eq!(mp1.make_simple(), Geometry::from(mp2));
+    // }
 
 }

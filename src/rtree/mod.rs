@@ -1,9 +1,9 @@
 use rstar::AABB;
 pub use rstar::{RTree, RTreeObject};
 
-use crate::types::{Coord2, Coordinate, Segment};
+use crate::types::{Position, Coordinate, Segment};
 
-fn coord_to_point<T: Coordinate>(c: Coord2<T>) -> [T; 2] {
+fn coord_to_point<T: Coordinate>(c: Position<T>) -> [T; 2] {
     [c.x, c.y]
 }
 

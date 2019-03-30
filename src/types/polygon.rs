@@ -10,7 +10,7 @@ where
     _envelope: Envelope<T>,
 }
 
-/// Turn a `Vec` of `Coord2`-ish objects into a `Polygon`.
+/// Turn a `Vec` of `Position`-ish objects into a `Polygon`.
 impl<T: Coordinate, ILS: Into<LineString<T>>> From<ILS> for Polygon<T> {
     fn from(ext: ILS) -> Self {
         let exterior: LineString<T> = ext.into();

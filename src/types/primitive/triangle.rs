@@ -1,34 +1,34 @@
-use crate::types::primitive::{Coord2, Coordinate};
+use crate::types::primitive::{Coordinate, Position};
 
 #[derive(Copy, Clone, Debug)]
-pub struct Triangle<T: Coordinate>(pub Coord2<T>, pub Coord2<T>, pub Coord2<T>);
+pub struct Triangle<C: Coordinate>(pub Position<C>, pub Position<C>, pub Position<C>);
 
-impl<T: Coordinate> Triangle<T> {
-    pub fn to_array(&self) -> [Coord2<T>; 3] {
+impl<C: Coordinate> Triangle<C> {
+    pub fn to_array(&self) -> [Position<C>; 3] {
         [self.0, self.1, self.2]
     }
 }
 
-impl<IC: Into<Coord2<T>> + Copy, T: Coordinate> From<(IC, IC, IC)> for Triangle<T> {
-    fn from(coords: (IC, IC, IC)) -> Triangle<T> {
-        Triangle(coords.0.into(), coords.1.into(), coords.2.into())
+impl<C: Coordinate, IC: Into<Position<C>> + Copy> From<(IC, IC, IC)> for Triangle<C> {
+    fn from(positions: (IC, IC, IC)) -> Triangle<C> {
+        Triangle(positions.0.into(), positions.1.into(), positions.2.into())
     }
 }
 
-impl<T: Coordinate> Triangle<T> {
-    pub fn new(c0: Coord2<T>, c1: Coord2<T>, c2: Coord2<T>) -> Self {
-        Triangle(c0, c1, c2)
+impl<C: Coordinate> Triangle<C> {
+    pub fn new(p0: Position<C>, p1: Position<C>, p2: Position<C>) -> Self {
+        Triangle(p0, p1, p2)
     }
 
-    pub fn signed_area(&self) -> T {
+    pub fn signed_area(&self) -> C {
         ((self.1.x - self.0.x) * (self.2.y - self.0.y)
             - (self.2.x - self.0.x) * (self.1.y - self.0.y))
-            / (T::one() + T::one())
+            / (C::one() + C::one())
     }
 
-    pub fn area(&self) -> T {
+    pub fn area(&self) -> C {
         let signed_area = self.signed_area();
-        if signed_area < T::zero() {
+        if signed_area < C::zero() {
             -signed_area
         } else {
             signed_area
