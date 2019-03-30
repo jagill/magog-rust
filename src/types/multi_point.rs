@@ -2,25 +2,22 @@ use crate::types::{Coordinate, Envelope, Geometry, Point, Position};
 use std::collections::HashSet;
 
 #[derive(Debug, PartialEq)]
-pub struct MultiPoint<T>
-where
-    T: Coordinate,
-{
-    pub points: Vec<Point<T>>,
-    _envelope: Envelope<T>,
+pub struct MultiPoint<C: Coordinate> {
+    pub points: Vec<Point<C>>,
+    _envelope: Envelope<C>,
 }
 
 /// Turn a `Vec` of `Position`-ish objects into a `LineString`.
-impl<T: Coordinate, IC: Into<Position<T>>> From<Vec<IC>> for MultiPoint<T> {
-    fn from(v: Vec<IC>) -> Self {
-        MultiPoint::new(v.into_iter().map(|c| Point(c.into())).collect())
+impl<C: Coordinate, IP: Into<Position<C>>> From<Vec<IP>> for MultiPoint<C> {
+    fn from(v: Vec<IP>) -> Self {
+        MultiPoint::new(v.into_iter().map(|p| Point(p.into())).collect())
     }
 }
 
-impl<T: Coordinate> MultiPoint<T> {
-    pub fn new(points: Vec<Point<T>>) -> Self {
-        let coords: Vec<Position<T>> = points.iter().map(|p| p.0).collect();
-        let _envelope: Envelope<T> = Envelope::from(&coords);
+impl<C: Coordinate> MultiPoint<C> {
+    pub fn new(points: Vec<Point<C>>) -> Self {
+        let positions: Vec<Position<C>> = points.iter().map(|p| p.0).collect();
+        let _envelope: Envelope<C> = Envelope::from(&positions);
         MultiPoint { points, _envelope }
     }
 
@@ -30,7 +27,7 @@ impl<T: Coordinate> MultiPoint<T> {
 }
 
 // GEOMETRY implementation
-impl<T: Coordinate> MultiPoint<T> {
+impl<C: Coordinate> MultiPoint<C> {
     pub fn dimension(&self) -> u8 {
         0
     }
@@ -39,7 +36,7 @@ impl<T: Coordinate> MultiPoint<T> {
         "MultiPoint"
     }
 
-    pub fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<C> {
         self._envelope
     }
 
@@ -57,7 +54,7 @@ impl<T: Coordinate> MultiPoint<T> {
         if self.points.is_empty() {
             return false;
         }
-        let mut coord_set = HashSet::new();
+        let mut position_set = HashSet::new();
         for point in &self.points {
             if point.validate().is_err() {
                 return false;
@@ -65,10 +62,10 @@ impl<T: Coordinate> MultiPoint<T> {
             match point.0.to_hashable() {
                 Err(_) => return false,
                 Ok(hashable) => {
-                    if coord_set.contains(&hashable) {
+                    if position_set.contains(&hashable) {
                         return false;
                     } else {
-                        coord_set.insert(hashable);
+                        position_set.insert(hashable);
                     }
                 }
             }
@@ -83,8 +80,8 @@ impl<T: Coordinate> MultiPoint<T> {
      * Then, if there are no remaining points, return Geometry::Empty.
      * Else, return MultiPoint with the remaining points.
      */
-    pub fn make_simple(&self) -> Geometry<T> {
-        let mut coord_set = HashSet::new();
+    pub fn make_simple(&self) -> Geometry<C> {
+        let mut position_set = HashSet::new();
         for point in &self.points {
             if point.validate().is_err() {
                 continue;
@@ -92,21 +89,21 @@ impl<T: Coordinate> MultiPoint<T> {
             match point.0.to_hashable() {
                 Err(_) => continue,
                 Ok(hashable) => {
-                    coord_set.insert(hashable);
+                    position_set.insert(hashable);
                 }
             }
         }
 
-        if coord_set.is_empty() {
+        if position_set.is_empty() {
             Geometry::Empty
         } else {
             Geometry::from(MultiPoint::new(
-                coord_set.iter().map(|&h| Point::from(h)).collect(),
+                position_set.iter().map(|&h| Point::from(h)).collect(),
             ))
         }
     }
 
-    pub fn boundary(&self) -> Geometry<T> {
+    pub fn boundary(&self) -> Geometry<C> {
         Geometry::Empty
     }
 }

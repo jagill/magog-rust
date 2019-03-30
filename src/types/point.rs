@@ -1,20 +1,18 @@
-use crate::types::{Position, Coordinate, Envelope, Geometry};
+use crate::types::{Coordinate, Envelope, Geometry, Position};
 
 #[derive(Debug, PartialEq)]
-pub struct Point<T>(pub Position<T>)
-where
-    T: Coordinate;
+pub struct Point<C: Coordinate>(pub Position<C>);
 
 /// Turn a `Position`-ish object into a `Point`.
-impl<T: Coordinate, IC: Into<Position<T>>> From<IC> for Point<T> {
-    fn from(c: IC) -> Self {
-        Point(c.into())
+impl<C: Coordinate, IP: Into<Position<C>>> From<IP> for Point<C> {
+    fn from(p: IP) -> Self {
+        Point(p.into())
     }
 }
 
-impl<T: Coordinate> Point<T> {
-    pub fn new(coord: Position<T>) -> Point<T> {
-        Point(coord)
+impl<C: Coordinate> Point<C> {
+    pub fn new(position: Position<C>) -> Point<C> {
+        Point(position)
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
@@ -22,17 +20,17 @@ impl<T: Coordinate> Point<T> {
         Ok(())
     }
 
-    pub fn x(&self) -> T {
+    pub fn x(&self) -> C {
         self.0.x
     }
 
-    pub fn y(&self) -> T {
+    pub fn y(&self) -> C {
         self.0.y
     }
 }
 
 // GEOMETRY implementation
-impl<T: Coordinate> Point<T> {
+impl<C: Coordinate> Point<C> {
     pub fn dimension(&self) -> u8 {
         0
     }
@@ -41,7 +39,7 @@ impl<T: Coordinate> Point<T> {
         "Point"
     }
 
-    pub fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<C> {
         Envelope::from((self.0, self.0))
     }
 
@@ -56,7 +54,7 @@ impl<T: Coordinate> Point<T> {
         }
     }
 
-    pub fn boundary(&self) -> Geometry<T> {
+    pub fn boundary(&self) -> Geometry<C> {
         Geometry::Empty
     }
 }

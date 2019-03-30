@@ -7,55 +7,52 @@ use crate::types::{
 /// All `Geo` types can be converted to a `Geometry` member using `.into()` (as part of the
 /// `std::convert::Into` pattern).
 #[derive(PartialEq, Debug)]
-pub enum Geometry<T>
-where
-    T: Coordinate,
-{
+pub enum Geometry<C: Coordinate> {
     Empty,
-    Point(Point<T>),
-    LineString(LineString<T>),
-    Polygon(Polygon<T>),
-    MultiPoint(MultiPoint<T>),
-    MultiLineString(MultiLineString<T>),
-    MultiPolygon(MultiPolygon<T>),
-    // GeometryCollection(GeometryCollection<T>),
+    Point(Point<C>),
+    LineString(LineString<C>),
+    Polygon(Polygon<C>),
+    MultiPoint(MultiPoint<C>),
+    MultiLineString(MultiLineString<C>),
+    MultiPolygon(MultiPolygon<C>),
+    // GeometryCollection(GeometryCollection<C>),
 }
 
 // FROM constructors
-impl<T: Coordinate> From<Point<T>> for Geometry<T> {
-    fn from(x: Point<T>) -> Geometry<T> {
+impl<C: Coordinate> From<Point<C>> for Geometry<C> {
+    fn from(x: Point<C>) -> Geometry<C> {
         Geometry::Point(x)
     }
 }
-impl<T: Coordinate> From<LineString<T>> for Geometry<T> {
-    fn from(x: LineString<T>) -> Geometry<T> {
+impl<C: Coordinate> From<LineString<C>> for Geometry<C> {
+    fn from(x: LineString<C>) -> Geometry<C> {
         Geometry::LineString(x)
     }
 }
-impl<T: Coordinate> From<Polygon<T>> for Geometry<T> {
-    fn from(x: Polygon<T>) -> Geometry<T> {
+impl<C: Coordinate> From<Polygon<C>> for Geometry<C> {
+    fn from(x: Polygon<C>) -> Geometry<C> {
         Geometry::Polygon(x)
     }
 }
-impl<T: Coordinate> From<MultiPoint<T>> for Geometry<T> {
-    fn from(x: MultiPoint<T>) -> Geometry<T> {
+impl<C: Coordinate> From<MultiPoint<C>> for Geometry<C> {
+    fn from(x: MultiPoint<C>) -> Geometry<C> {
         Geometry::MultiPoint(x)
     }
 }
-impl<T: Coordinate> From<MultiLineString<T>> for Geometry<T> {
-    fn from(x: MultiLineString<T>) -> Geometry<T> {
+impl<C: Coordinate> From<MultiLineString<C>> for Geometry<C> {
+    fn from(x: MultiLineString<C>) -> Geometry<C> {
         Geometry::MultiLineString(x)
     }
 }
-impl<T: Coordinate> From<MultiPolygon<T>> for Geometry<T> {
-    fn from(x: MultiPolygon<T>) -> Geometry<T> {
+impl<C: Coordinate> From<MultiPolygon<C>> for Geometry<C> {
+    fn from(x: MultiPolygon<C>) -> Geometry<C> {
         Geometry::MultiPolygon(x)
     }
 }
 
-impl<T: Coordinate> Geometry<T> {
+impl<C: Coordinate> Geometry<C> {
     /// Convert empty Geometries to an official Empty.
-    pub fn maybe_to_empty(self) -> Geometry<T> {
+    pub fn maybe_to_empty(self) -> Geometry<C> {
         if self.is_empty() {
             Geometry::Empty
         } else {
@@ -64,7 +61,7 @@ impl<T: Coordinate> Geometry<T> {
     }
 
     /// If this Geometry is a Point, then return that, else None.
-    pub fn as_point(self) -> Option<Point<T>> {
+    pub fn as_point(self) -> Option<Point<C>> {
         if let Geometry::Point(x) = self {
             Some(x)
         } else {
@@ -73,7 +70,7 @@ impl<T: Coordinate> Geometry<T> {
     }
 
     /// If this Geometry is a LineString, then return that LineString, else None.
-    pub fn as_linestring(self) -> Option<LineString<T>> {
+    pub fn as_linestring(self) -> Option<LineString<C>> {
         if let Geometry::LineString(x) = self {
             Some(x)
         } else {
@@ -82,7 +79,7 @@ impl<T: Coordinate> Geometry<T> {
     }
 
     /// If this Geometry is a Polygon, then return that, else None.
-    pub fn as_polygon(self) -> Option<Polygon<T>> {
+    pub fn as_polygon(self) -> Option<Polygon<C>> {
         if let Geometry::Polygon(x) = self {
             Some(x)
         } else {
@@ -91,7 +88,7 @@ impl<T: Coordinate> Geometry<T> {
     }
 
     /// If this Geometry is a MultiPoint, then return that, else None.
-    pub fn as_multipoint(self) -> Option<MultiPoint<T>> {
+    pub fn as_multipoint(self) -> Option<MultiPoint<C>> {
         if let Geometry::MultiPoint(x) = self {
             Some(x)
         } else {
@@ -100,7 +97,7 @@ impl<T: Coordinate> Geometry<T> {
     }
 
     /// If this Geometry is a MultiLineString, then return that, else None.
-    pub fn as_multilinestring(self) -> Option<MultiLineString<T>> {
+    pub fn as_multilinestring(self) -> Option<MultiLineString<C>> {
         if let Geometry::MultiLineString(x) = self {
             Some(x)
         } else {
@@ -109,7 +106,7 @@ impl<T: Coordinate> Geometry<T> {
     }
 
     /// If this Geometry is a MultiPolygon, then return that, else None.
-    pub fn as_multipolygon(self) -> Option<MultiPolygon<T>> {
+    pub fn as_multipolygon(self) -> Option<MultiPolygon<C>> {
         if let Geometry::MultiPolygon(x) = self {
             Some(x)
         } else {
@@ -118,7 +115,7 @@ impl<T: Coordinate> Geometry<T> {
     }
 }
 
-impl<T: Coordinate> Geometry<T> {
+impl<C: Coordinate> Geometry<C> {
     // Basic accessors
     pub fn dimension(&self) -> u8 {
         match self {
@@ -144,7 +141,7 @@ impl<T: Coordinate> Geometry<T> {
         }
     }
 
-    pub fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<C> {
         match self {
             Geometry::Empty => Envelope::empty(),
             Geometry::Point(x) => x.envelope(),
@@ -180,7 +177,7 @@ impl<T: Coordinate> Geometry<T> {
         }
     }
 
-    pub fn boundary(&self) -> Geometry<T> {
+    pub fn boundary(&self) -> Geometry<C> {
         match self {
             Geometry::Empty => Geometry::Empty,
             Geometry::Point(x) => x.boundary(),
@@ -193,12 +190,12 @@ impl<T: Coordinate> Geometry<T> {
     }
 
     //     // Intersection Relations
-    //     // fn equals(&self, other: &Geometry<T>) -> bool;
-    //     // fn disjoint(&self, other: &Geometry<T>) -> bool;
-    //     // fn intersects(&self, other: &Geometry<T>) -> bool;
-    //     // fn touches(&self, other: &Geometry<T>) -> bool;
-    //     // fn crosses(&self, other: &Geometry<T>) -> bool;
-    //     // fn within(&self, other: &Geometry<T>) -> bool;
-    //     // fn contains(&self, other: &Geometry<T>) -> bool;
-    //     // fn overlaps(&self, other: &Geometry<T>) -> bool;
+    //     // fn equals(&self, other: &Geometry<C>) -> bool;
+    //     // fn disjoint(&self, other: &Geometry<C>) -> bool;
+    //     // fn intersects(&self, other: &Geometry<C>) -> bool;
+    //     // fn touches(&self, other: &Geometry<C>) -> bool;
+    //     // fn crosses(&self, other: &Geometry<C>) -> bool;
+    //     // fn within(&self, other: &Geometry<C>) -> bool;
+    //     // fn contains(&self, other: &Geometry<C>) -> bool;
+    //     // fn overlaps(&self, other: &Geometry<C>) -> bool;
 }

@@ -1,17 +1,14 @@
 use crate::types::{Coordinate, Envelope, Geometry, LineString};
 
 #[derive(Debug, PartialEq)]
-pub struct MultiLineString<T>
-where
-    T: Coordinate,
-{
-    pub line_strings: Vec<LineString<T>>,
-    _envelope: Envelope<T>,
+pub struct MultiLineString<C: Coordinate> {
+    pub line_strings: Vec<LineString<C>>,
+    _envelope: Envelope<C>,
 }
 
-impl<T: Coordinate> MultiLineString<T> {
-    pub fn new(line_strings: Vec<LineString<T>>) -> Self {
-        let envs: Vec<Envelope<T>> = line_strings.iter().map(|ls| ls.envelope()).collect();
+impl<C: Coordinate> MultiLineString<C> {
+    pub fn new(line_strings: Vec<LineString<C>>) -> Self {
+        let envs: Vec<Envelope<C>> = line_strings.iter().map(|ls| ls.envelope()).collect();
         let _envelope = Envelope::from(&envs);
         MultiLineString {
             line_strings,
@@ -21,18 +18,18 @@ impl<T: Coordinate> MultiLineString<T> {
 }
 
 // MultiLineString implementation
-impl<T: Coordinate> MultiLineString<T> {
+impl<C: Coordinate> MultiLineString<C> {
     pub fn is_closed(&self) -> bool {
         self.line_strings.iter().all(|ls| ls.is_closed())
     }
 
-    pub fn length(&self) -> T {
+    pub fn length(&self) -> C {
         self.line_strings.iter().map(|ls| ls.length()).sum()
     }
 }
 
 // GEOMETRY implementation
-impl<T: Coordinate> MultiLineString<T> {
+impl<C: Coordinate> MultiLineString<C> {
     pub fn dimension(&self) -> u8 {
         1
     }
@@ -41,7 +38,7 @@ impl<T: Coordinate> MultiLineString<T> {
         "MultiLineString"
     }
 
-    pub fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<C> {
         self._envelope
     }
 
@@ -59,7 +56,7 @@ impl<T: Coordinate> MultiLineString<T> {
 
     /// The boundary of a MultiLineString is are the boundaries of
     /// the component LineStrings that don't touch any other LineString.
-    pub fn boundary(&self) -> Geometry<T> {
+    pub fn boundary(&self) -> Geometry<C> {
         // TODO: STUB
         Geometry::Empty
     }

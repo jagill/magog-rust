@@ -1,41 +1,41 @@
 use crate::rtree::{RTree, RTreeObject, RTreeSegment};
 use crate::types::primitive::SegmentIntersection;
-use crate::types::{Position, Coordinate, Envelope, Geometry, MultiPoint, Point, Segment};
+use crate::types::{Coordinate, Envelope, Geometry, MultiPoint, Point, Position, Segment};
 
 #[derive(Debug, PartialEq)]
-pub struct LineString<T>
-where
-    T: Coordinate,
-{
-    pub coords: Vec<Position<T>>,
-    _envelope: Envelope<T>,
+pub struct LineString<C: Coordinate> {
+    pub positions: Vec<Position<C>>,
+    _envelope: Envelope<C>,
 }
 
 /// Turn a `Vec` of `Position`-ish objects into a `LineString`.
-impl<T: Coordinate, IC: Into<Position<T>>> From<Vec<IC>> for LineString<T> {
-    fn from(v: Vec<IC>) -> Self {
-        LineString::new(v.into_iter().map(|c| c.into()).collect())
+impl<C: Coordinate, IP: Into<Position<C>>> From<Vec<IP>> for LineString<C> {
+    fn from(v: Vec<IP>) -> Self {
+        LineString::new(v.into_iter().map(|p| p.into()).collect())
     }
 }
 
-impl<T: Coordinate> LineString<T> {
-    pub fn new(coords: Vec<Position<T>>) -> LineString<T> {
-        let _envelope = Envelope::from(&coords);
-        LineString { coords, _envelope }
+impl<C: Coordinate> LineString<C> {
+    pub fn new(positions: Vec<Position<C>>) -> LineString<C> {
+        let _envelope = Envelope::from(&positions);
+        LineString {
+            positions,
+            _envelope,
+        }
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
-        let mut last_coord: Option<Position<T>> = None;
-        for &coord in &self.coords {
-            coord.validate()?;
+        let mut last_coord: Option<Position<C>> = None;
+        for &position in &self.positions {
+            position.validate()?;
             // According to the spec this function must fail if any two consecutive points are the same.
             match last_coord {
-                None => last_coord = Some(coord),
+                None => last_coord = Some(position),
                 Some(c) => {
-                    if c == coord {
-                        return Err("LineString coordinates have repeated points.");
+                    if c == position {
+                        return Err("LineString positions have repeats.");
                     }
-                    last_coord = Some(coord);
+                    last_coord = Some(position);
                 }
             }
         }
@@ -43,10 +43,10 @@ impl<T: Coordinate> LineString<T> {
         Ok(())
     }
 
-    pub fn segments_iter<'a>(&'a self) -> impl Iterator<Item = Segment<T>> + 'a {
-        self.coords
+    pub fn segments_iter<'a>(&'a self) -> impl Iterator<Item = Segment<C>> + 'a {
+        self.positions
             .iter()
-            .zip(self.coords.iter().skip(1))
+            .zip(self.positions.iter().skip(1))
             .map(|(start, end)| Segment {
                 start: start.clone(),
                 end: end.clone(),
@@ -55,54 +55,54 @@ impl<T: Coordinate> LineString<T> {
 }
 
 // LineString Implementation
-impl<T: Coordinate> LineString<T> {
+impl<C: Coordinate> LineString<C> {
     pub fn num_points(&self) -> usize {
-        self.coords.len()
+        self.positions.len()
     }
 
     /// Get the point at coordinate `n` of the LineString.
     /// If `n > self.num_points`, return None.
-    pub fn get_point(&self, n: usize) -> Option<Point<T>> {
-        match self.coords.get(n) {
+    pub fn get_point(&self, n: usize) -> Option<Point<C>> {
+        match self.positions.get(n) {
             None => None,
             Some(c) => Some(Point::new(*c)),
         }
     }
 
     pub fn is_closed(&self) -> bool {
-        if self.coords.len() < 4 {
+        if self.positions.len() < 4 {
             return false;
         }
-        return self.coords[0] == self.coords[self.coords.len() - 1];
+        return self.positions[0] == self.positions[self.positions.len() - 1];
     }
 
     pub fn is_ring(&self) -> bool {
         self.is_closed() && self.is_simple()
     }
 
-    pub fn length(&self) -> T {
+    pub fn length(&self) -> C {
         self.segments_iter().map(|s| s.length()).sum()
     }
 
     /// Return the first coordinate of the linestring
-    pub fn start_point(&self) -> Option<Position<T>> {
-        if self.coords.len() == 0 {
+    pub fn start_point(&self) -> Option<Position<C>> {
+        if self.positions.len() == 0 {
             return None;
         }
-        Some(self.coords[0])
+        Some(self.positions[0])
     }
 
     /// Return the last coordinate of the linestring
-    pub fn end_point(&self) -> Option<Position<T>> {
-        if self.coords.len() == 0 {
+    pub fn end_point(&self) -> Option<Position<C>> {
+        if self.positions.len() == 0 {
             return None;
         }
-        Some(self.coords[self.coords.len() - 1])
+        Some(self.positions[self.positions.len() - 1])
     }
 }
 
 // GEOMETRY implementation
-impl<T: Coordinate> LineString<T> {
+impl<C: Coordinate> LineString<C> {
     pub fn dimension(&self) -> u8 {
         1
     }
@@ -111,15 +111,15 @@ impl<T: Coordinate> LineString<T> {
         "LineString"
     }
 
-    pub fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<C> {
         self._envelope
     }
 
     pub fn is_empty(&self) -> bool {
-        self.coords.is_empty()
+        self.positions.is_empty()
     }
 
-    pub fn boundary(&self) -> Geometry<T> {
+    pub fn boundary(&self) -> Geometry<C> {
         if self.is_closed() {
             Geometry::Empty
         } else {
@@ -136,7 +136,7 @@ impl<T: Coordinate> LineString<T> {
         if self.num_points() < 2 {
             return false;
         }
-        let mut rtree: RTree<RTreeSegment<T>> = RTree::new();
+        let mut rtree: RTree<RTreeSegment<C>> = RTree::new();
         for (i, seg) in self.segments_iter().enumerate() {
             // First check: should not have two same adjacent points.
             if seg.start == seg.end {
@@ -152,11 +152,11 @@ impl<T: Coordinate> LineString<T> {
             for found in rtree.locate_in_envelope_intersecting(&rtree_seg.envelope()) {
                 match seg.intersect_segment(found.segment) {
                     SegmentIntersection::None => continue,
-                    SegmentIntersection::Position(c) => {
+                    SegmentIntersection::Position(p) => {
                         if found.index == i - 1 {
                             // Point intersxns are fine for adjacent segments (must be end-start)
                             continue;
-                        } else if i == self.num_points() - 2 && found.index == 0 && c == seg.end {
+                        } else if i == self.num_points() - 2 && found.index == 0 && p == seg.end {
                             // or the final segment ending at the first segment's beginning.
                             continue;
                         }
@@ -182,25 +182,25 @@ mod tests {
 
     #[test]
     fn check_basic_linestring() {
-        let c0: Position<f64> = Position { x: 0.0, y: 0.1 };
-        let c1: Position<f64> = Position { x: 1.0, y: 1.1 };
-        let ls = LineString::new(vec![c0, c1]);
-        let results: Vec<Position<f64>> = ls.coords.into_iter().collect();
-        assert_eq!(results, vec![c0, c1])
+        let p0: Position<f64> = Position { x: 0.0, y: 0.1 };
+        let p1: Position<f64> = Position { x: 1.0, y: 1.1 };
+        let ls = LineString::new(vec![p0, p1]);
+        let results: Vec<Position<f64>> = ls.positions.into_iter().collect();
+        assert_eq!(results, vec![p0, p1])
     }
 
     #[test]
     fn check_linestring_segments_iter() {
-        let c0: Position<f64> = Position { x: 0.0, y: 0.1 };
-        let c1: Position<f64> = Position { x: 1.0, y: 1.1 };
-        let c2: Position<f64> = Position { x: 2.0, y: 2.1 };
-        let ls = LineString::new(vec![c0, c1, c2]);
+        let p0: Position<f64> = Position { x: 0.0, y: 0.1 };
+        let p1: Position<f64> = Position { x: 1.0, y: 1.1 };
+        let p2: Position<f64> = Position { x: 2.0, y: 2.1 };
+        let ls = LineString::new(vec![p0, p1, p2]);
         let results: Vec<Segment<f64>> = ls.segments_iter().collect();
         assert_eq!(
             results,
             vec![
-                Segment { start: c0, end: c1 },
-                Segment { start: c1, end: c2 },
+                Segment { start: p0, end: p1 },
+                Segment { start: p1, end: p2 },
             ]
         )
     }

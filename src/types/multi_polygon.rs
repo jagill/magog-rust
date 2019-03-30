@@ -1,17 +1,14 @@
 use crate::types::{Coordinate, Envelope, Geometry, Point, Polygon};
 
 #[derive(Debug, PartialEq)]
-pub struct MultiPolygon<T>
-where
-    T: Coordinate,
-{
-    pub polygons: Vec<Polygon<T>>,
-    _envelope: Envelope<T>,
+pub struct MultiPolygon<C: Coordinate> {
+    pub polygons: Vec<Polygon<C>>,
+    _envelope: Envelope<C>,
 }
 
-impl<T: Coordinate> MultiPolygon<T> {
-    pub fn new(polygons: Vec<Polygon<T>>) -> Self {
-        let envs: Vec<Envelope<T>> = polygons.iter().map(|p| p.envelope()).collect();
+impl<C: Coordinate> MultiPolygon<C> {
+    pub fn new(polygons: Vec<Polygon<C>>) -> Self {
+        let envs: Vec<Envelope<C>> = polygons.iter().map(|p| p.envelope()).collect();
         let _envelope = Envelope::from(&envs);
         MultiPolygon {
             polygons,
@@ -21,20 +18,20 @@ impl<T: Coordinate> MultiPolygon<T> {
 }
 
 // MultiPolygon implementation
-impl<T: Coordinate> MultiPolygon<T> {
-    pub fn centroid(&self) -> Point<T> {
+impl<C: Coordinate> MultiPolygon<C> {
+    pub fn centroid(&self) -> Point<C> {
         // TODO: STUB
-        Point::from((T::zero(), T::zero()))
+        Point::from((C::zero(), C::zero()))
     }
 
-    pub fn point_on_surface(&self) -> Point<T> {
+    pub fn point_on_surface(&self) -> Point<C> {
         // TODO: STUB
-        Point::from((T::zero(), T::zero()))
+        Point::from((C::zero(), C::zero()))
     }
 }
 
 // GEOMETRY implementation
-impl<T: Coordinate> MultiPolygon<T> {
+impl<C: Coordinate> MultiPolygon<C> {
     pub fn dimension(&self) -> u8 {
         2
     }
@@ -43,7 +40,7 @@ impl<T: Coordinate> MultiPolygon<T> {
         "MultiPolygon"
     }
 
-    pub fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<C> {
         self._envelope
     }
 
@@ -59,7 +56,7 @@ impl<T: Coordinate> MultiPolygon<T> {
     }
 
     /// The boundary of a MultiPolygon is the boundaries of the Polygons.
-    pub fn boundary(&self) -> Geometry<T> {
+    pub fn boundary(&self) -> Geometry<C> {
         // TODO: STUB  Should be a union of the boundaries of the component polygons.
         Geometry::Empty
     }

@@ -1,19 +1,16 @@
 use crate::types::{Coordinate, Envelope, Geometry, LineString, Point};
 
 #[derive(Debug, PartialEq)]
-pub struct Polygon<T>
-where
-    T: Coordinate,
-{
-    pub exterior: LineString<T>,
-    pub interiors: Vec<LineString<T>>,
-    _envelope: Envelope<T>,
+pub struct Polygon<C: Coordinate> {
+    pub exterior: LineString<C>,
+    pub interiors: Vec<LineString<C>>,
+    _envelope: Envelope<C>,
 }
 
 /// Turn a `Vec` of `Position`-ish objects into a `Polygon`.
-impl<T: Coordinate, ILS: Into<LineString<T>>> From<ILS> for Polygon<T> {
+impl<C: Coordinate, ILS: Into<LineString<C>>> From<ILS> for Polygon<C> {
     fn from(ext: ILS) -> Self {
-        let exterior: LineString<T> = ext.into();
+        let exterior: LineString<C> = ext.into();
         let _envelope = exterior.envelope().clone();
         Polygon {
             exterior,
@@ -23,11 +20,8 @@ impl<T: Coordinate, ILS: Into<LineString<T>>> From<ILS> for Polygon<T> {
     }
 }
 
-impl<T> Polygon<T>
-where
-    T: Coordinate,
-{
-    pub fn new(exterior: LineString<T>, interiors: Vec<LineString<T>>) -> Polygon<T> {
+impl<C: Coordinate> Polygon<C> {
+    pub fn new(exterior: LineString<C>, interiors: Vec<LineString<C>>) -> Polygon<C> {
         let _envelope = exterior.envelope().clone();
         Polygon {
             exterior,
@@ -52,23 +46,20 @@ where
 }
 
 // Polygon implementation
-impl<T: Coordinate> Polygon<T> {
-    pub fn centroid(&self) -> Point<T> {
+impl<C: Coordinate> Polygon<C> {
+    pub fn centroid(&self) -> Point<C> {
         // TODO: STUB
-        Point::from((T::zero(), T::zero()))
+        Point::from((C::zero(), C::zero()))
     }
 
-    pub fn point_on_surface(&self) -> Point<T> {
+    pub fn point_on_surface(&self) -> Point<C> {
         // TODO: STUB
-        Point::from((T::zero(), T::zero()))
+        Point::from((C::zero(), C::zero()))
     }
 }
 
 // GEOMETRY implementation
-impl<T: Coordinate> Polygon<T>
-where
-    T: Coordinate,
-{
+impl<C: Coordinate> Polygon<C> {
     pub fn dimension(&self) -> u8 {
         2
     }
@@ -77,7 +68,7 @@ where
         "Polygon"
     }
 
-    pub fn envelope(&self) -> Envelope<T> {
+    pub fn envelope(&self) -> Envelope<C> {
         self._envelope
     }
 
@@ -95,7 +86,7 @@ where
     }
 
     /// The boundary of a Polygon are the component LineStrings.
-    pub fn boundary(&self) -> Geometry<T> {
+    pub fn boundary(&self) -> Geometry<C> {
         // TODO: STUB
         Geometry::Empty
     }
