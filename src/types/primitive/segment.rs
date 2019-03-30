@@ -8,7 +8,7 @@ pub struct Segment<C: Coordinate> {
 
 /// Location of a point in relation to a line
 #[derive(PartialEq, Clone, Debug)]
-pub enum PointLocation {
+pub enum PositionLocation {
     Left,
     On,
     Right,
@@ -62,15 +62,15 @@ impl<C: Coordinate> Segment<C> {
     }
 
     /// Tests if a positions is Left|On|Right of the infinite line determined by the segment.
-    ///    Return: PointLocation for location of p relative to [start, end]
-    pub fn coord_position(&self, position: Position<C>) -> PointLocation {
+    ///    Return: PositionLocation for location of p relative to [start, end]
+    pub fn position_location(&self, position: Position<C>) -> PositionLocation {
         let test = Position::cross(self.end - self.start, position - self.start);
         if test > C::zero() {
-            PointLocation::Left
+            PositionLocation::Left
         } else if test == C::zero() {
-            PointLocation::On
+            PositionLocation::On
         } else {
-            PointLocation::Right
+            PositionLocation::Right
         }
     }
 
@@ -80,7 +80,7 @@ impl<C: Coordinate> Segment<C> {
     }
 
     pub fn contains(self, p: Position<C>) -> bool {
-        Rect::from(self).contains(p) && self.coord_position(p) == PointLocation::On
+        Rect::from(self).contains(p) && self.position_location(p) == PositionLocation::On
     }
 
     /**

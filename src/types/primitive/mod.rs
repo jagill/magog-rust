@@ -10,7 +10,7 @@ pub use crate::types::primitive::{
     envelope::Envelope,
     position::Position,
     rect::Rect,
-    segment::{PointLocation, Segment, SegmentIntersection},
+    segment::{PositionLocation, Segment, SegmentIntersection},
     triangle::Triangle,
 };
 

@@ -3,20 +3,17 @@ pub use rstar::{RTree, RTreeObject};
 
 use crate::types::{Coordinate, Position, Segment};
 
-fn coord_to_point<T: Coordinate>(c: Position<T>) -> [T; 2] {
-    [c.x, c.y]
+fn coord_to_point<C: Coordinate>(p: Position<C>) -> [C; 2] {
+    [p.x, p.y]
 }
 
-pub struct RTreeSegment<T>
-where
-    T: Coordinate,
-{
+pub struct RTreeSegment<C: Coordinate> {
     pub index: usize,
-    pub segment: Segment<T>,
+    pub segment: Segment<C>,
 }
 
-impl<T: Coordinate> RTreeObject for RTreeSegment<T> {
-    type Envelope = AABB<[T; 2]>;
+impl<C: Coordinate> RTreeObject for RTreeSegment<C> {
+    type Envelope = AABB<[C; 2]>;
 
     fn envelope(&self) -> Self::Envelope {
         AABB::from_corners(

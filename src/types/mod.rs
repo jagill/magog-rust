@@ -8,7 +8,7 @@ mod polygon;
 mod primitive;
 
 pub use crate::types::primitive::{
-    Coordinate, Envelope, PointLocation, Position, Rect, Segment, Triangle,
+    Coordinate, Envelope, Position, PositionLocation, Rect, Segment, Triangle,
 };
 
 pub use crate::types::{

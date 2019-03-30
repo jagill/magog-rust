@@ -2,79 +2,67 @@ use crate::types::{
     Coordinate, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 
-fn get_signed_loop_area<T: Coordinate>(ls: &LineString<T>) -> T {
+fn get_signed_loop_area<C: Coordinate>(ls: &LineString<C>) -> C {
     if ls.num_points() < 4 {
-        return T::zero();
+        return C::zero();
     }
-    let twice_area: T = ls.segments_iter().map(|s| s.determinant()).sum();
-    twice_area / (T::one() + T::one())
+    let twice_area: C = ls.segments_iter().map(|s| s.determinant()).sum();
+    twice_area / (C::one() + C::one())
 }
 
-fn get_loop_area<T: Coordinate>(ls: &LineString<T>) -> T {
+fn get_loop_area<C: Coordinate>(ls: &LineString<C>) -> C {
     let signed_area = get_signed_loop_area(ls);
-    if signed_area < T::zero() {
+    if signed_area < C::zero() {
         -signed_area
     } else {
         signed_area
     }
 }
 
-pub trait Area<T> {
-    fn area(&self) -> T;
+pub trait Area<C: Coordinate> {
+    fn area(&self) -> C;
 }
 
-impl<T> Area<T> for Point<T>
-where
-    T: Coordinate,
+impl<C: Coordinate> Area<C> for Point<C>
 {
-    fn area(&self) -> T {
-        T::zero()
+    fn area(&self) -> C {
+        C::zero()
     }
 }
 
-impl<T> Area<T> for MultiPoint<T>
-where
-    T: Coordinate,
+impl<C: Coordinate> Area<C> for MultiPoint<C>
 {
-    fn area(&self) -> T {
-        T::zero()
+    fn area(&self) -> C {
+        C::zero()
     }
 }
 
-impl<T> Area<T> for LineString<T>
-where
-    T: Coordinate,
+impl<C: Coordinate> Area<C> for LineString<C>
 {
-    fn area(&self) -> T {
-        T::zero()
+    fn area(&self) -> C {
+        C::zero()
     }
 }
 
-impl<T> Area<T> for MultiLineString<T>
-where
-    T: Coordinate,
+impl<C: Coordinate> Area<C> for MultiLineString<C>
 {
-    fn area(&self) -> T {
-        T::zero()
+    fn area(&self) -> C {
+        C::zero()
     }
 }
 
 /// Calculate the area of its exterior, plus the sum of that of the interiors.
-impl<T> Area<T> for Polygon<T>
-where
-    T: Coordinate,
+impl<C: Coordinate> Area<C> for Polygon<C>
 {
-    fn area(&self) -> T {
+    fn area(&self) -> C {
         get_loop_area(&self.exterior) - self.interiors.iter().map(|ls| get_loop_area(ls)).sum()
     }
 }
 
 /// Calculate the sum of the areas of its polygons.
-impl<T> Area<T> for MultiPolygon<T>
-where
-    T: Coordinate,
+impl<C: Coordinate> Area<C> for MultiPolygon<C>
 {
-    fn area(&self) -> T {
+    fn area(&self) -> C {
         self.polygons.iter().map(|p| p.area()).sum()
     }
 }

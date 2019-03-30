@@ -1,15 +1,13 @@
 use crate::relation::Intersection;
-use crate::types::{Coordinate, Geometry, LineString, Point, PointLocation, Polygon, Rect};
+use crate::types::{Coordinate, Geometry, LineString, Point, PositionLocation, Polygon, Rect};
 
-pub fn intersection_linestring_point<T>(
-    linestring: &LineString<T>,
-    point: &Point<T>,
+pub fn intersection_linestring_point<C: Coordinate>(
+    linestring: &LineString<C>,
+    point: &Point<C>,
 ) -> Intersection
-where
-    T: Coordinate,
 {
-    let coord = point.0;
-    if !linestring.envelope().contains(coord) {
+    let position = point.0;
+    if !linestring.envelope().contains(position) {
         return Intersection::Outside;
     }
 
@@ -18,7 +16,7 @@ where
             // Already checked empty case, but for syntactic completeness...
             None => return Intersection::Outside,
             Some(c) => {
-                if c == coord {
+                if c == position {
                     return Intersection::Boundary;
                 }
             }
@@ -27,7 +25,7 @@ where
             // Already checked empty case, but for syntactic completeness...
             None => return Intersection::Outside,
             Some(c) => {
-                if c == coord {
+                if c == position {
                     return Intersection::Boundary;
                 }
             }
@@ -36,8 +34,8 @@ where
 
     if linestring
         .segments_iter()
-        .filter(|&s| Rect::from(s).contains(coord))
-        .any(|s| s.coord_position(coord) == PointLocation::On)
+        .filter(|&s| Rect::from(s).contains(position))
+        .any(|s| s.coord_position(position) == PositionLocation::On)
     {
         Intersection::Contains
     } else {
@@ -45,9 +43,9 @@ where
     }
 }
 
-pub fn intersection_polygon_point<T>(
-    polygon: &Polygon<T>,
-    point: &Point<T>,
+pub fn intersection_polygon_point<C>(
+    polygon: &Polygon<C>,
+    point: &Point<C>,
 ) -> Result<Intersection, &'static str>
 where
     T: Coordinate,
@@ -80,9 +78,9 @@ where
 }
 
 /// Check the intersection of a simple polygon (defined by a loop) and a point.
-fn _intersection_simple_polygon_point<T>(
-    ls: &LineString<T>,
-    point: &Point<T>,
+fn _intersection_simple_polygon_point<C>(
+    ls: &LineString<C>,
+    point: &Point<C>,
 ) -> Result<Intersection, &'static str>
 where
     T: Coordinate,
@@ -92,28 +90,28 @@ where
     }
 
     let mut wn: i32 = 0; // the winding number counter
-    let coord = point.0;
+    let position = point.0;
     // loop through all edges of the polygon
     let right_segments = ls.segments_iter().filter(|&s| {
         // We only care about segments we are on, or intersect a ray in the positive x dir.
         let rect = Rect::from(s);
-        coord.y <= rect.max.y && coord.y >= rect.min.y && coord.x <= rect.max.x
+        position.y <= rect.max.y && position.y >= rect.min.y && position.x <= rect.max.x
     });
     for seg in right_segments {
-        if seg.contains(coord) {
+        if seg.contains(position) {
             return Ok(Intersection::Boundary);
         }
 
-        if seg.start.y <= coord.y {
-            if seg.end.y > coord.y  // an upward crossing
-                 && seg.coord_position(coord) == PointLocation::Left
+        if seg.start.y <= position.y {
+            if seg.end.y > position.y  // an upward crossing
+                 && seg.position_location(position) == PositionLocation::Left
             {
                 wn += 1; // have a valid up intersect
             }
         } else {
             // seg.start.y > P.y (no test needed)
-            if seg.end.y <= coord.y  // a downward crossing
-                 && seg.coord_position(coord) == PointLocation::Right
+            if seg.end.y <= position.y  // a downward crossing
+                 && seg.position_location(position) == PositionLocation::Right
             {
                 wn -= 1; // have  a valid down intersect
             }
