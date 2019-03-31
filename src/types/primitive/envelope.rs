@@ -90,6 +90,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn check_from_tuple_tuples() {
+        let e = Envelope::from(((0., 1.), (2., 0.)));
+        let min: Position<f64> = Position { x: 0., y: 0. };
+        let max: Position<f64> = Position { x: 2., y: 1. };
+        assert_eq!(
+            e,
+            Envelope {
+                rect: Some(Rect { min, max })
+            }
+        );
+    }
+
+    #[test]
     fn check_from_vec_positions() {
         let e = Envelope::from(&vec![Position::new(0., 1.), Position::new(2., 0.)]);
         let min: Position<f64> = Position { x: 0., y: 0. };

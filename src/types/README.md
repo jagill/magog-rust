@@ -5,8 +5,11 @@ reduce to operations on these.  They are all fixed size, cheaply copyable,
 and this safe and quick on the stack.
 
 The foundational types are:
-  * Position: An x-y pair.  Note that we let the actual value to be any float.
-  * Segment: A finite line between two points.
+  * Coordinate: A single coordinate, eg distance along the x-axis.  Note that we
+    let the actual value to be any float.
+  * Position: An x-y pair of Coordinates.  
+  * Segment: A finite line between two points, start and end.  Start and end may
+    be identical.
   * Triangle: Three points.  They may be colinear.
   * Rect: A bounding box with min/max-x/y values.  This will allow many
     algorithms to short-circuit quickly.
