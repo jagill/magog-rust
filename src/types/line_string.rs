@@ -24,25 +24,6 @@ impl<C: Coordinate> LineString<C> {
         }
     }
 
-    pub fn validate(&self) -> Result<(), &'static str> {
-        let mut last_coord: Option<Position<C>> = None;
-        for &position in &self.positions {
-            position.validate()?;
-            // According to the spec this function must fail if any two consecutive points are the same.
-            match last_coord {
-                None => last_coord = Some(position),
-                Some(c) => {
-                    if c == position {
-                        return Err("LineString positions have repeats.");
-                    }
-                    last_coord = Some(position);
-                }
-            }
-        }
-        self._envelope.validate()?;
-        Ok(())
-    }
-
     pub fn segments_iter<'a>(&'a self) -> impl Iterator<Item = Segment<C>> + 'a {
         self.positions
             .iter()
@@ -132,15 +113,29 @@ impl<C: Coordinate> LineString<C> {
 
     /// A LineString is simple if it has no self-intersections.
     pub fn is_simple(&self) -> bool {
+        match self.validate() {
+            Err(_) => false,
+            Ok(_) => true,
+        }
+    }
+
+    /**
+     * Validate the geometry.
+     *
+     * A LineString is valid if it has 2 or more positions, has no repeated
+     * positions, and has no self-intersections, except possibly last_point
+     * and first_point being the same.
+     */
+    pub fn validate(&self) -> Result<(), &'static str> {
         // Must have at least 2 points to be 1-dimensional.
         if self.num_points() < 2 {
-            return false;
+            return Err("LineString must have at least 2 points.");
         }
         let mut rtree: RTree<RTreeSegment<C>> = RTree::new();
         for (i, seg) in self.segments_iter().enumerate() {
             // First check: should not have two same adjacent points.
             if seg.start == seg.end {
-                return false;
+                return Err("LineString has repeated points.");
             }
             // Second check: Should not intersect any previous segment.
             // Exception 1: The last point can be the first point; ie a loop.
@@ -161,17 +156,17 @@ impl<C: Coordinate> LineString<C> {
                             continue;
                         }
                         // Otherwise they are invalid.
-                        return false;
+                        return Err("LineString has self-intersection.");
                     }
                     SegmentIntersection::Segment(_) => {
                         // Segment intersxns are always bad
-                        return false;
+                        return Err("LineString has self-intersection.");
                     }
                 }
             }
             rtree.insert(rtree_seg);
         }
-        true
+        Ok(())
     }
 }
 

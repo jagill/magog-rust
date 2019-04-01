@@ -53,9 +53,9 @@ impl<C: Coordinate> MultiPoint<C> {
     }
 
     /**
-     * Check if the geometry is simple.
+     * Validate the geometry.
      *
-     * A MultiPoint is simple if it is not empty, has no invalid points, and has
+     * A MultiPoint is valid if it is not empty, has no invalid points, and has
      * no duplicate points.
      */
     pub fn validate(&self) -> Result<(), &'static str> {
