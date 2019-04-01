@@ -102,7 +102,7 @@ impl<C: Coordinate> MultiPoint<C> {
         }
 
         if position_set.is_empty() {
-            Geometry::Empty
+            Geometry::empty()
         } else {
             Geometry::from(MultiPoint::new(
                 position_set.iter().map(|&h| Point::from(h)).collect(),
@@ -111,7 +111,7 @@ impl<C: Coordinate> MultiPoint<C> {
     }
 
     pub fn boundary(&self) -> Geometry<C> {
-        Geometry::Empty
+        Geometry::empty()
     }
 }
 
@@ -149,7 +149,7 @@ mod tests {
     #[test]
     fn check_make_simple_empty() {
         let mp: MultiPoint<f32> = MultiPoint::new(Vec::new());
-        assert_eq!(mp.make_simple(), Geometry::Empty);
+        assert_eq!(mp.make_simple(), Geometry::empty());
     }
 
     #[test]

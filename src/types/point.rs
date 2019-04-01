@@ -54,7 +54,7 @@ impl<C: Coordinate> Point<C> {
     }
 
     pub fn boundary(&self) -> Geometry<C> {
-        Geometry::Empty
+        Geometry::empty()
     }
 }
 

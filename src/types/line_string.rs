@@ -102,10 +102,10 @@ impl<C: Coordinate> LineString<C> {
 
     pub fn boundary(&self) -> Geometry<C> {
         if self.is_closed() {
-            Geometry::Empty
+            Geometry::empty()
         } else {
             match (self.start_point(), self.end_point()) {
-                (None, _) | (_, None) => Geometry::Empty,
+                (None, _) | (_, None) => Geometry::empty(),
                 (Some(s), Some(e)) => Geometry::from(MultiPoint::from(vec![s, e])),
             }
         }

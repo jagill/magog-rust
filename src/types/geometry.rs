@@ -1,5 +1,6 @@
 use crate::types::{
-    Coordinate, Envelope, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Coordinate, Empty, Envelope, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+    Polygon,
 };
 
 /// An enum representing any possible geometry type.
@@ -8,7 +9,7 @@ use crate::types::{
 /// `std::convert::Into` pattern).
 #[derive(PartialEq, Debug)]
 pub enum Geometry<C: Coordinate> {
-    Empty,
+    Empty(Empty<C>),
     Point(Point<C>),
     LineString(LineString<C>),
     Polygon(Polygon<C>),
@@ -19,6 +20,11 @@ pub enum Geometry<C: Coordinate> {
 }
 
 // FROM constructors
+impl<C: Coordinate> From<Empty<C>> for Geometry<C> {
+    fn from(_x: Empty<C>) -> Geometry<C> {
+        Geometry::Empty(Empty::new())
+    }
+}
 impl<C: Coordinate> From<Point<C>> for Geometry<C> {
     fn from(x: Point<C>) -> Geometry<C> {
         Geometry::Point(x)
@@ -51,12 +57,17 @@ impl<C: Coordinate> From<MultiPolygon<C>> for Geometry<C> {
 }
 
 impl<C: Coordinate> Geometry<C> {
+    // Convenience constructor for empty geometry
+    pub fn empty() -> Geometry<C> {
+        Geometry::from(Empty::new())
+    }
+
     /// Convert empty Geometries to an official Empty.
-    pub fn maybe_to_empty(self) -> Geometry<C> {
+    pub fn as_empty(self) -> Option<Empty<C>> {
         if self.is_empty() {
-            Geometry::Empty
+            Some(Empty::new())
         } else {
-            self
+            None
         }
     }
 
@@ -119,7 +130,7 @@ impl<C: Coordinate> Geometry<C> {
     // Basic accessors
     pub fn dimension(&self) -> u8 {
         match self {
-            Geometry::Empty => 0,
+            Geometry::Empty(x) => x.dimension(),
             Geometry::Point(x) => x.dimension(),
             Geometry::MultiPoint(x) => x.dimension(),
             Geometry::LineString(x) => x.dimension(),
@@ -131,7 +142,7 @@ impl<C: Coordinate> Geometry<C> {
 
     pub fn geometry_type(&self) -> &'static str {
         match self {
-            Geometry::Empty => "Empty",
+            Geometry::Empty(x) => x.geometry_type(),
             Geometry::Point(x) => x.geometry_type(),
             Geometry::MultiPoint(x) => x.geometry_type(),
             Geometry::LineString(x) => x.geometry_type(),
@@ -143,7 +154,7 @@ impl<C: Coordinate> Geometry<C> {
 
     pub fn envelope(&self) -> Envelope<C> {
         match self {
-            Geometry::Empty => Envelope::empty(),
+            Geometry::Empty(x) => x.envelope(),
             Geometry::Point(x) => x.envelope(),
             Geometry::MultiPoint(x) => x.envelope(),
             Geometry::LineString(x) => x.envelope(),
@@ -155,7 +166,7 @@ impl<C: Coordinate> Geometry<C> {
 
     pub fn is_empty(&self) -> bool {
         match self {
-            Geometry::Empty => true,
+            Geometry::Empty(x) => x.is_empty(),
             Geometry::Point(x) => x.is_empty(),
             Geometry::MultiPoint(x) => x.is_empty(),
             Geometry::LineString(x) => x.is_empty(),
@@ -167,7 +178,7 @@ impl<C: Coordinate> Geometry<C> {
 
     pub fn is_simple(&self) -> bool {
         match self {
-            Geometry::Empty => true,
+            Geometry::Empty(x) => x.is_simple(),
             Geometry::Point(x) => x.is_simple(),
             Geometry::MultiPoint(x) => x.is_simple(),
             Geometry::LineString(x) => x.is_simple(),
@@ -179,7 +190,7 @@ impl<C: Coordinate> Geometry<C> {
 
     pub fn boundary(&self) -> Geometry<C> {
         match self {
-            Geometry::Empty => Geometry::Empty,
+            Geometry::Empty(x) => x.boundary(),
             Geometry::Point(x) => x.boundary(),
             Geometry::MultiPoint(x) => x.boundary(),
             Geometry::LineString(x) => x.boundary(),

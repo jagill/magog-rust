@@ -88,7 +88,7 @@ impl<C: Coordinate> Polygon<C> {
     /// The boundary of a Polygon are the component LineStrings.
     pub fn boundary(&self) -> Geometry<C> {
         // TODO: STUB
-        Geometry::Empty
+        Geometry::empty()
     }
 }
 

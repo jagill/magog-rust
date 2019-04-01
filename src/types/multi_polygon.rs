@@ -58,6 +58,6 @@ impl<C: Coordinate> MultiPolygon<C> {
     /// The boundary of a MultiPolygon is the boundaries of the Polygons.
     pub fn boundary(&self) -> Geometry<C> {
         // TODO: STUB  Should be a union of the boundaries of the component polygons.
-        Geometry::Empty
+        Geometry::empty()
     }
 }

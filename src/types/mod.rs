@@ -1,3 +1,4 @@
+mod empty;
 mod geometry;
 mod line_string;
 mod multi_line_string;
@@ -12,7 +13,7 @@ pub use crate::types::primitive::{
 };
 
 pub use crate::types::{
-    geometry::Geometry, line_string::LineString, multi_line_string::MultiLineString,
+    empty::Empty, geometry::Geometry, line_string::LineString, multi_line_string::MultiLineString,
     multi_point::MultiPoint, multi_polygon::MultiPolygon, point::Point, polygon::Polygon,
 };
 

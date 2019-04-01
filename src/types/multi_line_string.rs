@@ -58,6 +58,6 @@ impl<C: Coordinate> MultiLineString<C> {
     /// the component LineStrings that don't touch any other LineString.
     pub fn boundary(&self) -> Geometry<C> {
         // TODO: STUB
-        Geometry::Empty
+        Geometry::empty()
     }
 }
