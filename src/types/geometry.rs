@@ -126,79 +126,32 @@ impl<C: Coordinate> Geometry<C> {
     }
 }
 
+macro_rules! delegate_accessor {
+    // This macro takes the name of an accessor function and delegates it
+    // to each of the options of the Geometry Enum.
+    ($func_name:ident, $ret_type:ty) => (
+        pub fn $func_name(&self) -> $ret_type {
+            match self {
+                Geometry::Empty(x) => x.$func_name(),
+                Geometry::Point(x) => x.$func_name(),
+                Geometry::MultiPoint(x) => x.$func_name(),
+                Geometry::LineString(x) => x.$func_name(),
+                Geometry::MultiLineString(x) => x.$func_name(),
+                Geometry::Polygon(x) => x.$func_name(),
+                Geometry::MultiPolygon(x) => x.$func_name(),
+            }
+        }
+    )
+}
+
 impl<C: Coordinate> Geometry<C> {
     // Basic accessors
-    pub fn dimension(&self) -> u8 {
-        match self {
-            Geometry::Empty(x) => x.dimension(),
-            Geometry::Point(x) => x.dimension(),
-            Geometry::MultiPoint(x) => x.dimension(),
-            Geometry::LineString(x) => x.dimension(),
-            Geometry::MultiLineString(x) => x.dimension(),
-            Geometry::Polygon(x) => x.dimension(),
-            Geometry::MultiPolygon(x) => x.dimension(),
-        }
-    }
-
-    pub fn geometry_type(&self) -> &'static str {
-        match self {
-            Geometry::Empty(x) => x.geometry_type(),
-            Geometry::Point(x) => x.geometry_type(),
-            Geometry::MultiPoint(x) => x.geometry_type(),
-            Geometry::LineString(x) => x.geometry_type(),
-            Geometry::MultiLineString(x) => x.geometry_type(),
-            Geometry::Polygon(x) => x.geometry_type(),
-            Geometry::MultiPolygon(x) => x.geometry_type(),
-        }
-    }
-
-    pub fn envelope(&self) -> Envelope<C> {
-        match self {
-            Geometry::Empty(x) => x.envelope(),
-            Geometry::Point(x) => x.envelope(),
-            Geometry::MultiPoint(x) => x.envelope(),
-            Geometry::LineString(x) => x.envelope(),
-            Geometry::MultiLineString(x) => x.envelope(),
-            Geometry::Polygon(x) => x.envelope(),
-            Geometry::MultiPolygon(x) => x.envelope(),
-        }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        match self {
-            Geometry::Empty(x) => x.is_empty(),
-            Geometry::Point(x) => x.is_empty(),
-            Geometry::MultiPoint(x) => x.is_empty(),
-            Geometry::LineString(x) => x.is_empty(),
-            Geometry::MultiLineString(x) => x.is_empty(),
-            Geometry::Polygon(x) => x.is_empty(),
-            Geometry::MultiPolygon(x) => x.is_empty(),
-        }
-    }
-
-    pub fn is_simple(&self) -> bool {
-        match self {
-            Geometry::Empty(x) => x.is_simple(),
-            Geometry::Point(x) => x.is_simple(),
-            Geometry::MultiPoint(x) => x.is_simple(),
-            Geometry::LineString(x) => x.is_simple(),
-            Geometry::MultiLineString(x) => x.is_simple(),
-            Geometry::Polygon(x) => x.is_simple(),
-            Geometry::MultiPolygon(x) => x.is_simple(),
-        }
-    }
-
-    pub fn boundary(&self) -> Geometry<C> {
-        match self {
-            Geometry::Empty(x) => x.boundary(),
-            Geometry::Point(x) => x.boundary(),
-            Geometry::MultiPoint(x) => x.boundary(),
-            Geometry::LineString(x) => x.boundary(),
-            Geometry::MultiLineString(x) => x.boundary(),
-            Geometry::Polygon(x) => x.boundary(),
-            Geometry::MultiPolygon(x) => x.boundary(),
-        }
-    }
+    delegate_accessor!(dimension, u8);
+    delegate_accessor!(geometry_type, &'static str);
+    delegate_accessor!(envelope, Envelope<C>);
+    delegate_accessor!(is_empty, bool);
+    delegate_accessor!(is_simple, bool);
+    delegate_accessor!(boundary, Geometry<C>);
 
     //     // Intersection Relations
     //     // fn equals(&self, other: &Geometry<C>) -> bool;
@@ -209,4 +162,62 @@ impl<C: Coordinate> Geometry<C> {
     //     // fn within(&self, other: &Geometry<C>) -> bool;
     //     // fn contains(&self, other: &Geometry<C>) -> bool;
     //     // fn overlaps(&self, other: &Geometry<C>) -> bool;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::Position;
+
+    #[test]
+    fn check_dim_point() {
+        assert_eq!(Geometry::from(Point::from((0.0, 1.0))).dimension(), 0);
+    }
+
+    #[test]
+    fn check_dim_linestring() {
+        assert_eq!(
+            Geometry::from(LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 1.0)])).dimension(),
+            1
+        );
+    }
+
+    #[test]
+    fn check_type_point() {
+        assert_eq!(
+            Geometry::from(Point::from((0.0, 1.0))).geometry_type(),
+            "Point"
+        );
+    }
+
+    #[test]
+    fn check_type_linestring() {
+        assert_eq!(
+            Geometry::from(LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 1.0)]))
+                .geometry_type(),
+            "LineString"
+        );
+    }
+
+    #[test]
+    fn check_envelope_point() {
+        let p = (0.0, 1.0);
+        assert_eq!(
+            Geometry::from(Point::from(p)).envelope(),
+            Envelope::from((p, p))
+        );
+    }
+
+    #[test]
+    fn check_envelope_linestring() {
+        let positions = vec![
+            Position::new(0.0, 0.0),
+            Position::new(0.0, 1.0),
+            Position::new(1.0, 1.0),
+        ];
+        assert_eq!(
+            Geometry::from(LineString::from(positions.clone())).envelope(),
+            Envelope::from(&positions)
+        );
+    }
 }
