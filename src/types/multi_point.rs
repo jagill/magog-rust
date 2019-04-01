@@ -1,5 +1,6 @@
 use crate::types::{Coordinate, Envelope, Geometry, Point, Position};
-use std::collections::HashSet;
+use ordered_float::FloatIsNan;
+use std::collections::{BTreeSet, HashSet};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiPoint<C: Coordinate> {
@@ -44,33 +45,38 @@ impl<C: Coordinate> MultiPoint<C> {
         self.points.is_empty()
     }
 
+    pub fn is_simple(&self) -> bool {
+        match self.validate() {
+            Err(_) => false,
+            Ok(_) => true,
+        }
+    }
+
     /**
      * Check if the geometry is simple.
      *
      * A MultiPoint is simple if it is not empty, has no invalid points, and has
      * no duplicate points.
      */
-    pub fn is_simple(&self) -> bool {
+    pub fn validate(&self) -> Result<(), &'static str> {
         if self.points.is_empty() {
-            return false;
+            return Err("MultiPoint has no points.");
         }
         let mut position_set = HashSet::new();
         for point in &self.points {
-            if point.validate().is_err() {
-                return false;
-            }
+            point.validate()?;
             match point.0.to_hashable() {
-                Err(_) => return false,
+                Err(FloatIsNan) => return Err("Point contains NaN."),
                 Ok(hashable) => {
                     if position_set.contains(&hashable) {
-                        return false;
+                        return Err("Duplicate point");
                     } else {
                         position_set.insert(hashable);
                     }
                 }
             }
         }
-        true
+        Ok(())
     }
 
     /**
@@ -81,7 +87,8 @@ impl<C: Coordinate> MultiPoint<C> {
      * Else, return MultiPoint with the remaining points.
      */
     pub fn make_simple(&self) -> Geometry<C> {
-        let mut position_set = HashSet::new();
+        // Use BTreeSet so that output is ordered and deterministic.
+        let mut position_set = BTreeSet::new();
         for point in &self.points {
             if point.validate().is_err() {
                 continue;
@@ -145,17 +152,17 @@ mod tests {
         assert_eq!(mp.make_simple(), Geometry::Empty);
     }
 
-    // #[test]
-    // fn check_make_simple_noop() {
-    //     let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0)]);
-    //     assert_eq!(mp.make_simple(), Geometry::from(mp));
-    // }
+    #[test]
+    fn check_make_simple_noop() {
+        let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+        assert_eq!(mp.make_simple(), Geometry::from(mp));
+    }
 
-    // #[test]
-    // fn check_make_simple_dedup() {
-    //     let mp1 = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0), (0.0, 0.0)]);
-    //     let mp2 = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0)]);
-    //     assert_eq!(mp1.make_simple(), Geometry::from(mp2));
-    // }
+    #[test]
+    fn check_make_simple_dedup() {
+        let mp1 = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0), (0.0, 0.0)]);
+        let mp2 = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0)]);
+        assert_eq!(mp1.make_simple(), Geometry::from(mp2));
+    }
 
 }

@@ -2,7 +2,7 @@ use crate::types::primitive::Coordinate;
 use ordered_float::{FloatIsNan, NotNan};
 use std::ops::{Add, Mul, Sub};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Position<C: Coordinate> {
     pub x: C,
     pub y: C,
