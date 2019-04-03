@@ -28,7 +28,7 @@ impl<'a, C: Coordinate> From<&'a Vec<Position<C>>> for Envelope<C> {
 impl<'a, C: Coordinate> From<&'a Vec<Envelope<C>>> for Envelope<C> {
     fn from(envelopes: &'a Vec<Envelope<C>>) -> Self {
         let env = Envelope { rect: None };
-        envelopes.iter().fold(env, |base_env, e| base_env.merge(e))
+        envelopes.iter().fold(env, |base_env, e| base_env.merge(*e))
     }
 }
 
@@ -62,7 +62,7 @@ impl<C: Coordinate> Envelope<C> {
     pub fn add_position(&self, p: Position<C>) -> Envelope<C> {
         match &self.rect {
             None => Envelope {
-                rect: Some(Rect::new(p.clone(), p.clone())),
+                rect: Some(Rect::new(p, p)),
             },
             Some(r) => Envelope {
                 rect: Some(r.add_position(p)),
@@ -70,18 +70,15 @@ impl<C: Coordinate> Envelope<C> {
         }
     }
 
-    pub fn merge(&self, other: &Envelope<C>) -> Envelope<C> {
-        match &self.rect {
-            None => Envelope {
-                rect: other.rect.clone(),
-            },
+    pub fn merge(&self, other: Envelope<C>) -> Envelope<C> {
+        let new_rect = match &self.rect {
+            None => other.rect,
             Some(r) => match other.rect {
-                None => self.clone(),
-                Some(other_r) => Envelope {
-                    rect: Some(r.merge(other_r)),
-                },
+                None => self.rect,
+                Some(other_r) => Some(r.merge(other_r)),
             },
-        }
+        };
+        Envelope::new(new_rect)
     }
 }
 
