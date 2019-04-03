@@ -17,8 +17,7 @@ impl<C: Coordinate, IP: Into<Position<C>>> From<Vec<IP>> for MultiPoint<C> {
 
 impl<C: Coordinate> MultiPoint<C> {
     pub fn new(points: Vec<Point<C>>) -> Self {
-        let positions: Vec<Position<C>> = points.iter().map(|p| p.0).collect();
-        let _envelope: Envelope<C> = Envelope::from(&positions);
+        let _envelope: Envelope<C> = Envelope::from(&points);
         MultiPoint { points, _envelope }
     }
 

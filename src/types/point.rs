@@ -58,6 +58,17 @@ impl<C: Coordinate> Point<C> {
     }
 }
 
+// Vec<Point> -> Envelope
+impl<'a, C: Coordinate> From<&'a Vec<Point<C>>> for Envelope<C> {
+    fn from(positions: &'a Vec<Point<C>>) -> Self {
+        let empty_env = Envelope { rect: None };
+        positions
+            .iter()
+            .fold(empty_env, |env, p| env.add_position(p.0))
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
