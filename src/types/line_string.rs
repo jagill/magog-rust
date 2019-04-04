@@ -127,6 +127,18 @@ impl<C: Coordinate> LineString<C> {
      * and first_point being the same.
      */
     pub fn validate(&self) -> Result<(), &'static str> {
+        match self._validate_with_rtree() {
+            Err(s) => Err(s),
+            _ => Ok(()),
+        }
+    }
+
+    /*
+     * The workhouse fn for validation.
+     * It does the work, but also returns the constructed rtree, which can be
+     * used for additional validation checks, eg for MultiLineString.
+     */
+    pub(crate) fn _validate_with_rtree(&self) -> Result<RTree<RTreeSegment<C>>, &'static str> {
         // Must have at least 2 points to be 1-dimensional.
         if self.num_points() < 2 {
             return Err("LineString must have at least 2 points.");
@@ -166,7 +178,7 @@ impl<C: Coordinate> LineString<C> {
             }
             rtree.insert(rtree_seg);
         }
-        Ok(())
+        Ok(rtree)
     }
 }
 
@@ -308,6 +320,12 @@ mod tests {
     }
 
     #[test]
+    fn check_backtrack2_not_simple() {
+        let ls = LineString::from(vec![(-1.0, 49.0), (-1.0, 50.0), (-1.0, 49.0)]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
     fn check_tail_not_simple() {
         let ls = LineString::from(vec![
             (0.0, 0.0),
@@ -340,6 +358,18 @@ mod tests {
             (1.0, 1.0),
             (1.0, 0.0),
             (0.5, 0.5),
+            (0.0, 0.0),
+        ]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_tadpole_not_simple() {
+        let ls = LineString::from(vec![
+            (0.0, 0.0),
+            (1.0, 1.0),
+            (1.0, 2.0),
+            (1.0, 1.0),
             (0.0, 0.0),
         ]);
         assert!(!ls.is_simple());
