@@ -22,3 +22,36 @@ impl<C: Coordinate> RTreeObject for RTreeSegment<C> {
         )
     }
 }
+
+pub fn intersection_candidates<'a, T: RTreeObject>(
+    tree1: &'a RTree<T>,
+    tree2: &'a RTree<T>,
+) -> Vec<(&'a T, &'a T)> {
+    // This is inefficient.  Replace with more efficient implementation if
+    // https://github.com/Stoeoef/rstar/issues/6 is resolved.
+    let probe;
+    let build;
+    let mut switched = false;
+    if tree1.size() <= tree2.size() {
+        probe = tree1;
+        build = tree2;
+    } else {
+        probe = tree2;
+        build = tree1;
+        switched = true;
+    }
+    // We can now assume probe is smaller than/equal to build, so iterate through
+    // probe, and check in build.
+    let mut candidates = Vec::new();
+    for p in probe.into_iter() {
+        for b in build.locate_in_envelope_intersecting(&p.envelope()) {
+            if switched {
+                candidates.push((b, p))
+            } else {
+                candidates.push((p, b))
+            }
+        }
+    }
+
+    candidates
+}
