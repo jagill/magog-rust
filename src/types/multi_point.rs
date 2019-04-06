@@ -112,6 +112,10 @@ impl<C: Coordinate> MultiPoint<C> {
     pub fn boundary(&self) -> Geometry<C> {
         Geometry::empty()
     }
+
+    pub fn contains_point(&self, point: &Point<C>) -> bool {
+        self.points.iter().any(|p| p == point)
+    }
 }
 
 #[cfg(test)]
