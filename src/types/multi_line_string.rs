@@ -1,6 +1,6 @@
 use crate::rtree::intersection_candidates;
 use crate::types::primitive::SegmentIntersection;
-use crate::types::{Coordinate, Envelope, Geometry, LineString};
+use crate::types::{Coordinate, Envelope, Geometry, LineString, Point};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiLineString<C: Coordinate> {
@@ -68,15 +68,38 @@ impl<C: Coordinate> MultiLineString<C> {
         if self.line_strings.len() == 0 {
             return Err("MultiLineString has no LineStrings.");
         }
+        let intersection_err = Err("Intersection between LineStrings.");
         let mut rtrees = Vec::new();
-        for line_string in self.line_strings.iter() {
+        for (i1, line_string) in self.line_strings.iter().enumerate() {
             let rtree1 = line_string._validate_with_rtree()?;
-            for rtree2 in &rtrees {
+            for i2 in 0..i1 {
+                // If i2 isn't a key, something is deeply wrong.
+                let line_string2 = &self.line_strings[i2];
+                // If there's no chance of intersection, move along.
+                // A more efficient RTree check would take care of this.
+                if !(line_string.envelope().intersects(line_string2.envelope())) {
+                    continue;
+                }
+                let rtree2 = &rtrees[i2];
                 for (rtree_seg1, rtree_seg2) in intersection_candidates(&rtree1, rtree2) {
-                    // TODO: Allow linestrings to intersect at their endpoints.
                     match rtree_seg1.segment.intersect_segment(rtree_seg2.segment) {
                         SegmentIntersection::None => continue,
-                        _ => return Err("Intersection between LineStrings."),
+                        SegmentIntersection::Segment(_) => {
+                            return intersection_err;
+                        }
+                        SegmentIntersection::Position(pos) => {
+                            // Allow linestrings to intersect at their endpoints.
+                            if let (Geometry::MultiPoint(mp1), Geometry::MultiPoint(mp2)) =
+                                (line_string.boundary(), line_string2.boundary())
+                            {
+                                let point = Point(pos);
+                                if !(mp1.contains_point(&point) && mp2.contains_point(&point)) {
+                                    return intersection_err;
+                                }
+                            } else {
+                                return intersection_err;
+                            }
+                        }
                     }
                 }
             }
@@ -91,6 +114,28 @@ mod tests {
     use super::*;
 
     #[test]
+    fn check_basic_simple() {
+        let mls = MultiLineString::new(vec![
+            LineString::from(vec![(0., 0.), (0.4, 0.4)]),
+            LineString::from(vec![(0.5, 0.5), (1., 1.), (0., 1.), (0.5, 0.5)]),
+        ]);
+        assert!(mls.is_simple());
+    }
+
+    #[test]
+    fn check_empty_not_simple() {
+        let ls: Vec<LineString<f32>> = Vec::new();
+        let mls = MultiLineString::new(ls);
+        assert!(!mls.is_simple());
+    }
+
+    #[test]
+    fn check_non_simple_linestring_not_simple() {
+        let mls = MultiLineString::new(vec![LineString::from(vec![(0.0, 0.0)])]);
+        assert!(!mls.is_simple());
+    }
+
+    #[test]
     fn check_ribbon_not_simple() {
         let mls = MultiLineString::new(vec![
             LineString::from(vec![(0., 0.), (0.5, 0.5)]),
@@ -100,4 +145,34 @@ mod tests {
         // Second LS is a loop and has no boundary, so the isxn is invalid.
         assert!(!mls.is_simple());
     }
+
+    #[test]
+    fn check_cross_not_simple() {
+        let mls = MultiLineString::new(vec![
+            LineString::from(vec![(0., 0.), (1., 1.)]),
+            LineString::from(vec![(0., 1.), (0., 1.)]),
+        ]);
+        assert!(!mls.is_simple());
+    }
+
+    #[test]
+    fn check_long_line_simple() {
+        // Since their intersection is the boundary of each, this is simple.
+        let mls = MultiLineString::new(vec![
+            LineString::from(vec![(0., 0.), (1., 0.)]),
+            LineString::from(vec![(1., 0.), (1., 1.)]),
+        ]);
+        assert!(mls.is_simple());
+    }
+
+    #[test]
+    fn check_box_simple() {
+        // Since their intersection is the boundary of each, this is simple.
+        let mls = MultiLineString::new(vec![
+            LineString::from(vec![(0., 0.), (1., 0.)]),
+            LineString::from(vec![(1., 0.), (1., 1.), (0., 0.)]),
+        ]);
+        assert!(mls.is_simple());
+    }
+
 }
