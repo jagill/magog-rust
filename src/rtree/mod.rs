@@ -8,7 +8,7 @@ fn coord_to_point<C: Coordinate>(p: Position<C>) -> [C; 2] {
 }
 
 pub struct RTreeSegment<C: Coordinate> {
-    pub index: usize,
+    pub id: usize,
     pub segment: Segment<C>,
 }
 

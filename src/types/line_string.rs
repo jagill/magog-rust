@@ -153,17 +153,17 @@ impl<C: Coordinate> LineString<C> {
             // Exception 1: The last point can be the first point; ie a loop.
             // Exception 2: The seg.start == last_seg.end, by construction.
             let rtree_seg = RTreeSegment {
-                index: i,
+                id: i,
                 segment: seg,
             };
             for found in rtree.locate_in_envelope_intersecting(&rtree_seg.envelope()) {
                 match seg.intersect_segment(found.segment) {
                     SegmentIntersection::None => continue,
                     SegmentIntersection::Position(p) => {
-                        if found.index == i - 1 {
+                        if found.id == i - 1 {
                             // Point intersxns are fine for adjacent segments (must be end-start)
                             continue;
-                        } else if i == self.num_points() - 2 && found.index == 0 && p == seg.end {
+                        } else if i == self.num_points() - 2 && found.id == 0 && p == seg.end {
                             // or the final segment ending at the first segment's beginning.
                             continue;
                         }
