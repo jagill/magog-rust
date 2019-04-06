@@ -42,6 +42,14 @@ impl<C: Coordinate> Rect<C> {
         self.min.x <= p.x && self.max.x >= p.x && self.min.y <= p.y && self.max.y >= p.y
     }
 
+    /// Do these two rects intersect?
+    pub fn intersects(&self, r: Rect<C>) -> bool {
+        self.min.x <= r.max.x
+            && self.max.x >= r.min.x
+            && self.min.y <= r.max.y
+            && self.max.y >= r.min.y
+    }
+
     /// Return a rect expanded by position.  Nans absorbed when possible.
     pub fn add_position(&self, p: Position<C>) -> Rect<C> {
         Rect::new(

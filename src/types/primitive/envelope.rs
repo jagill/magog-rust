@@ -59,6 +59,13 @@ impl<C: Coordinate> Envelope<C> {
         }
     }
 
+    pub fn intersects(&self, other_env: Envelope<C>) -> bool {
+        match (&self.rect, other_env.rect) {
+            (None, _) | (_, None) => false,
+            (Some(rect), Some(other_rect)) => rect.intersects(other_rect),
+        }
+    }
+
     pub fn add_position(&self, p: Position<C>) -> Envelope<C> {
         match &self.rect {
             None => Envelope {
