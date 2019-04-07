@@ -1,4 +1,5 @@
-use crate::types::{Coordinate, Envelope, Geometry, Point, Polygon};
+use crate::primitives::{Coordinate, Envelope};
+use crate::types::{Geometry, Point, Polygon};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiPolygon<C: Coordinate> {

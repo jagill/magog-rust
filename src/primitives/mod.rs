@@ -5,7 +5,7 @@ mod rect;
 mod segment;
 mod triangle;
 
-pub use crate::types::primitive::{
+pub use crate::primitives::{
     coordinate::Coordinate,
     envelope::Envelope,
     position::Position,

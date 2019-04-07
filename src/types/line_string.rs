@@ -1,6 +1,6 @@
+use crate::primitives::{Coordinate, Envelope, Position, Segment, SegmentIntersection};
 use crate::rtree::{RTree, RTreeObject, RTreeSegment};
-use crate::types::primitive::SegmentIntersection;
-use crate::types::{Coordinate, Envelope, Geometry, MultiPoint, Point, Position, Segment};
+use crate::types::{Geometry, MultiPoint, Point};
 
 #[derive(Debug, PartialEq)]
 pub struct LineString<C: Coordinate> {
@@ -185,7 +185,7 @@ impl<C: Coordinate> LineString<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::Rect;
+    use crate::primitives::Rect;
 
     #[test]
     fn check_basic_linestring() {

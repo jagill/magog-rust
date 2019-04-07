@@ -6,11 +6,6 @@ mod multi_point;
 mod multi_polygon;
 mod point;
 mod polygon;
-mod primitive;
-
-pub use crate::types::primitive::{
-    Coordinate, Envelope, Position, PositionLocation, Rect, Segment, Triangle,
-};
 
 pub use crate::types::{
     empty::Empty, geometry::Geometry, line_string::LineString, multi_line_string::MultiLineString,

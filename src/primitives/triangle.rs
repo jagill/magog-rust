@@ -1,4 +1,4 @@
-use crate::types::primitive::{Coordinate, Position};
+use crate::primitives::{Coordinate, Position};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Triangle<C: Coordinate>(pub Position<C>, pub Position<C>, pub Position<C>);

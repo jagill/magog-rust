@@ -1,4 +1,5 @@
-use crate::types::{Coordinate, Envelope, Geometry, Point, Position};
+use crate::primitives::{Coordinate, Envelope, Position};
+use crate::types::{Geometry, Point};
 use ordered_float::FloatIsNan;
 use std::collections::{BTreeSet, HashSet};
 
@@ -121,7 +122,7 @@ impl<C: Coordinate> MultiPoint<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::Rect;
+    use crate::primitives::Rect;
     use core::f32;
 
     #[test]

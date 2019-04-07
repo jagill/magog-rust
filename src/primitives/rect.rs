@@ -1,4 +1,4 @@
-use crate::types::primitive::{Coordinate, Position};
+use crate::primitives::{Coordinate, Position};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Rect<C: Coordinate> {

@@ -1,4 +1,4 @@
-use crate::types::primitive::{Coordinate, Position, Rect};
+use crate::primitives::{Coordinate, Position, Rect};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Envelope<C: Coordinate> {

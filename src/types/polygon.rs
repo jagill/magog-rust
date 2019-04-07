@@ -1,4 +1,5 @@
-use crate::types::{Coordinate, Envelope, Geometry, LineString, Point};
+use crate::primitives::{Coordinate, Envelope};
+use crate::types::{Geometry, LineString, Point};
 
 #[derive(Debug, PartialEq)]
 pub struct Polygon<C: Coordinate> {

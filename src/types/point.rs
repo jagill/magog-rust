@@ -1,4 +1,5 @@
-use crate::types::{Coordinate, Envelope, Geometry, Position};
+use crate::primitives::{Coordinate, Envelope, Position};
+use crate::types::Geometry;
 
 #[derive(Debug, PartialEq)]
 pub struct Point<C: Coordinate>(pub Position<C>);
@@ -67,7 +68,6 @@ impl<'a, C: Coordinate> From<&'a Vec<Point<C>>> for Envelope<C> {
             .fold(empty_env, |env, p| env.add_position(p.0))
     }
 }
-
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,6 @@
+use crate::primitives::{Coordinate, Envelope, SegmentIntersection};
 use crate::rtree::intersection_candidates;
-use crate::types::primitive::SegmentIntersection;
-use crate::types::{Coordinate, Envelope, Geometry, LineString, Point};
+use crate::types::{Geometry, LineString, Point};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiLineString<C: Coordinate> {

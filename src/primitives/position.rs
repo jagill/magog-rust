@@ -1,4 +1,4 @@
-use crate::types::primitive::Coordinate;
+use crate::primitives::Coordinate;
 use ordered_float::{FloatIsNan, NotNan};
 use std::ops::{Add, Mul, Sub};
 

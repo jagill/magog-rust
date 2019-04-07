@@ -1,27 +1,13 @@
 This module contains the types that underlie geometry.
 
-The first class of types are "foundational" types; geometrical operations will
-reduce to operations on these.  They are all fixed size, cheaply copyable,
-and this safe and quick on the stack.
-
-The foundational types are:
-  * Coordinate: A single coordinate, eg distance along the x-axis.  Note that we
-    let the actual value to be any float.
-  * Position: An x-y pair of Coordinates.  
-  * Segment: A finite line between two points, start and end.  Start and end may
-    be identical.
-  * Triangle: Three points.  They may be colinear.
-  * Rect: A bounding box with min/max-x/y values.  This will allow many
-    algorithms to short-circuit quickly.
-  * Envelope: Either empty (None), or a Rect. A None Envelope comes from an
-    empty geometry.
-
-The second class of types are the "geometrical" types, which may contain many
-coordinates in various configurations.
+These types are "geometrical", in that the represent objects in 2D euclidean
+space, and strive to follow the
+[OpenGIS spec](https://www.opengeospatial.org/standards/sfa).  Choices are made
+in sitations that OpenGIS underspecifies.
 
 The geometrical types are:
   * Point: A point on a 2-d plane.  This is basically a promoted Position.
-  * LineString: A series of points on a 2-d plane, tracing out a root.  This
+  * LineString: A series of points on a 2-d plane, tracing out a route.  This
     is basically a promoted Vec<Position>.
   * Polygon: A polygon is a solid region in the plane.  It may have holes.  It
     has a single exterior LineString, which must be a loop (the final coordinate
