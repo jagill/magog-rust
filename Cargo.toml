@@ -6,5 +6,5 @@ edition = "2018"
 
 [dependencies]
 num-traits = "0.2"
-ordered-float = "1.0.2"
-rstar = "0.2.0"
+ordered-float = "1.0"
+rstar = "0.3"
