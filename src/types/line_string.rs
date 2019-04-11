@@ -158,17 +158,14 @@ impl<C: Coordinate> LineString<C> {
         );
         // If there is only one segment, it just needs to not be degenerate.
         if self.num_points() == 2 {
-            return match (self.start_point(), self.end_point()) {
-                (None, _) | (_, None) => Err("None position."),
-                (Some(start), Some(end)) => {
-                    start.validate()?;
-                    end.validate()?;
-                    if start == end {
-                        repeated_err
-                    } else {
-                        Ok(rtree)
-                    }
-                }
+            let start = self.positions[0];
+            let end = self.positions[1];
+            start.validate()?;
+            end.validate()?;
+            return if start == end {
+                repeated_err
+            } else {
+                Ok(rtree)
             };
         }
         // Now we know num_points > 2

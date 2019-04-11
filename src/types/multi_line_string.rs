@@ -1,5 +1,4 @@
 use crate::primitives::{Coordinate, Envelope, SegmentIntersection};
-use crate::rtree::intersection_candidates;
 use crate::types::{Geometry, LineString, Point};
 
 #[derive(Debug, PartialEq)]
@@ -81,7 +80,9 @@ impl<C: Coordinate> MultiLineString<C> {
                     continue;
                 }
                 let rtree2 = &rtrees[i2];
-                for (rtree_seg1, rtree_seg2) in intersection_candidates(&rtree1, rtree2) {
+                for (rtree_seg1, rtree_seg2) in
+                    rtree1.intersection_candidates_with_other_tree(rtree2)
+                {
                     match rtree_seg1.segment.intersect_segment(rtree_seg2.segment) {
                         SegmentIntersection::None => continue,
                         SegmentIntersection::Segment(_) => {
