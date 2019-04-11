@@ -143,40 +143,73 @@ impl<C: Coordinate> LineString<C> {
         if self.num_points() < 2 {
             return Err("LineString must have at least 2 points.");
         }
-        let mut rtree: RTree<RTreeSegment<C>> = RTree::new();
+        // Declare the errors here
+        let repeated_err = Err("LineString has repeated points.");
+        let intersection_err = Err("LineString has self-intersection.");
+
+        let rtree: RTree<RTreeSegment<C>> = RTree::bulk_load(
+            self.segments_iter()
+                .enumerate()
+                .map(|(i, seg)| RTreeSegment {
+                    id: i,
+                    segment: seg,
+                })
+                .collect(),
+        );
+        // If there is only one segment, it just needs to not be degenerate.
+        if self.num_points() == 2 {
+            return match (self.start_point(), self.end_point()) {
+                (None, _) | (_, None) => Err("None position."),
+                (Some(start), Some(end)) => {
+                    start.validate()?;
+                    end.validate()?;
+                    if start == end {
+                        repeated_err
+                    } else {
+                        Ok(rtree)
+                    }
+                }
+            };
+        }
+        // Now we know num_points > 2
+        let num_segments = self.num_points() - 1;
         for (i, seg) in self.segments_iter().enumerate() {
-            // First check: should not have two same adjacent points.
+            // First check: should have finite coordinates.
+            seg.start.validate()?;
+            seg.end.validate()?;
+            // Second check: should not have two same adjacent points.
             if seg.start == seg.end {
-                return Err("LineString has repeated points.");
+                return repeated_err;
             }
-            // Second check: Should not intersect any previous segment.
-            // Exception 1: The last point can be the first point; ie a loop.
-            // Exception 2: The seg.start == last_seg.end, by construction.
+            // Third check: Should not intersect any segment except itself,
+            // or the previous/successive segment at their mutual end points.
             let rtree_seg = RTreeSegment {
                 id: i,
                 segment: seg,
             };
             for found in rtree.locate_in_envelope_intersecting(&rtree_seg.envelope()) {
+                if found.id == i {
+                    continue;
+                }
                 match seg.intersect_segment(found.segment) {
                     SegmentIntersection::None => continue,
                     SegmentIntersection::Position(p) => {
-                        if found.id == i - 1 {
-                            // Point intersxns are fine for adjacent segments (must be end-start)
+                        let small = found.id.min(i);
+                        let large = found.id.max(i);
+                        if ((large == small + 1) || (small == 0 && large == num_segments - 1))
+                            && (p == seg.start || p == seg.end)
+                        {
                             continue;
-                        } else if i == self.num_points() - 2 && found.id == 0 && p == seg.end {
-                            // or the final segment ending at the first segment's beginning.
-                            continue;
+                        } else {
+                            return intersection_err;
                         }
-                        // Otherwise they are invalid.
-                        return Err("LineString has self-intersection.");
                     }
                     SegmentIntersection::Segment(_) => {
                         // Segment intersxns are always bad
-                        return Err("LineString has self-intersection.");
+                        return intersection_err;
                     }
                 }
             }
-            rtree.insert(rtree_seg);
         }
         Ok(rtree)
     }
@@ -186,6 +219,7 @@ impl<C: Coordinate> LineString<C> {
 mod tests {
     use super::*;
     use crate::primitives::Rect;
+    use core::f32;
 
     #[test]
     fn check_basic_linestring() {
@@ -373,6 +407,18 @@ mod tests {
             (0.0, 0.0),
         ]);
         assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_nan_is_not_simple() {
+        let ls = LineString::from(vec![(0., 0.), (0.1, f32::NAN)]);
+        assert!(!ls.is_simple());
+    }
+
+    #[test]
+    fn check_angle_simple() {
+        let ls = LineString::from(vec![(1., 0.), (1., 1.), (0., 0.)]);
+        assert!(ls.is_simple());
     }
 
 }
