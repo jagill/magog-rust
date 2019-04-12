@@ -1,9 +1,6 @@
 mod contains;
 pub use crate::relation::contains::*;
 
-mod point_point;
-pub use crate::relation::point_point::*;
-
 /// Location of a point in relation to a line
 #[derive(PartialEq, Clone, Debug)]
 pub enum Intersection {
