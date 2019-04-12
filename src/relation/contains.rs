@@ -1,11 +1,11 @@
+use crate::primitives::{Coordinate, Position, PositionLocation, Rect};
 use crate::relation::Intersection;
-use crate::types::{Coordinate, Geometry, LineString, Point, PositionLocation, Polygon, Rect};
+use crate::types::{LineString, Point, Polygon};
 
 pub fn intersection_linestring_point<C: Coordinate>(
     linestring: &LineString<C>,
     point: &Point<C>,
-) -> Intersection
-{
+) -> Intersection {
     let position = point.0;
     if !linestring.envelope().contains(position) {
         return Intersection::Outside;
@@ -35,7 +35,7 @@ pub fn intersection_linestring_point<C: Coordinate>(
     if linestring
         .segments_iter()
         .filter(|&s| Rect::from(s).contains(position))
-        .any(|s| s.coord_position(position) == PositionLocation::On)
+        .any(|s| s.position_location(position) == PositionLocation::On)
     {
         Intersection::Contains
     } else {
@@ -43,52 +43,43 @@ pub fn intersection_linestring_point<C: Coordinate>(
     }
 }
 
-pub fn intersection_polygon_point<C>(
+pub fn intersection_polygon_point<C: Coordinate>(
     polygon: &Polygon<C>,
     point: &Point<C>,
-) -> Result<Intersection, &'static str>
-where
-    T: Coordinate,
-{
+) -> Intersection {
     // If it's not in the envelope, it's not in the polygon.
-    if !polygon.envelope.contains(point.0) {
-        return Ok(Intersection::Outside);
+    if !polygon.envelope().contains(point.0) {
+        return Intersection::Outside;
     }
 
-    match _intersection_simple_polygon_point(&polygon.exterior, point)? {
+    match _intersection_simple_polygon_point(&polygon.exterior, point) {
         // If it's outside the exterior ring, it's not in the polygon.
-        Intersection::Outside => return Ok(Intersection::Outside),
+        Intersection::Outside => return Intersection::Outside,
         // If it's on the exterior ring, it's on the boundarty.
-        Intersection::Boundary => return Ok(Intersection::Boundary),
+        Intersection::Boundary => return Intersection::Boundary,
         // If it's inside the exterior ring, it may be in the polygon.
         Intersection::Contains => (),
     }
     for int_ring in &polygon.interiors {
-        match _intersection_simple_polygon_point(&int_ring, point)? {
+        match _intersection_simple_polygon_point(&int_ring, point) {
             // If it's inside an interior ring, it's not in the polygon.
-            Intersection::Contains => return Ok(Intersection::Outside),
+            Intersection::Contains => return Intersection::Outside,
             // If it's on an interior ring, it's on the boundarty.
-            Intersection::Boundary => return Ok(Intersection::Boundary),
+            Intersection::Boundary => return Intersection::Boundary,
             // If it's outside an interior ring, it may be in the polygon.
             Intersection::Outside => (),
         }
     }
     // If it's inside the exerior ring, but not inside an interior ring, it's contained.
-    Ok(Intersection::Contains)
+    Intersection::Contains
 }
 
 /// Check the intersection of a simple polygon (defined by a loop) and a point.
-fn _intersection_simple_polygon_point<C>(
-    ls: &LineString<C>,
-    point: &Point<C>,
-) -> Result<Intersection, &'static str>
+/// This assumes the LineString is closed; if not the answer is meaningless.
+fn _intersection_simple_polygon_point<C>(ls: &LineString<C>, point: &Point<C>) -> Intersection
 where
-    T: Coordinate,
+    C: Coordinate,
 {
-    if !ls.is_closed() {
-        return Err("Simple polygons must be defined by a closed LineString.");
-    }
-
     let mut wn: i32 = 0; // the winding number counter
     let position = point.0;
     // loop through all edges of the polygon
@@ -99,7 +90,7 @@ where
     });
     for seg in right_segments {
         if seg.contains(position) {
-            return Ok(Intersection::Boundary);
+            return Intersection::Boundary;
         }
 
         if seg.start.y <= position.y {
@@ -119,9 +110,9 @@ where
     }
 
     if wn == 0 {
-        Ok(Intersection::Outside)
+        Intersection::Outside
     } else {
-        Ok(Intersection::Contains)
+        Intersection::Contains
     }
 }
 
@@ -134,7 +125,7 @@ mod tests {
         let poly = Polygon::from(vec![(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0., 0.)]);
         let point = Point::from((0.5, 0.5));
         // let position = intersection_polygon_point(&poly, &point)?;
-        let position = intersection_polygon_point(&poly, &point).expect("Shouldn't have error");
+        let position = intersection_polygon_point(&poly, &point);
         assert_eq!(position, Intersection::Contains);
     }
 
@@ -142,7 +133,7 @@ mod tests {
     fn check_envelope_non_containment() {
         let poly = Polygon::from(vec![(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0., 0.)]);
         let point = Point::from((1.5, 0.5));
-        let position = intersection_polygon_point(&poly, &point).expect("Shouldn't have error");
+        let position = intersection_polygon_point(&poly, &point);
         assert_eq!(position, Intersection::Outside);
     }
 
@@ -157,7 +148,7 @@ mod tests {
             (0., 0.),
         ]);
         let point = Point::from((1.0, 0.5));
-        let position = intersection_polygon_point(&poly, &point).expect("Shouldn't have error");
+        let position = intersection_polygon_point(&poly, &point);
         assert_eq!(position, Intersection::Outside);
     }
 
@@ -174,7 +165,7 @@ mod tests {
             ])],
         );
         let point = Point::from((0.0, 0.0));
-        let position = intersection_polygon_point(&poly, &point).expect("Shouldn't have error");
+        let position = intersection_polygon_point(&poly, &point);
         assert_eq!(position, Intersection::Outside);
     }
 
@@ -191,7 +182,7 @@ mod tests {
             ])],
         );
         let point = Point::from((0.0, 0.0));
-        let position = intersection_polygon_point(&poly, &point).expect("Shouldn't have error");
+        let position = intersection_polygon_point(&poly, &point);
         assert_eq!(position, Intersection::Outside);
     }
 
