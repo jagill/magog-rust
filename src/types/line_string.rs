@@ -1,5 +1,5 @@
 use crate::primitives::{Coordinate, Envelope, Position, Segment, SegmentIntersection};
-use crate::rtree::{RTree, RTreeObject, RTreeSegment};
+use crate::rtree::{build_rtree, RTree, RTreeSegment};
 use crate::types::{Geometry, MultiPoint, Point};
 
 #[derive(Debug, PartialEq)]
@@ -146,31 +146,7 @@ impl<C: Coordinate> LineString<C> {
         // Declare the errors here
         let repeated_err = Err("LineString has repeated points.");
         let intersection_err = Err("LineString has self-intersection.");
-
-        let rtree: RTree<RTreeSegment<C>> = RTree::bulk_load(
-            self.segments_iter()
-                .enumerate()
-                .map(|(i, seg)| RTreeSegment {
-                    id: i,
-                    segment: seg,
-                })
-                .collect(),
-        );
-        // If there is only one segment, it just needs to not be degenerate.
-        if self.num_points() == 2 {
-            let start = self.positions[0];
-            let end = self.positions[1];
-            start.validate()?;
-            end.validate()?;
-            return if start == end {
-                repeated_err
-            } else {
-                Ok(rtree)
-            };
-        }
-        // Now we know num_points > 2
-        let num_segments = self.num_points() - 1;
-        for (i, seg) in self.segments_iter().enumerate() {
+        for seg in self.segments_iter() {
             // First check: should have finite coordinates.
             seg.start.validate()?;
             seg.end.validate()?;
@@ -178,33 +154,35 @@ impl<C: Coordinate> LineString<C> {
             if seg.start == seg.end {
                 return repeated_err;
             }
-            // Third check: Should not intersect any segment except itself,
-            // or the previous/successive segment at their mutual end points.
-            let rtree_seg = RTreeSegment {
-                id: i,
-                segment: seg,
-            };
-            for found in rtree.locate_in_envelope_intersecting(&rtree_seg.envelope()) {
-                if found.id == i {
-                    continue;
-                }
-                match seg.intersect_segment(found.segment) {
-                    SegmentIntersection::None => continue,
-                    SegmentIntersection::Position(p) => {
-                        let small = found.id.min(i);
-                        let large = found.id.max(i);
-                        if ((large == small + 1) || (small == 0 && large == num_segments - 1))
-                            && (p == seg.start || p == seg.end)
-                        {
-                            continue;
-                        } else {
-                            return intersection_err;
-                        }
-                    }
-                    SegmentIntersection::Segment(_) => {
-                        // Segment intersxns are always bad
+        }
+
+        let rtree = build_rtree(self);
+        let intersections = rtree
+            .intersection_candidates_with_other_tree(&rtree)
+            // Remove duplicates and self-insxns
+            .filter(|(c1, c2)| c1.id < c2.id);
+
+        let num_segments = self.num_points() - 1;
+        for (candidate1, candidate2) in intersections {
+            match candidate1.segment.intersect_segment(candidate2.segment) {
+                SegmentIntersection::None => continue,
+                SegmentIntersection::Position(p) => {
+                    // We know from above that rtree_seg2.id > rtree_seg1.id
+                    let low_id = candidate1.id;
+                    let high_id = candidate2.id;
+                    // Point intersections are fine at the shared point between
+                    // adjacent segments.  In loops this includes the wraparound.
+                    if ((high_id == low_id + 1) || (low_id == 0 && high_id == num_segments - 1))
+                        && (p == candidate1.segment.end || p == candidate1.segment.start)
+                    {
+                        continue;
+                    } else {
                         return intersection_err;
                     }
+                }
+                SegmentIntersection::Segment(_) => {
+                    // Segment intersxns are always bad
+                    return intersection_err;
                 }
             }
         }
