@@ -2,7 +2,7 @@ use crate::primitives::{Coordinate, Envelope, Position, Segment, SegmentIntersec
 use crate::rtree::{build_rtree, RTree, RTreeSegment};
 use crate::types::{Geometry, MultiPoint, Point};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct LineString<C: Coordinate> {
     pub positions: Vec<Position<C>>,
     _envelope: Envelope<C>,
@@ -66,19 +66,19 @@ impl<C: Coordinate> LineString<C> {
     }
 
     /// Return the first coordinate of the linestring
-    pub fn start_point(&self) -> Option<Position<C>> {
+    pub fn start_point(&self) -> Option<Point<C>> {
         if self.positions.len() == 0 {
             return None;
         }
-        Some(self.positions[0])
+        Some(Point(self.positions[0]))
     }
 
     /// Return the last coordinate of the linestring
-    pub fn end_point(&self) -> Option<Position<C>> {
+    pub fn end_point(&self) -> Option<Point<C>> {
         if self.positions.len() == 0 {
             return None;
         }
-        Some(self.positions[self.positions.len() - 1])
+        Some(Point(self.positions[self.positions.len() - 1]))
     }
 }
 
@@ -106,7 +106,7 @@ impl<C: Coordinate> LineString<C> {
         } else {
             match (self.start_point(), self.end_point()) {
                 (None, _) | (_, None) => Geometry::empty(),
-                (Some(s), Some(e)) => Geometry::from(MultiPoint::from(vec![s, e])),
+                (Some(s), Some(e)) => Geometry::from(MultiPoint::new(vec![s, e])),
             }
         }
     }

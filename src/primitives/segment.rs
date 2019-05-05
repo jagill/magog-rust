@@ -137,6 +137,32 @@ impl<C: Coordinate> Segment<C> {
         }
         SegmentIntersection::None
     }
+
+    /**
+     * The winding number is calculated as follows:
+     * 1. pos.y must be between the top of the segment (exclusive) and the bottom
+     *    of the segment (inclusive).
+     *   A. This condition excludes all horizontal segments.
+     * 2. The intersection of the ray from pos to x=+inf with the segment must be
+     *    strictly to the right of pos (isxn.x > pos.x).
+     *
+     */
+    pub(crate) fn find_winding_number(position: Position<C>, seg: Segment<C>) -> i32 {
+        let seg_rect = Rect::from(seg);
+        let upward = seg.end.y > seg.start.y;
+
+        if position.y >= seg_rect.max.y || position.y < seg_rect.min.y {
+            return 0;
+        }
+
+        return match (seg.position_location(position), upward) {
+            // have a valid up intersect
+            (PositionLocation::Left, true) => -1,
+            // have a valid down intersect
+            (PositionLocation::Right, false) => 1,
+            _ => 0,
+        };
+    }
 }
 
 #[cfg(test)]

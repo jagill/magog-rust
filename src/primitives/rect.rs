@@ -42,6 +42,10 @@ impl<C: Coordinate> Rect<C> {
         self.min.x <= p.x && self.max.x >= p.x && self.min.y <= p.y && self.max.y >= p.y
     }
 
+    pub fn contains_rect(&self, other: Rect<C>) -> bool {
+        self.contains(other.min) && self.contains(other.max)
+    }
+
     /// Do these two rects intersect?
     pub fn intersects(&self, r: Rect<C>) -> bool {
         self.min.x <= r.max.x
