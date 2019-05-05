@@ -38,7 +38,7 @@ pub fn find_loop_loop_relation<C: Coordinate>(
         Some(LoopRelation::Outside) => match _find_loop_loop_relation(&rtree_b, &rtree_a) {
             None => LoopLoopRelation::Separate,
             // If b crosses a, a should have crossed b
-            Some(LoopRelation::Crosses) => panic!("Bug: Loop A outside B, but B Crosses A."),
+            Some(LoopRelation::Crosses) => panic!("Bug: Loop B outside A, but A Crosses B."),
             // a is inside b
             Some(LoopRelation::Inside) => LoopLoopRelation::Within,
             Some(LoopRelation::Outside) => LoopLoopRelation::Separate,
