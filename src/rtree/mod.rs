@@ -5,6 +5,8 @@ pub use rstar::{RTree, RTreeObject};
 
 use crate::primitives::{Coordinate, Position, Segment};
 
+pub mod utils;
+
 fn position_to_point<C: Coordinate>(p: Position<C>) -> [C; 2] {
     [p.x, p.y]
 }
