@@ -18,6 +18,13 @@ impl<C: Coordinate> MultiLineString<C> {
     }
 }
 
+/// Turn a `Vec` of `LineString`-ish objects into a `MultiLineString`.
+impl<C: Coordinate, IL: Into<LineString<C>>> From<Vec<IL>> for MultiLineString<C> {
+    fn from(v: Vec<IL>) -> Self {
+        MultiLineString::new(v.into_iter().map(|l| l.into()).collect())
+    }
+}
+
 // MultiLineString implementation
 impl<C: Coordinate> MultiLineString<C> {
     pub fn is_closed(&self) -> bool {

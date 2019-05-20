@@ -9,7 +9,7 @@ pub struct Polygon<C: Coordinate> {
     _envelope: Envelope<C>,
 }
 
-/// Turn a `Vec` of `Position`-ish objects into a `Polygon`.
+/// Turn a `Vec` of `Position`-ish objects into a `Polygon` with no interior loops.
 impl<C: Coordinate, ILS: Into<LineString<C>>> From<ILS> for Polygon<C> {
     fn from(ext: ILS) -> Self {
         let exterior: LineString<C> = ext.into();

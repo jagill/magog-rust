@@ -18,6 +18,13 @@ impl<C: Coordinate> MultiPolygon<C> {
     }
 }
 
+/// Turn a `Vec` of `Polygon`-ish objects into a `MultiPolygon`.
+impl<C: Coordinate, IP: Into<Polygon<C>>> From<Vec<IP>> for MultiPolygon<C> {
+    fn from(v: Vec<IP>) -> Self {
+        MultiPolygon::new(v.into_iter().map(|p| p.into()).collect())
+    }
+}
+
 // MultiPolygon implementation
 impl<C: Coordinate> MultiPolygon<C> {
     pub fn centroid(&self) -> Point<C> {
@@ -51,9 +58,22 @@ impl<C: Coordinate> MultiPolygon<C> {
 
     /// A MultiPolygon is simple if it has no self-intersections in or between the Polygons.
     pub fn is_simple(&self) -> bool {
-        self.polygons.iter().all(|p| p.is_simple())
-            // TODO: STUB  Should be a pair-wise check for disjoint
-            && true
+        match self.validate() {
+            Err(_) => false,
+            Ok(_) => true,
+        }
+    }
+
+    pub fn validate(&self) -> Result<(), &'static str> {
+        if self.polygons.len() == 0 {
+            return Err("MultiPolygon has no Polygon.");
+        }
+
+        for polygon in self.polygons.iter() {
+            polygon.validate()?;
+        }
+
+        Ok(())
     }
 
     /// The boundary of a MultiPolygon is the boundaries of the Polygons.
