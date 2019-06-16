@@ -41,6 +41,10 @@ impl<C: Coordinate> Envelope<C> {
         Envelope { rect: None }
     }
 
+    pub fn from_envelopes(envs: impl Iterator<Item = Envelope<C>>) -> Envelope<C> {
+        envs.fold(Envelope::empty(), |base, env| base.merge(env))
+    }
+
     pub fn validate(&self) -> Result<(), &'static str> {
         match &self.rect {
             None => Ok(()),
@@ -83,6 +87,16 @@ impl<C: Coordinate> Envelope<C> {
             (None, Some(r)) | (Some(r), None) => r.into(),
             (Some(r1), Some(r2)) => r1.merge(r2).into(),
         }
+    }
+}
+
+pub trait HasEnvelope<C: Coordinate> {
+    fn envelope(&self) -> Envelope<C>;
+}
+
+impl<C: Coordinate> HasEnvelope<C> for Envelope<C> {
+    fn envelope(&self) -> Envelope<C> {
+        return *self;
     }
 }
 

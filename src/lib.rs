@@ -1,6 +1,7 @@
 pub mod primitives;
 pub mod types;
 
+mod flatbush;
 mod rtree;
 
 #[cfg(test)]

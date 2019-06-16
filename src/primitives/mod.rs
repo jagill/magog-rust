@@ -7,7 +7,7 @@ mod triangle;
 
 pub use crate::primitives::{
     coordinate::Coordinate,
-    envelope::Envelope,
+    envelope::{Envelope, HasEnvelope},
     position::Position,
     rect::Rect,
     segment::{PositionLocation, Segment, SegmentIntersection},
