@@ -9,38 +9,34 @@ use rayon::prelude::*;
 
 mod hilbert;
 
-use crate::primitives::{Coordinate, Envelope, HasEnvelope};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope, Rect};
 use hilbert::Hilbert;
 
 const DEFAULT_DEGREE: usize = 8;
 
-pub struct Flatbush<'a, C, E>
+pub struct Flatbush<C>
 where
     C: Coordinate,
-    E: HasEnvelope<C>,
 {
     degree: usize,
     // nodes in level i are (level_indices[i] .. level_indices[i + 1] - 1)
     level_indices: Vec<usize>,
     tree: Vec<(usize, Envelope<C>)>,
-    items: &'a Vec<E>,
 }
 
-impl<'a, C, E> Flatbush<'a, C, E>
+impl<C> Flatbush<C>
 where
     C: Coordinate,
-    E: HasEnvelope<C>,
 {
-    pub fn new_empty(items: &'a Vec<E>) -> Flatbush<'a, C, E> {
+    pub fn new_empty() -> Flatbush<C> {
         Flatbush {
             degree: DEFAULT_DEGREE,
             level_indices: Vec::new(),
             tree: Vec::new(),
-            items,
         }
     }
 
-    pub fn new(items: &Vec<E>, degree: usize) -> Flatbush<C, E> {
+    pub fn new(items: &Vec<impl HasEnvelope<C>>, degree: usize) -> Flatbush<C> {
         let total_envelope = Envelope::from_envelopes(items.iter().map(|e| e.envelope()));
         if total_envelope.rect == None {
             // The list of items are empty, or all items are empty.
@@ -58,43 +54,35 @@ where
         entries.par_sort_unstable_by_key(|&(h, _, _)| h);
 
         Flatbush::_new_unsorted(
-            items,
             entries.into_iter().map(|(_, i, e)| (i, e)).collect(),
             degree,
         )
     }
 
-    pub fn new_unsorted(items: &Vec<E>, degree: usize) -> Flatbush<C, E> {
+    pub fn new_unsorted(items: &Vec<impl HasEnvelope<C>>, degree: usize) -> Flatbush<C> {
         let entries = items.iter().map(|e| e.envelope()).enumerate().collect();
-        Flatbush::_new_unsorted(items, entries, degree)
+        Flatbush::_new_unsorted(entries, degree)
     }
 
-    fn _new_unsorted(
-        items: &Vec<E>,
-        entries: Vec<(usize, Envelope<C>)>,
-        degree: usize,
-    ) -> Flatbush<C, E> {
-        // This should always be true, since we are calling it internally.
-        assert_eq!(items.len(), entries.len());
-
+    fn _new_unsorted(entries: Vec<(usize, Envelope<C>)>, degree: usize) -> Flatbush<C> {
         if degree != degree.next_power_of_two() {
             panic!("Degree must be a positive power of 2.");
         }
         let degree_exp = degree.trailing_zeros();
 
-        if items.len() == 0 {
-            return Flatbush::new_empty(items);
+        if entries.len() == 0 {
+            return Flatbush::new_empty();
         }
 
-        let mut tree: Vec<(usize, Envelope<C>)> = Vec::with_capacity(3 * items.len() / 2);
+        let mut tree: Vec<(usize, Envelope<C>)> = Vec::with_capacity(3 * entries.len() / 2);
         tree.extend(entries.iter());
 
-        let estimated_capacity = quick_log_ceil(items.len(), degree_exp) + 1;
+        let estimated_capacity = quick_log_ceil(entries.len(), degree_exp) + 1;
         let mut level_indices: Vec<usize> = Vec::with_capacity(estimated_capacity as usize);
         level_indices.push(0);
 
         let mut level = 0;
-        let mut level_size = items.len();
+        let mut level_size = entries.len();
         let mut level_capacity;
 
         while level_size > 1 {
@@ -126,19 +114,70 @@ where
             degree,
             level_indices,
             tree,
-            items,
         }
     }
 
-    /**
-     * Get a start_index for children of a parent at `level` with `index`.
-     *
-     * The children will be at indices start_index..(start_index + DEGREE)
-     * All of the children will be defined, although some may be empty.
-     */
-    fn get_first_child_index(&self, level: usize, index: usize) -> usize {
-        self.level_indices[level - 1] + index * self.degree
+    pub fn find_intersection_candidates(&self, query_rect: Rect<C>) -> Vec<usize> {
+        let mut todo_list: Vec<FlatbushNode> =
+            Vec::with_capacity(self.degree * self.level_indices.len());
+        let mut results = Vec::new();
+
+        let root_node = FlatbushNode {
+            level: self.level_indices.len() - 1,
+            tree_index: self.tree.len() - 1,
+            node_index: 0,
+        };
+
+        if self.does_intersect(query_rect, root_node.tree_index) {
+            if root_node.level == 0 {
+                let item_index = self.tree[root_node.tree_index].0;
+                results.push(item_index);
+            } else {
+                todo_list.push(root_node);
+            }
+        }
+
+        // The todo_list will keep a LIFO stack of nodes to be processed.
+        // The invariant is that everything in todo_list (envelope) intersects
+        // query_rect, and is level > 0 (leaves are yielded).
+        while let Some(node) = todo_list.pop() {
+            let child_level = node.level - 1;
+            let start_index = self.level_indices[child_level] + node.node_index * self.degree;
+            let child_index_range = start_index..start_index + self.degree;
+            child_index_range
+                .map(move |tree_index| FlatbushNode {
+                    level: child_level,
+                    tree_index: tree_index,
+                    node_index: self.tree[tree_index].0,
+                })
+                .for_each(|node| {
+                    if !self.does_intersect(query_rect, node.tree_index) {
+                        return;
+                    }
+                    if node.level == 0 {
+                        let item_index = self.tree[node.tree_index].0;
+                        results.push(item_index);
+                    } else {
+                        todo_list.push(node);
+                    }
+                });
+        }
+
+        results
     }
+
+    fn does_intersect(&self, query_rect: Rect<C>, tree_index: usize) -> bool {
+        self.tree[tree_index].1.intersects(query_rect.into())
+    }
+}
+
+struct FlatbushNode {
+    // The index within the tree
+    tree_index: usize,
+    // Level in tree, 0 is leaf, max is root.
+    level: usize,
+    // Index of node in a level
+    node_index: usize,
 }
 
 /**
@@ -184,7 +223,7 @@ fn next_multiple<I: PrimInt>(n: I, k: I) -> I {
 
 #[cfg(test)]
 mod tests {
-    use super::{div_ceil, next_multiple, quick_log_ceil, Envelope, Flatbush};
+    use super::{div_ceil, next_multiple, quick_log_ceil, Envelope, Flatbush, Rect};
 
     #[test]
     fn test_quick_log_ciel() {
@@ -253,26 +292,147 @@ mod tests {
         );
     }
 
+    fn test_build_tree() {
+        let degree = 4;
+        let e0 = Envelope::from(((7.0f32, 44.), (8., 48.)));
+        let e1 = Envelope::from(((25., 48.), (35., 55.)));
+        let e2 = Envelope::from(((98., 46.), (99., 56.)));
+        let e3 = Envelope::from(((58., 65.), (73., 79.)));
+        let e4 = Envelope::from(((43., 40.), (44., 45.)));
+        let e5 = Envelope::from(((97., 87.), (100., 91.)));
+        let e6 = Envelope::from(((92., 46.), (108., 57.)));
+        let e7 = Envelope::from(((7.1, 48.), (10., 56.)));
+        let envs = vec![e0, e1, e2, e3, e4, e5, e6, e7];
+
+        let flatbush = Flatbush::new(&envs, degree);
+
+        // This is unsorted, so the order should be:
+        // [e0..e3, e4..e7, p1=parent(e0..e3), p2=parent(e4..e7), root=parent(p1, p2)]
+
+        dbg!(&flatbush.tree);
+        assert_eq!(flatbush.degree, degree);
+        assert_eq!(flatbush.level_indices, vec![0, 8, 12]);
+        let expected_l0: Vec<(usize, Envelope<f32>)> =
+            envs.clone().into_iter().enumerate().collect();
+        assert_eq!(flatbush.tree[0..8], expected_l0[..]);
+        assert_eq!(
+            flatbush.tree[8..12],
+            vec![
+                (0, Envelope::from(((7.0, 44.), (99., 79.)))),
+                (1, Envelope::from(((7.1, 40.), (108., 91.)))),
+                (2, Envelope::empty()),
+                (3, Envelope::empty()),
+            ][..]
+        );
+        assert_eq!(
+            flatbush.tree[12],
+            (0, Envelope::from(((7., 40.,), (108., 91.))))
+        );
+    }
+
     fn get_envelopes() -> Vec<Envelope<f32>> {
+        #[rustfmt::skip]
         let rects: Vec<f32> = vec![
-            8, 62, 11, 66, 57, 17, 57, 19, 76, 26, 79, 29, 36, 56, 38, 56, 92, 77, 96, 80, 87, 70,
-            90, 74, 43, 41, 47, 43, 0, 58, 2, 62, 76, 86, 80, 89, 27, 13, 27, 15, 71, 63, 75, 67,
-            25, 2, 27, 2, 87, 6, 88, 6, 22, 90, 23, 93, 22, 89, 22, 93, 57, 11, 61, 13, 61, 55, 63,
-            56, 17, 85, 21, 87, 33, 43, 37, 43, 6, 1, 7, 3, 80, 87, 80, 87, 23, 50, 26, 52, 58, 89,
-            58, 89, 12, 30, 15, 34, 32, 58, 36, 61, 41, 84, 44, 87, 44, 18, 44, 19, 13, 63, 15, 67,
-            52, 70, 54, 74, 57, 59, 58, 59, 17, 90, 20, 92, 48, 53, 52, 56, 92, 68, 92, 72, 26, 52,
-            30, 52, 56, 23, 57, 26, 88, 48, 88, 48, 66, 13, 67, 15, 7, 82, 8, 86, 46, 68, 50, 68,
-            37, 33, 38, 36, 6, 15, 8, 18, 85, 36, 89, 38, 82, 45, 84, 48, 12, 2, 16, 3, 26, 15, 26,
-            16, 55, 23, 59, 26, 76, 37, 79, 39, 86, 74, 90, 77, 16, 75, 18, 78, 44, 18, 45, 21, 52,
-            67, 54, 71, 59, 78, 62, 78, 24, 5, 24, 8, 64, 80, 64, 83, 66, 55, 70, 55, 0, 17, 2, 19,
-            15, 71, 18, 74, 87, 57, 87, 59, 6, 34, 7, 37, 34, 30, 37, 32, 51, 19, 53, 19, 72, 51,
-            73, 55, 29, 45, 30, 45, 94, 94, 96, 95, 7, 22, 11, 24, 86, 45, 87, 48, 33, 62, 34, 65,
-            18, 10, 21, 14, 64, 66, 67, 67, 64, 25, 65, 28, 27, 4, 31, 6, 84, 4, 85, 5, 48, 80, 50,
-            81, 1, 61, 3, 61, 71, 89, 74, 92, 40, 42, 43, 43, 27, 64, 28, 66, 46, 26, 50, 26, 53,
-            83, 57, 87, 14, 75, 15, 79, 31, 45, 34, 45, 89, 84, 92, 88, 84, 51, 85, 53, 67, 87, 67,
-            89, 39, 26, 43, 27, 47, 61, 47, 63, 23, 49, 25, 53, 12, 3, 14, 5, 16, 50, 19, 53, 63,
-            80, 64, 84, 22, 63, 22, 64, 26, 66, 29, 66, 2, 15, 3, 15, 74, 77, 77, 79, 64, 11, 68,
-            11, 38, 4, 39, 8, 83, 73, 87, 77, 85, 52, 89, 56, 74, 60, 76, 63, 62, 66, 65, 67,
+             8, 62, 11, 66,
+            57, 17, 57, 19,
+            76, 26, 79, 29,
+            36, 56, 38, 56,
+            92, 77, 96, 80,
+            87, 70, 90, 74,
+            43, 41, 47, 43,
+             0, 58,  2, 62,
+            76, 86, 80, 89,
+            27, 13, 27, 15,
+            71, 63, 75, 67,
+            25,  2, 27,  2,
+            87,  6, 88,  6,
+            22, 90, 23, 93,
+            22, 89, 22, 93,
+            57, 11, 61, 13,
+            61, 55, 63, 56,
+            17, 85, 21, 87,
+            33, 43, 37, 43,
+             6,  1,  7,  3,
+            80, 87, 80, 87,
+            23, 50, 26, 52,
+            58, 89, 58, 89,
+            12, 30, 15, 34,
+            32, 58, 36, 61,
+            41, 84, 44, 87,
+            44, 18, 44, 19,
+            13, 63, 15, 67,
+            52, 70, 54, 74,
+            57, 59, 58, 59,
+            17, 90, 20, 92,
+            48, 53, 52, 56,
+             2, 68, 92, 72,
+            26, 52, 30, 52,
+            56, 23, 57, 26,
+            88, 48, 88, 48,
+            66, 13, 67, 15,
+             7, 82,  8, 86,
+            46, 68, 50, 68,
+            37, 33, 38, 36,
+             6, 15,  8, 18,
+            85, 36, 89, 38,
+            82, 45, 84, 48,
+            12,  2, 16,  3,
+            26, 15, 26, 16,
+            55, 23, 59, 26,
+            76, 37, 79, 39,
+            86, 74, 90, 77,
+            16, 75, 18, 78,
+            44, 18, 45, 21,
+            52, 67, 54, 71,
+            59, 78, 62, 78,
+            24,  5, 24,  8,
+            64, 80, 64, 83,
+            66, 55, 70, 55,
+             0, 17,  2, 19,
+            15, 71, 18, 74,
+            87, 57, 87, 59,
+             6, 34,  7, 37,
+            34, 30, 37, 32,
+            51, 19, 53, 19,
+            72, 51, 73, 55,
+            29, 45, 30, 45,
+            94, 94, 96, 95,
+             7, 22, 11, 24,
+            86, 45, 87, 48,
+            33, 62, 34, 65,
+            18, 10, 21, 14,
+            64, 66, 67, 67,
+            64, 25, 65, 28,
+            27,  4, 31,  6,
+            84,  4, 85,  5,
+            48, 80, 50, 81,
+             1, 61,  3, 61,
+            71, 89, 74, 92,
+            40, 42, 43, 43,
+            27, 64, 28, 66,
+            46, 26, 50, 26,
+            53, 83, 57, 87,
+            14, 75, 15, 79,
+            31, 45, 34, 45,
+            89, 84, 92, 88,
+            84, 51, 85, 53,
+            67, 87, 67, 89,
+            39, 26, 43, 27,
+            47, 61, 47, 63,
+            23, 49, 25, 53,
+            12,  3, 14,  5,
+            16, 50, 19, 53,
+            63, 80, 64, 84,
+            22, 63, 22, 64,
+            26, 66, 29, 66,
+             2, 15,  3, 15,
+            74, 77, 77, 79,
+            64, 11, 68, 11,
+            38,  4, 39,  8,
+            83, 73, 87, 77,
+            85, 52, 89, 56,
+            74, 60, 76, 63,
+            62, 66, 65, 67,
         ]
         .into_iter()
         .map(|v| v as f32)
@@ -284,25 +444,37 @@ mod tests {
     }
 
     #[test]
+    fn test_intersection_candidates_unsorted() {
+        let envelopes = get_envelopes();
+        let f = Flatbush::new_unsorted(&envelopes, 16);
+        let query_rect = Rect::from(((40., 40.), (60., 60.)));
+
+        let brute_results: Vec<usize> = envelopes
+            .iter()
+            .enumerate()
+            .filter(|(_, e)| e.intersects(query_rect.into()))
+            .map(|(i, _)| i)
+            .collect();
+        let mut rtree_results = f.find_intersection_candidates(query_rect);
+        rtree_results.sort();
+        assert_eq!(rtree_results, brute_results);
+    }
+
+    #[test]
     fn test_intersection_candidates() {
         let envelopes = get_envelopes();
         let f = Flatbush::new(&envelopes, 16);
+        let query_rect = Rect::from(((40., 40.), (60., 60.)));
 
-        /*
-        let results = f.search(&Rect {
-            min_x: 40.,
-            min_y: 40.,
-            max_x: 60.,
-            max_y: 60.,
-        });
-        let mut rrects: Vec<f32> = Vec::new();
-        for i in results {
-            rrects.push(rects[4 * i]);
-            rrects.push(rects[4 * i + 1]);
-            rrects.push(rects[4 * i + 2]);
-            rrects.push(rects[4 * i + 3]);
-        }
-        println!("r: {:?}", rrects);
-        */
+        let brute_results: Vec<usize> = envelopes
+            .iter()
+            .enumerate()
+            .filter(|(_, e)| e.intersects(query_rect.into()))
+            .map(|(i, _)| i)
+            .collect();
+        let mut rtree_results = f.find_intersection_candidates(query_rect);
+        rtree_results.sort();
+        assert_eq!(rtree_results, brute_results);
     }
+
 }
