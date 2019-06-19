@@ -17,11 +17,10 @@ impl<C: Coordinate, IP: Into<Position<C>>> From<(IP, IP)> for Rect<C> {
 
 impl<C: Coordinate> Rect<C> {
     pub fn new(p1: Position<C>, p2: Position<C>) -> Rect<C> {
-        let (min_x, max_x) = Position::min_max(p1.x, p2.x);
-        let (min_y, max_y) = Position::min_max(p1.y, p2.y);
+        let (min_p, max_p) = Position::min_max(p1, p2);
         Rect {
-            min: Position::from((min_x, min_y)),
-            max: Position::from((max_x, max_y)),
+            min: min_p,
+            max: max_p,
         }
     }
 

@@ -17,18 +17,18 @@ impl<C: Coordinate, IR: Into<Rect<C>>> From<IR> for Envelope<C> {
 // Vec<Position> -> Envelope
 impl<'a, C: Coordinate> From<&'a Vec<Position<C>>> for Envelope<C> {
     fn from(positions: &'a Vec<Position<C>>) -> Self {
-        let empty_env = Envelope { rect: None };
         positions
             .iter()
-            .fold(empty_env, |env, p| env.add_position(*p))
+            .fold(Envelope::empty(), |env, p| env.add_position(*p))
     }
 }
 
 // Vec<Envelope> -> Envelope
 impl<'a, C: Coordinate> From<&'a Vec<Envelope<C>>> for Envelope<C> {
     fn from(envelopes: &'a Vec<Envelope<C>>) -> Self {
-        let env = Envelope { rect: None };
-        envelopes.iter().fold(env, |base_env, e| base_env.merge(*e))
+        envelopes
+            .iter()
+            .fold(Envelope::empty(), |env, e| env.merge(*e))
     }
 }
 
@@ -78,14 +78,11 @@ impl<C: Coordinate> Envelope<C> {
     }
 
     pub fn merge(&self, other: Envelope<C>) -> Envelope<C> {
-        let new_rect = match &self.rect {
-            None => other.rect,
-            Some(r) => match other.rect {
-                None => self.rect,
-                Some(other_r) => Some(r.merge(other_r)),
-            },
-        };
-        Envelope::new(new_rect)
+        match (self.rect, other.rect) {
+            (None, None) => Envelope::empty(),
+            (None, Some(r)) | (Some(r), None) => r.into(),
+            (Some(r1), Some(r2)) => r1.merge(r2).into(),
+        }
     }
 }
 
@@ -96,6 +93,19 @@ mod tests {
     #[test]
     fn check_from_tuple_tuples() {
         let e = Envelope::from(((0., 1.), (2., 0.)));
+        let min: Position<f64> = Position { x: 0., y: 0. };
+        let max: Position<f64> = Position { x: 2., y: 1. };
+        assert_eq!(
+            e,
+            Envelope {
+                rect: Some(Rect { min, max })
+            }
+        );
+    }
+
+    #[test]
+    fn check_from_tuple_positions() {
+        let e = Envelope::from((Position::new(0., 1.), Position::new(2., 0.)));
         let min: Position<f64> = Position { x: 0., y: 0. };
         let max: Position<f64> = Position { x: 2., y: 1. };
         assert_eq!(

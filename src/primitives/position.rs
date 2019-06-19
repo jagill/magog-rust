@@ -51,13 +51,18 @@ impl<C: Coordinate> Position<C> {
     }
 
     /**
-     * Order z1, z2 into (min, max).
+     * Given p1, p2, return p_min and p_max.
      *
-     * If z1 or z2 is NAN, set min/max to be the other.
+     * p_min has the minimum values for both x and y.
+     * p_max has the maximum values for both x and y.
+     * If any coordinate is NAN, set the min/max to be the other.
      * If both are NAN, return (NAN, NAN).
      */
-    pub fn min_max(z1: C, z2: C) -> (C, C) {
-        (z1.min(z2), z1.max(z2))
+    pub fn min_max(p1: Position<C>, p2: Position<C>) -> (Position<C>, Position<C>) {
+        (
+            Position::new(p1.x.min(p2.x), p1.y.min(p2.y)),
+            Position::new(p1.x.max(p2.x), p1.y.max(p2.y)),
+        )
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {

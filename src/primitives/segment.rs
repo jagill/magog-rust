@@ -113,7 +113,7 @@ impl<C: Coordinate> Segment<C> {
                 let t0 = Position::dot(offset, da) / da_2;
                 // self.start to other end, in units of da.
                 let t1 = t0 + Position::dot(da, db) / da_2;
-                let (t_min, t_max) = Position::min_max(t0, t1);
+                let (t_min, t_max) = t0.min_max(t1);
                 if t_min > C::one() || t_max < C::zero() {
                     // if min(t0, t1) > 1 or max(t0, t1) < 0, they don't intersect.
                     return SegmentIntersection::None;
