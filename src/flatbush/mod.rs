@@ -7,6 +7,7 @@
 use num_traits::PrimInt;
 use rayon::prelude::*;
 
+use itertools::iproduct;
 mod hilbert;
 
 use crate::primitives::{Coordinate, Envelope, HasEnvelope, Rect};
@@ -14,6 +15,7 @@ use hilbert::Hilbert;
 
 const DEFAULT_DEGREE: usize = 8;
 
+#[derive(Debug)]
 pub struct Flatbush<C>
 where
     C: Coordinate,
@@ -122,11 +124,7 @@ where
             Vec::with_capacity(self.degree * self.level_indices.len());
         let mut results = Vec::new();
 
-        let root_node = FlatbushNode {
-            level: self.level_indices.len() - 1,
-            tree_index: self.tree.len() - 1,
-            node_index: 0,
-        };
+        let root_node = self.root_node();
 
         if self.does_intersect(query_rect, root_node.tree_index) {
             if root_node.level == 0 {
@@ -141,24 +139,71 @@ where
         // The invariant is that everything in todo_list (envelope) intersects
         // query_rect, and is level > 0 (leaves are yielded).
         while let Some(node) = todo_list.pop() {
-            let child_level = node.level - 1;
-            let start_index = self.level_indices[child_level] + node.node_index * self.degree;
-            let child_index_range = start_index..start_index + self.degree;
-            child_index_range
-                .map(move |tree_index| FlatbushNode {
-                    level: child_level,
-                    tree_index: tree_index,
-                    node_index: self.tree[tree_index].0,
-                })
-                .for_each(|node| {
-                    if !self.does_intersect(query_rect, node.tree_index) {
-                        return;
+            self.get_children(node).iter().for_each(|&child| {
+                if !self.does_intersect(query_rect, child.tree_index) {
+                    return;
+                }
+                if child.level == 0 {
+                    let item_index = self.tree[child.tree_index].0;
+                    results.push(item_index);
+                } else {
+                    todo_list.push(child);
+                }
+            });
+        }
+
+        results
+    }
+
+    fn find_self_intersection_candidates(&self) -> Vec<(usize, usize)> {
+        let mut todo_list: Vec<(FlatbushNode, FlatbushNode)> =
+            Vec::with_capacity(self.degree * self.level_indices.len());
+        let mut results = Vec::new();
+
+        let root_node = self.root_node();
+
+        todo_list.push((root_node, root_node));
+
+        // The todo_list will keep a LIFO stack of nodes to be processed.
+        // The invariant is that everything in todo_list (envelope)
+        // self-intersects, both nodes are at the same level,
+        // and are level > 0 (leaves are yielded).
+        while let Some((node1, node2)) = todo_list.pop() {
+            let children1: Vec<FlatbushNode>;
+            let children2: Vec<FlatbushNode>;
+            if node1.tree_index == node2.tree_index {
+                // They are the same node, so we don't need to do the isxn checks.
+                children1 = self.get_children(node1);
+                children2 = self.get_children(node2);
+            } else {
+                children1 = self
+                    .get_children(node1)
+                    .into_iter()
+                    .filter(|c1| self.does_intersect_internally(c1.tree_index, node2.tree_index))
+                    .collect();
+                children2 = self
+                    .get_children(node2)
+                    .into_iter()
+                    .filter(|c2| self.does_intersect_internally(c2.tree_index, node1.tree_index))
+                    .collect();
+            }
+            iproduct!(children1, children2)
+                .filter(|(c1, c2)| c1.tree_index <= c2.tree_index)
+                .filter(|(c1, c2)| self.does_intersect_internally(c1.tree_index, c2.tree_index))
+                .for_each(|(c1, c2)| match (c1.level, c2.level) {
+                    (0, 0) => {
+                        let item_index1 = self.tree[c1.tree_index].0;
+                        let item_index2 = self.tree[c2.tree_index].0;
+                        if item_index1 != item_index2 {
+                            results
+                                .push((item_index1.min(item_index2), item_index1.max(item_index2)));
+                        }
                     }
-                    if node.level == 0 {
-                        let item_index = self.tree[node.tree_index].0;
-                        results.push(item_index);
-                    } else {
-                        todo_list.push(node);
+                    (0, _) | (_, 0) => {
+                        panic!("Self-intersection found with different levels.");
+                    }
+                    _ => {
+                        todo_list.push((c1, c2));
                     }
                 });
         }
@@ -166,11 +211,40 @@ where
         results
     }
 
+    fn root_node(&self) -> FlatbushNode {
+        FlatbushNode {
+            level: self.level_indices.len() - 1,
+            tree_index: self.tree.len() - 1,
+            node_index: 0,
+        }
+    }
+
     fn does_intersect(&self, query_rect: Rect<C>, tree_index: usize) -> bool {
-        self.tree[tree_index].1.intersects(query_rect.into())
+        let (_, env) = self.tree[tree_index];
+        env.intersects(query_rect.into())
+    }
+
+    fn does_intersect_internally(&self, tree_index1: usize, tree_index2: usize) -> bool {
+        let (_, env1) = self.tree[tree_index1];
+        let (_, env2) = self.tree[tree_index2];
+        env1.intersects(env2)
+    }
+
+    fn get_children(&self, node: FlatbushNode) -> Vec<FlatbushNode> {
+        let child_level = node.level - 1;
+        let start_index = self.level_indices[child_level] + node.node_index * self.degree;
+        let child_index_range = start_index..start_index + self.degree;
+        child_index_range
+            .map(move |tree_index| FlatbushNode {
+                level: child_level,
+                tree_index: tree_index,
+                node_index: self.tree[tree_index].0,
+            })
+            .collect()
     }
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
 struct FlatbushNode {
     // The index within the tree
     tree_index: usize,
@@ -223,7 +297,7 @@ fn next_multiple<I: PrimInt>(n: I, k: I) -> I {
 
 #[cfg(test)]
 mod tests {
-    use super::{div_ceil, next_multiple, quick_log_ceil, Envelope, Flatbush, Rect};
+    use super::{div_ceil, iproduct, next_multiple, quick_log_ceil, Envelope, Flatbush, Rect};
 
     #[test]
     fn test_quick_log_ciel() {
@@ -255,7 +329,7 @@ mod tests {
     }
 
     #[test]
-    fn test_build_tree_unordered() {
+    fn test_build_tree_unsorted() {
         let degree = 4;
         let e0 = Envelope::from(((7.0f32, 44.), (8., 48.)));
         let e1 = Envelope::from(((25., 48.), (35., 55.)));
@@ -272,44 +346,6 @@ mod tests {
         // This is unsorted, so the order should be:
         // [e0..e3, e4..e7, p1=parent(e0..e3), p2=parent(e4..e7), root=parent(p1, p2)]
 
-        assert_eq!(flatbush.degree, degree);
-        assert_eq!(flatbush.level_indices, vec![0, 8, 12]);
-        let expected_l0: Vec<(usize, Envelope<f32>)> =
-            envs.clone().into_iter().enumerate().collect();
-        assert_eq!(flatbush.tree[0..8], expected_l0[..]);
-        assert_eq!(
-            flatbush.tree[8..12],
-            vec![
-                (0, Envelope::from(((7.0, 44.), (99., 79.)))),
-                (1, Envelope::from(((7.1, 40.), (108., 91.)))),
-                (2, Envelope::empty()),
-                (3, Envelope::empty()),
-            ][..]
-        );
-        assert_eq!(
-            flatbush.tree[12],
-            (0, Envelope::from(((7., 40.,), (108., 91.))))
-        );
-    }
-
-    fn test_build_tree() {
-        let degree = 4;
-        let e0 = Envelope::from(((7.0f32, 44.), (8., 48.)));
-        let e1 = Envelope::from(((25., 48.), (35., 55.)));
-        let e2 = Envelope::from(((98., 46.), (99., 56.)));
-        let e3 = Envelope::from(((58., 65.), (73., 79.)));
-        let e4 = Envelope::from(((43., 40.), (44., 45.)));
-        let e5 = Envelope::from(((97., 87.), (100., 91.)));
-        let e6 = Envelope::from(((92., 46.), (108., 57.)));
-        let e7 = Envelope::from(((7.1, 48.), (10., 56.)));
-        let envs = vec![e0, e1, e2, e3, e4, e5, e6, e7];
-
-        let flatbush = Flatbush::new(&envs, degree);
-
-        // This is unsorted, so the order should be:
-        // [e0..e3, e4..e7, p1=parent(e0..e3), p2=parent(e4..e7), root=parent(p1, p2)]
-
-        dbg!(&flatbush.tree);
         assert_eq!(flatbush.degree, degree);
         assert_eq!(flatbush.level_indices, vec![0, 8, 12]);
         let expected_l0: Vec<(usize, Envelope<f32>)> =
@@ -449,32 +485,68 @@ mod tests {
         let f = Flatbush::new_unsorted(&envelopes, 16);
         let query_rect = Rect::from(((40., 40.), (60., 60.)));
 
-        let brute_results: Vec<usize> = envelopes
-            .iter()
-            .enumerate()
-            .filter(|(_, e)| e.intersects(query_rect.into()))
-            .map(|(i, _)| i)
-            .collect();
+        let brute_results = find_brute_intersections(query_rect, &envelopes);
         let mut rtree_results = f.find_intersection_candidates(query_rect);
         rtree_results.sort();
         assert_eq!(rtree_results, brute_results);
     }
 
     #[test]
-    fn test_intersection_candidates() {
+    fn test_intersection_candidates_hilbert() {
         let envelopes = get_envelopes();
         let f = Flatbush::new(&envelopes, 16);
         let query_rect = Rect::from(((40., 40.), (60., 60.)));
 
-        let brute_results: Vec<usize> = envelopes
-            .iter()
-            .enumerate()
-            .filter(|(_, e)| e.intersects(query_rect.into()))
-            .map(|(i, _)| i)
-            .collect();
+        let brute_results = find_brute_intersections(query_rect, &envelopes);
         let mut rtree_results = f.find_intersection_candidates(query_rect);
         rtree_results.sort();
         assert_eq!(rtree_results, brute_results);
     }
 
+    #[test]
+    fn test_self_intersection_unsorted() {
+        let envelopes: Vec<Envelope<f32>> = get_envelopes();
+        let f = Flatbush::new_unsorted(&envelopes, 16);
+
+        let brute_results = find_brute_self_intersections(&envelopes);
+        let mut rtree_results = f.find_self_intersection_candidates();
+        rtree_results.sort();
+        assert_eq!(rtree_results, brute_results);
+    }
+
+    #[test]
+    fn test_self_intersection_hilbert() {
+        let envelopes: Vec<Envelope<f32>> = get_envelopes();
+        let f = Flatbush::new(&envelopes, 16);
+
+        let brute_results = find_brute_self_intersections(&envelopes);
+        let mut rtree_results = f.find_self_intersection_candidates();
+        rtree_results.sort();
+        assert_eq!(rtree_results, brute_results);
+    }
+
+    fn find_brute_intersections(
+        query_rect: Rect<f32>,
+        envelopes: &Vec<Envelope<f32>>,
+    ) -> Vec<usize> {
+        envelopes
+            .iter()
+            .enumerate()
+            .filter(|(_, e)| e.intersects(query_rect.into()))
+            .map(|(i, _)| i)
+            .collect()
+    }
+
+    fn find_brute_self_intersections(envelopes: &Vec<Envelope<f32>>) -> Vec<(usize, usize)> {
+        type EnumEnv = (usize, Envelope<f32>);
+        let enum_envelopes: Vec<EnumEnv> = envelopes.clone().into_iter().enumerate().collect();
+        let env_prod: Vec<(EnumEnv, EnumEnv)> =
+            iproduct!(enum_envelopes.clone(), enum_envelopes).collect();
+        env_prod
+            .into_iter()
+            .filter(|((i1, _), (i2, _))| i1 < i2)
+            .filter(|((_, e1), (_, e2))| e1.intersects(*e2))
+            .map(|((i1, _), (i2, _))| (i1, i2))
+            .collect()
+    }
 }
