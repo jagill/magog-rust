@@ -2,7 +2,7 @@ use num_traits::{Bounded, Float, Signed};
 use std::fmt::Debug;
 use std::iter::Sum;
 
-pub trait Coordinate: Float + Sum + Bounded + Signed + Debug + Send + Sync + 'static {
+pub trait Coordinate: Float + Sum + Bounded + Signed + Debug + Send + Sync {
     /**
      * Order self, other into (min, max).
      *
@@ -14,4 +14,4 @@ pub trait Coordinate: Float + Sum + Bounded + Signed + Debug + Send + Sync + 'st
     }
 }
 
-impl<C: Float + Sum + Bounded + Signed + Debug + Send + Sync + 'static> Coordinate for C {}
+impl<C: Float + Sum + Bounded + Signed + Debug + Send + Sync> Coordinate for C {}
