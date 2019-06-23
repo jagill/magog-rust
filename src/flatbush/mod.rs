@@ -10,12 +10,13 @@ use rayon::prelude::*;
 use itertools::iproduct;
 mod hilbert;
 
-use crate::primitives::{Coordinate, Envelope, HasEnvelope, Rect};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position, Rect};
 use hilbert::Hilbert;
 
-const DEFAULT_DEGREE: usize = 8;
+pub const FLATBUSH_DEFAULT_DEGREE: usize = 8;
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Flatbush<C>
 where
     C: Coordinate,
@@ -26,15 +27,22 @@ where
     tree: Vec<(usize, Envelope<C>)>,
 }
 
+impl<C: Coordinate> HasEnvelope<C> for Flatbush<C> {
+    fn envelope(&self) -> Envelope<C> {
+        self.get_envelope(self.root_node().tree_index)
+    }
+}
+
+#[allow(dead_code)]
 impl<C> Flatbush<C>
 where
     C: Coordinate,
 {
     pub fn new_empty() -> Flatbush<C> {
         Flatbush {
-            degree: DEFAULT_DEGREE,
-            level_indices: Vec::new(),
-            tree: Vec::new(),
+            degree: FLATBUSH_DEFAULT_DEGREE,
+            level_indices: vec![0],
+            tree: vec![(0, Envelope::empty())],
         }
     }
 
@@ -119,55 +127,91 @@ where
         }
     }
 
+    /**
+     * Find geometries that might intersect the query_rect.
+     *
+     * This only checks bounding-box intersection, so the candidates must be
+     * checked by the caller.
+     */
     pub fn find_intersection_candidates(&self, query_rect: Rect<C>) -> Vec<usize> {
         let mut todo_list: Vec<FlatbushNode> =
             Vec::with_capacity(self.degree * self.level_indices.len());
         let mut results = Vec::new();
 
-        let root_node = self.root_node();
-
-        if self.does_intersect(query_rect, root_node.tree_index) {
-            if root_node.level == 0 {
-                let item_index = self.tree[root_node.tree_index].0;
-                results.push(item_index);
-            } else {
-                todo_list.push(root_node);
-            }
-        }
+        self._maybe_push_isxn(self.root_node(), query_rect, &mut results, &mut todo_list);
 
         // The todo_list will keep a LIFO stack of nodes to be processed.
         // The invariant is that everything in todo_list (envelope) intersects
         // query_rect, and is level > 0 (leaves are yielded).
         while let Some(node) = todo_list.pop() {
             self.get_children(node).iter().for_each(|&child| {
-                if !self.does_intersect(query_rect, child.tree_index) {
-                    return;
-                }
-                if child.level == 0 {
-                    let item_index = self.tree[child.tree_index].0;
-                    results.push(item_index);
-                } else {
-                    todo_list.push(child);
-                }
+                self._maybe_push_isxn(child, query_rect, &mut results, &mut todo_list);
             });
         }
 
         results
     }
 
-    fn find_self_intersection_candidates(&self) -> Vec<(usize, usize)> {
-        let mut todo_list: Vec<(FlatbushNode, FlatbushNode)> =
-            Vec::with_capacity(self.degree * self.level_indices.len());
+    fn _maybe_push_isxn(
+        &self,
+        node: FlatbushNode,
+        query_rect: Rect<C>,
+        results: &mut Vec<usize>,
+        todo_list: &mut Vec<FlatbushNode>,
+    ) {
+        if !self
+            .get_envelope(node.tree_index)
+            .intersects(query_rect.into())
+        {
+            return;
+        }
+        if node.level == 0 {
+            let item_index = self.tree[node.tree_index].0;
+            results.push(item_index);
+        } else {
+            todo_list.push(node);
+        }
+    }
+
+    /**
+     * Find geometries that might be within `distance` of `position`.
+     *
+     * This only checks bounding-box distance, so the candidates must be
+     * checked by the caller.
+     */
+    pub fn find_candidates_within(&self, position: Position<C>, distance: C) -> Vec<usize> {
+        let delta = Position::new(distance, distance);
+        self.find_intersection_candidates(Rect::new(position - delta, position + delta))
+    }
+
+    /**
+     * Find all distinct elements of the Rtree that might intersect each other.
+     *
+     * This will only return each candidate pair once; the element with the
+     * smaller index will be the first element of the pair.  It will not return
+     * the degenerate pair of two of the same elements.
+     *
+     * This only checks bounding-box intersection, so the candidates must be
+     * checked by the caller.
+     */
+    pub fn find_self_intersection_candidates(&self) -> Vec<(usize, usize)> {
         let mut results = Vec::new();
 
+        // The todo_list will keep a LIFO stack of pairs of nodes to be processed.
+        // The invariants for the todo_list are:
+        // * The first node in the pair is from self, the second from other
+        // * The nodes in the pair envelope intersect
+        // * The nodes in the pair are at the same level
+        // * The nodes are level > 0 (leaves are yielded).
+        let mut todo_list: Vec<(FlatbushNode, FlatbushNode)> =
+            Vec::with_capacity(self.degree * self.level_indices.len());
         let root_node = self.root_node();
 
-        todo_list.push((root_node, root_node));
+        if !self.get_envelope(root_node.tree_index).is_empty() {
+            // If rtree is empty, don't do anything.
+            self._maybe_push_self_isxn(root_node, root_node, &mut results, &mut todo_list);
+        }
 
-        // The todo_list will keep a LIFO stack of nodes to be processed.
-        // The invariant is that everything in todo_list (envelope)
-        // self-intersects, both nodes are at the same level,
-        // and are level > 0 (leaves are yielded).
         while let Some((node1, node2)) = todo_list.pop() {
             let children1: Vec<FlatbushNode>;
             let children2: Vec<FlatbushNode>;
@@ -176,39 +220,136 @@ where
                 children1 = self.get_children(node1);
                 children2 = self.get_children(node2);
             } else {
+                let node1_env = self.get_envelope(node1.tree_index);
+                let node2_env = self.get_envelope(node2.tree_index);
                 children1 = self
                     .get_children(node1)
                     .into_iter()
-                    .filter(|c1| self.does_intersect_internally(c1.tree_index, node2.tree_index))
+                    .filter(|c1| self.get_envelope(c1.tree_index).intersects(node2_env))
                     .collect();
                 children2 = self
                     .get_children(node2)
                     .into_iter()
-                    .filter(|c2| self.does_intersect_internally(c2.tree_index, node1.tree_index))
+                    .filter(|c2| self.get_envelope(c2.tree_index).intersects(node1_env))
                     .collect();
             }
             iproduct!(children1, children2)
                 .filter(|(c1, c2)| c1.tree_index <= c2.tree_index)
-                .filter(|(c1, c2)| self.does_intersect_internally(c1.tree_index, c2.tree_index))
-                .for_each(|(c1, c2)| match (c1.level, c2.level) {
-                    (0, 0) => {
-                        let item_index1 = self.tree[c1.tree_index].0;
-                        let item_index2 = self.tree[c2.tree_index].0;
-                        if item_index1 != item_index2 {
-                            results
-                                .push((item_index1.min(item_index2), item_index1.max(item_index2)));
-                        }
-                    }
-                    (0, _) | (_, 0) => {
-                        panic!("Self-intersection found with different levels.");
-                    }
-                    _ => {
-                        todo_list.push((c1, c2));
-                    }
+                .filter(|(c1, c2)| {
+                    self.get_envelope(c1.tree_index)
+                        .intersects(self.get_envelope(c2.tree_index))
+                })
+                .for_each(|(c1, c2)| {
+                    self._maybe_push_self_isxn(c1, c2, &mut results, &mut todo_list)
                 });
         }
 
         results
+    }
+
+    fn _maybe_push_self_isxn(
+        &self,
+        node1: FlatbushNode,
+        node2: FlatbushNode,
+        results: &mut Vec<(usize, usize)>,
+        todo_list: &mut Vec<(FlatbushNode, FlatbushNode)>,
+    ) {
+        match (node1.level, node2.level) {
+            (0, 0) => {
+                let item_index1 = self.tree[node1.tree_index].0;
+                let item_index2 = self.tree[node2.tree_index].0;
+                if item_index1 != item_index2 {
+                    results.push((item_index1.min(item_index2), item_index1.max(item_index2)));
+                }
+            }
+            (0, _) | (_, 0) => {
+                panic!("Self-intersection found with different levels.");
+            }
+            _ => {
+                todo_list.push((node1, node2));
+            }
+        }
+    }
+
+    /**
+     * Find all pairs of elements of this rtree and the other that might intersect.
+     *
+     * This will return pairs where the first index is for the element in this
+     * rtree, and the second index is for the other rtree.
+     *
+     * This only checks bounding-box intersection, so the candidates must be
+     * checked by the caller.
+     */
+    pub fn find_other_rtree_intersection_candidates(
+        &self,
+        other: &Flatbush<C>,
+    ) -> Vec<(usize, usize)> {
+        let mut results = Vec::new();
+
+        // The todo_list will keep a LIFO stack of pairs of nodes to be processed.
+        // The invariants for the todo_list are:
+        // * The first node in the pair is from self, the second from other
+        // * The nodes in the pair envelope intersect
+        // * The nodes in the pair are at the same level
+        // * The nodes are level > 0 (leaves are yielded).
+        let mut todo_list: Vec<(FlatbushNode, FlatbushNode)> =
+            Vec::with_capacity(self.degree * self.level_indices.len());
+        self._maybe_push_other_isxn(
+            self.root_node(),
+            other.root_node(),
+            &other,
+            &mut results,
+            &mut todo_list,
+        );
+
+        while let Some((node1, node2)) = todo_list.pop() {
+            let node1_env = self.get_envelope(node1.tree_index);
+            let node2_env = other.get_envelope(node2.tree_index);
+            let children1: Vec<FlatbushNode> = self
+                .get_children(node1)
+                .into_iter()
+                .filter(|c1| self.get_envelope(c1.tree_index).intersects(node2_env))
+                .collect();
+            let children2: Vec<FlatbushNode> = other
+                .get_children(node2)
+                .into_iter()
+                .filter(|c2| other.get_envelope(c2.tree_index).intersects(node1_env))
+                .collect();
+            iproduct!(children1, children2).for_each(|(c1, c2)| {
+                self._maybe_push_other_isxn(c1, c2, &other, &mut results, &mut todo_list)
+            });
+        }
+
+        results
+    }
+
+    fn _maybe_push_other_isxn(
+        &self,
+        node1: FlatbushNode,
+        node2: FlatbushNode,
+        other: &Flatbush<C>,
+        results: &mut Vec<(usize, usize)>,
+        todo_list: &mut Vec<(FlatbushNode, FlatbushNode)>,
+    ) {
+        if !self
+            .get_envelope(node1.tree_index)
+            .intersects(other.get_envelope(node2.tree_index))
+        {
+            return;
+        }
+        match (node1.level, node2.level) {
+            (0, 0) => {
+                let item_index1 = self.tree[node1.tree_index].0;
+                let item_index2 = other.tree[node2.tree_index].0;
+                results.push((item_index1, item_index2));
+            }
+            (0, _) | (_, 0) => {
+                panic!("Flatbush-intersection found with different levels.");
+            }
+            _ => {
+                todo_list.push((node1, node2));
+            }
+        }
     }
 
     fn root_node(&self) -> FlatbushNode {
@@ -219,15 +360,9 @@ where
         }
     }
 
-    fn does_intersect(&self, query_rect: Rect<C>, tree_index: usize) -> bool {
+    fn get_envelope(&self, tree_index: usize) -> Envelope<C> {
         let (_, env) = self.tree[tree_index];
-        env.intersects(query_rect.into())
-    }
-
-    fn does_intersect_internally(&self, tree_index1: usize, tree_index2: usize) -> bool {
-        let (_, env1) = self.tree[tree_index1];
-        let (_, env2) = self.tree[tree_index2];
-        env1.intersects(env2)
+        env
     }
 
     fn get_children(&self, node: FlatbushNode) -> Vec<FlatbushNode> {
@@ -260,7 +395,7 @@ struct FlatbushNode {
  * n is the number to take the log of.
  * e is the exponent of the base.
  * We define quick_log_ceil(0, e) == 0.
- * quick_log_ceil(n, 0) is illegal and will cause a panic.
+ * quick_log_ceil(n, 0) is illegal and will panic.
  *
  * so quick_log_ceil(15, 3) == ceil(log(15, 8)) == 2
  */
@@ -326,6 +461,14 @@ mod tests {
         assert_eq!(next_multiple(3, 2), 4);
         assert_eq!(next_multiple(65, 8), 72);
         assert_eq!(next_multiple(0, 8), 0);
+    }
+
+    #[test]
+    fn test_empty_tree() {
+        let empty = Flatbush::new_empty();
+        let query_rect = Rect::from(((0., 0.), (1., 1.)));
+        assert_eq!(empty.find_intersection_candidates(query_rect), vec![]);
+        assert_eq!(empty.find_self_intersection_candidates(), vec![]);
     }
 
     #[test]
@@ -525,6 +668,45 @@ mod tests {
         assert_eq!(rtree_results, brute_results);
     }
 
+    #[test]
+    fn test_rtree_intersection_unsorted() {
+        let mut envelopes1 = get_envelopes();
+        let n_envs = envelopes1.len();
+        let envelopes2 = envelopes1.split_off(2 * envelopes1.len() / 3);
+        assert_eq!(envelopes1.len() + envelopes2.len(), n_envs);
+
+        let f1 = Flatbush::new_unsorted(&envelopes1, 16);
+        let f2 = Flatbush::new_unsorted(&envelopes2, 16);
+        let mut rtree_results = f1.find_other_rtree_intersection_candidates(&f2);
+        rtree_results.sort();
+        let brute_results = find_brute_cross_intersections(&envelopes1, &envelopes2);
+        assert_eq!(rtree_results, brute_results);
+    }
+
+    #[test]
+    fn test_rtree_intersection_hilbert() {
+        let mut envelopes1 = get_envelopes();
+        let n_envs = envelopes1.len();
+        let envelopes2 = envelopes1.split_off(2 * envelopes1.len() / 3);
+        assert_eq!(envelopes1.len() + envelopes2.len(), n_envs);
+
+        let f1 = Flatbush::new(&envelopes1, 16);
+        let f2 = Flatbush::new(&envelopes2, 16);
+        let mut rtree_results = f1.find_other_rtree_intersection_candidates(&f2);
+        rtree_results.sort();
+        let brute_results = find_brute_cross_intersections(&envelopes1, &envelopes2);
+        assert_eq!(rtree_results, brute_results);
+    }
+
+    #[test]
+    fn test_rtree_intersection_with_empty() {
+        let envelopes1 = get_envelopes();
+        let f1 = Flatbush::new(&envelopes1, 16);
+        let f2 = Flatbush::new_empty();
+        let rtree_results = f1.find_other_rtree_intersection_candidates(&f2);
+        assert_eq!(rtree_results, vec![]);
+    }
+
     fn find_brute_intersections(
         query_rect: Rect<f32>,
         envelopes: &Vec<Envelope<f32>>,
@@ -545,6 +727,19 @@ mod tests {
         env_prod
             .into_iter()
             .filter(|((i1, _), (i2, _))| i1 < i2)
+            .filter(|((_, e1), (_, e2))| e1.intersects(*e2))
+            .map(|((i1, _), (i2, _))| (i1, i2))
+            .collect()
+    }
+
+    fn find_brute_cross_intersections(
+        envelopes1: &Vec<Envelope<f32>>,
+        envelopes2: &Vec<Envelope<f32>>,
+    ) -> Vec<(usize, usize)> {
+        type EnumEnv = (usize, Envelope<f32>);
+        let envelopes1: Vec<EnumEnv> = envelopes1.clone().into_iter().enumerate().collect();
+        let envelopes2: Vec<EnumEnv> = envelopes2.clone().into_iter().enumerate().collect();
+        iproduct!(envelopes1, envelopes2)
             .filter(|((_, e1), (_, e2))| e1.intersects(*e2))
             .map(|((i1, _), (i2, _))| (i1, i2))
             .collect()
