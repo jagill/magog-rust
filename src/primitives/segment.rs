@@ -1,4 +1,4 @@
-use crate::primitives::{Coordinate, Position, Rect};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position, Rect};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Segment<C: Coordinate> {
@@ -162,6 +162,12 @@ impl<C: Coordinate> Segment<C> {
             (PositionLocation::Right, false) => 1,
             _ => 0,
         };
+    }
+}
+
+impl<C: Coordinate> HasEnvelope<C> for Segment<C> {
+    fn envelope(&self) -> Envelope<C> {
+        Envelope::from(*self)
     }
 }
 

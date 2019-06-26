@@ -1,4 +1,7 @@
-use crate::primitives::{Coordinate, Envelope, Position, Segment, SegmentIntersection};
+use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
+use crate::primitives::{
+    Coordinate, Envelope, HasEnvelope, Position, Segment, SegmentIntersection,
+};
 use crate::rtree::{build_rtree, RTree, RTreeSegment};
 use crate::types::{Geometry, MultiPoint, Point};
 
@@ -32,6 +35,21 @@ impl<C: Coordinate> LineString<C> {
                 start: start.clone(),
                 end: end.clone(),
             })
+    }
+
+    /**
+     * Return the `n`th segment.
+     *
+     * This does not check that `n` is < positions.len() - 1;
+     * it will just panic if an invalid n is given.
+     */
+    pub fn get_segment(&self, n: usize) -> Segment<C> {
+        Segment::new(self.positions[n], self.positions[n + 1])
+    }
+
+    pub fn build_rtree(&self) -> Flatbush<C> {
+        let segments = self.segments_iter().collect();
+        Flatbush::new_unsorted(&segments, FLATBUSH_DEFAULT_DEGREE)
     }
 }
 
@@ -90,10 +108,6 @@ impl<C: Coordinate> LineString<C> {
 
     pub fn geometry_type(&self) -> &'static str {
         "LineString"
-    }
-
-    pub fn envelope(&self) -> Envelope<C> {
-        self._envelope
     }
 
     pub fn is_empty(&self) -> bool {
@@ -156,24 +170,20 @@ impl<C: Coordinate> LineString<C> {
             }
         }
 
-        let rtree = build_rtree(self);
-        let intersections = rtree
-            .intersection_candidates_with_other_tree(&rtree)
-            // Remove duplicates and self-insxns
-            .filter(|(c1, c2)| c1.id < c2.id);
+        let rtree = self.build_rtree();
+        let intersections = rtree.find_self_intersection_candidates();
 
         let num_segments = self.num_points() - 1;
-        for (candidate1, candidate2) in intersections {
-            match candidate1.segment.intersect_segment(candidate2.segment) {
+        for (low_id, high_id) in intersections {
+            let first_segment = self.get_segment(low_id);
+            let second_segment = self.get_segment(high_id);
+            match first_segment.intersect_segment(second_segment) {
                 SegmentIntersection::None => continue,
                 SegmentIntersection::Position(p) => {
-                    // We know from above that rtree_seg2.id > rtree_seg1.id
-                    let low_id = candidate1.id;
-                    let high_id = candidate2.id;
                     // Point intersections are fine at the shared point between
                     // adjacent segments.  In loops this includes the wraparound.
                     if ((high_id == low_id + 1) || (low_id == 0 && high_id == num_segments - 1))
-                        && (p == candidate1.segment.end || p == candidate1.segment.start)
+                        && (p == first_segment.end || p == first_segment.start)
                     {
                         continue;
                     } else {
@@ -186,7 +196,15 @@ impl<C: Coordinate> LineString<C> {
                 }
             }
         }
-        Ok(rtree)
+        // TEMP: Return this to the outside world to not affect return signature.
+        let old_rtree = build_rtree(self);
+        Ok(old_rtree)
+    }
+}
+
+impl<C: Coordinate> HasEnvelope<C> for LineString<C> {
+    fn envelope(&self) -> Envelope<C> {
+        self._envelope
     }
 }
 
@@ -194,6 +212,7 @@ impl<C: Coordinate> LineString<C> {
 mod tests {
     use super::*;
     use crate::primitives::Rect;
+
     use core::f32;
 
     #[test]

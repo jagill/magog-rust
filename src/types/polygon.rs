@@ -1,4 +1,4 @@
-use crate::primitives::{Coordinate, Envelope};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope};
 use crate::rtree::utils::{find_loop_loop_relation, LoopLoopRelation};
 use crate::types::{Geometry, LineString, MultiLineString, Point};
 
@@ -13,7 +13,7 @@ pub struct Polygon<C: Coordinate> {
 impl<C: Coordinate, ILS: Into<LineString<C>>> From<ILS> for Polygon<C> {
     fn from(ext: ILS) -> Self {
         let exterior: LineString<C> = ext.into();
-        let _envelope = exterior.envelope().clone();
+        let _envelope = exterior.envelope();
         Polygon {
             exterior,
             interiors: vec![],
@@ -24,7 +24,7 @@ impl<C: Coordinate, ILS: Into<LineString<C>>> From<ILS> for Polygon<C> {
 
 impl<C: Coordinate> Polygon<C> {
     pub fn new(exterior: LineString<C>, interiors: Vec<LineString<C>>) -> Polygon<C> {
-        let _envelope = exterior.envelope().clone();
+        let _envelope = exterior.envelope();
         Polygon {
             exterior,
             interiors,

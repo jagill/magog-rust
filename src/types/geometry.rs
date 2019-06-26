@@ -1,4 +1,4 @@
-use crate::primitives::{Coordinate, Envelope};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope};
 use crate::types::{Empty, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 /// An enum representing any possible geometry type.

@@ -1,4 +1,4 @@
-use crate::primitives::{Coordinate, Envelope, SegmentIntersection};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope, SegmentIntersection};
 use crate::types::{Geometry, LineString, Point};
 
 #[derive(Debug, PartialEq)]
