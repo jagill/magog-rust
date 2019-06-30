@@ -1,5 +1,6 @@
+use crate::algorithms::loop_relation::{find_loop_loop_relation, LoopLoopRelation};
+use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
 use crate::primitives::{Coordinate, Envelope, HasEnvelope};
-use crate::rtree::utils::{find_loop_loop_relation, LoopLoopRelation};
 use crate::types::{Geometry, LineString, MultiLineString, Point};
 
 #[derive(Debug, PartialEq)]
@@ -41,23 +42,26 @@ impl<C: Coordinate> Polygon<C> {
         if !self.exterior.is_closed() {
             return Err("Exterior is not a loop.");
         };
-        let ext_rtree = self.exterior._validate_with_rtree()?;
-        let mut rtrees = Vec::new(); // store interior ring rtrees
+        self.exterior.validate()?;
         for interior in &self.interiors {
             if !interior.is_closed() {
                 return Err("Interior linestring is not a loop.");
             };
-            let int_rtree = interior._validate_with_rtree()?;
-            if find_loop_loop_relation(&ext_rtree, &int_rtree) != LoopLoopRelation::Contains {
+            interior.validate()?;
+            if find_loop_loop_relation(&self.exterior, &interior) != LoopLoopRelation::Contains {
                 return Err("Interior loop not contained in exterior loop.");
             }
-            for other_rtree in rtrees.iter() {
-                if find_loop_loop_relation(&int_rtree, &other_rtree) != LoopLoopRelation::Separate {
-                    return Err("Two Interior rings intersect.");
-                }
-            }
-            rtrees.push(int_rtree);
         }
+
+        let rtree_of_interiors = Flatbush::new(&self.interiors, FLATBUSH_DEFAULT_DEGREE);
+        for (ls1_id, ls2_id) in rtree_of_interiors.find_self_intersection_candidates() {
+            let linestring_1 = &self.interiors[ls1_id];
+            let linestring_2 = &self.interiors[ls2_id];
+            if find_loop_loop_relation(linestring_1, linestring_2) != LoopLoopRelation::Separate {
+                return Err("Two Interior rings intersect.");
+            }
+        }
+
         Ok(())
     }
 }

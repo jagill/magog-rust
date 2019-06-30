@@ -2,7 +2,6 @@ use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
 use crate::primitives::{
     Coordinate, Envelope, HasEnvelope, Position, Segment, SegmentIntersection,
 };
-use crate::rtree::{build_rtree, RTree, RTreeSegment};
 use crate::types::{Geometry, MultiPoint, Point};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -152,7 +151,7 @@ impl<C: Coordinate> LineString<C> {
      * It does the work, but also returns the constructed rtree, which can be
      * used for additional validation checks, eg for MultiLineString.
      */
-    pub(crate) fn _validate_with_rtree(&self) -> Result<RTree<RTreeSegment<C>>, &'static str> {
+    pub(crate) fn _validate_with_rtree(&self) -> Result<Flatbush<C>, &'static str> {
         // Must have at least 2 points to be 1-dimensional.
         if self.num_points() < 2 {
             return Err("LineString must have at least 2 points.");
@@ -196,9 +195,7 @@ impl<C: Coordinate> LineString<C> {
                 }
             }
         }
-        // TEMP: Return this to the outside world to not affect return signature.
-        let old_rtree = build_rtree(self);
-        Ok(old_rtree)
+        Ok(rtree)
     }
 }
 

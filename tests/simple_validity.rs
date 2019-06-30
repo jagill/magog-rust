@@ -139,13 +139,13 @@ fn validity_polygon_invalid_inner_loop_self_intersection() {
 }
 
 #[test]
-fn validity_polygon_invalid_disconnected_interior() {
+fn validity_polygon_valid_disconnected_interior() {
     assert!(Polygon::new(
         vec![(0., 0.), (0., 1.), (1., 1.), (1., 0.), (0., 0.)].into(),
         vec![vec![(0., 0.), (0.5, 0.7), (1., 1.), (0.5, 0.4), (0., 0.)].into()]
     )
     .validate()
-    .is_err());
+    .is_ok());
 }
 
 #[test]
