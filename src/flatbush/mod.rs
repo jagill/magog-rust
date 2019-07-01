@@ -29,7 +29,7 @@ where
 
 impl<C: Coordinate> HasEnvelope<C> for Flatbush<C> {
     fn envelope(&self) -> Envelope<C> {
-        self.get_envelope(self.root_node().tree_index)
+        self.root_node().envelope
     }
 }
 
@@ -134,7 +134,7 @@ where
      * checked by the caller.
      */
     pub fn find_intersection_candidates(&self, query_rect: Rect<C>) -> Vec<usize> {
-        let mut todo_list: Vec<FlatbushNode> =
+        let mut todo_list: Vec<FlatbushNode<C>> =
             Vec::with_capacity(self.degree * self.level_indices.len());
         let mut results = Vec::new();
 
@@ -154,20 +154,16 @@ where
 
     fn _maybe_push_isxn(
         &self,
-        node: FlatbushNode,
+        node: FlatbushNode<C>,
         query_rect: Rect<C>,
         results: &mut Vec<usize>,
-        todo_list: &mut Vec<FlatbushNode>,
+        todo_list: &mut Vec<FlatbushNode<C>>,
     ) {
-        if !self
-            .get_envelope(node.tree_index)
-            .intersects(query_rect.into())
-        {
+        if !node.envelope.intersects(query_rect.into()) {
             return;
         }
         if node.level == 0 {
-            let item_index = self.tree[node.tree_index].0;
-            results.push(item_index);
+            results.push(node.sibling_index);
         } else {
             todo_list.push(node);
         }
@@ -203,45 +199,34 @@ where
         // * The nodes in the pair envelope intersect
         // * The nodes in the pair are at the same level
         // * The nodes are level > 0 (leaves are yielded).
-        let mut todo_list: Vec<(FlatbushNode, FlatbushNode)> =
+        let mut todo_list: Vec<(FlatbushNode<C>, FlatbushNode<C>)> =
             Vec::with_capacity(self.degree * self.level_indices.len());
         let root_node = self.root_node();
 
-        if !self.get_envelope(root_node.tree_index).is_empty() {
-            // If rtree is empty, don't do anything.
-            self._maybe_push_self_isxn(root_node, root_node, &mut results, &mut todo_list);
-        }
+        self._maybe_push_self_isxn(root_node, root_node, &mut results, &mut todo_list);
 
         while let Some((node1, node2)) = todo_list.pop() {
-            let children1: Vec<FlatbushNode>;
-            let children2: Vec<FlatbushNode>;
+            let children1: Vec<FlatbushNode<C>>;
+            let children2: Vec<FlatbushNode<C>>;
             if node1.tree_index == node2.tree_index {
                 // They are the same node, so we don't need to do the isxn checks.
                 children1 = self.get_children(node1);
                 children2 = self.get_children(node2);
             } else {
-                let node1_env = self.get_envelope(node1.tree_index);
-                let node2_env = self.get_envelope(node2.tree_index);
                 children1 = self
                     .get_children(node1)
                     .into_iter()
-                    .filter(|c1| self.get_envelope(c1.tree_index).intersects(node2_env))
+                    .filter(|c1| c1.envelope.intersects(node2.envelope))
                     .collect();
                 children2 = self
                     .get_children(node2)
                     .into_iter()
-                    .filter(|c2| self.get_envelope(c2.tree_index).intersects(node1_env))
+                    .filter(|c2| c2.envelope.intersects(node1.envelope))
                     .collect();
             }
-            iproduct!(children1, children2)
-                .filter(|(c1, c2)| c1.tree_index <= c2.tree_index)
-                .filter(|(c1, c2)| {
-                    self.get_envelope(c1.tree_index)
-                        .intersects(self.get_envelope(c2.tree_index))
-                })
-                .for_each(|(c1, c2)| {
-                    self._maybe_push_self_isxn(c1, c2, &mut results, &mut todo_list)
-                });
+            iproduct!(children1, children2).for_each(|(c1, c2)| {
+                self._maybe_push_self_isxn(c1, c2, &mut results, &mut todo_list)
+            });
         }
 
         results
@@ -249,17 +234,22 @@ where
 
     fn _maybe_push_self_isxn(
         &self,
-        node1: FlatbushNode,
-        node2: FlatbushNode,
+        node1: FlatbushNode<C>,
+        node2: FlatbushNode<C>,
         results: &mut Vec<(usize, usize)>,
-        todo_list: &mut Vec<(FlatbushNode, FlatbushNode)>,
+        todo_list: &mut Vec<(FlatbushNode<C>, FlatbushNode<C>)>,
     ) {
+        // Dedup results, and check for intersection.
+        if node1.tree_index > node2.tree_index || !node1.envelope.intersects(node2.envelope) {
+            return;
+        }
         match (node1.level, node2.level) {
             (0, 0) => {
-                let item_index1 = self.tree[node1.tree_index].0;
-                let item_index2 = self.tree[node2.tree_index].0;
-                if item_index1 != item_index2 {
-                    results.push((item_index1.min(item_index2), item_index1.max(item_index2)));
+                if node1.sibling_index != node2.sibling_index {
+                    results.push((
+                        node1.sibling_index.min(node2.sibling_index),
+                        node1.sibling_index.max(node2.sibling_index),
+                    ))
                 }
             }
             (0, _) | (_, 0) => {
@@ -292,31 +282,28 @@ where
         // * The nodes in the pair envelope intersect
         // * The nodes in the pair are at the same level
         // * The nodes are level > 0 (leaves are yielded).
-        let mut todo_list: Vec<(FlatbushNode, FlatbushNode)> =
+        let mut todo_list: Vec<(FlatbushNode<C>, FlatbushNode<C>)> =
             Vec::with_capacity(self.degree * self.level_indices.len());
         self._maybe_push_other_isxn(
             self.root_node(),
             other.root_node(),
-            &other,
             &mut results,
             &mut todo_list,
         );
 
         while let Some((node1, node2)) = todo_list.pop() {
-            let node1_env = self.get_envelope(node1.tree_index);
-            let node2_env = other.get_envelope(node2.tree_index);
-            let children1: Vec<FlatbushNode> = self
+            let children1: Vec<FlatbushNode<C>> = self
                 .get_children(node1)
                 .into_iter()
-                .filter(|c1| self.get_envelope(c1.tree_index).intersects(node2_env))
+                .filter(|c1| c1.envelope.intersects(node2.envelope))
                 .collect();
-            let children2: Vec<FlatbushNode> = other
+            let children2: Vec<FlatbushNode<C>> = other
                 .get_children(node2)
                 .into_iter()
-                .filter(|c2| other.get_envelope(c2.tree_index).intersects(node1_env))
+                .filter(|c2| c2.envelope.intersects(node1.envelope))
                 .collect();
             iproduct!(children1, children2).for_each(|(c1, c2)| {
-                self._maybe_push_other_isxn(c1, c2, &other, &mut results, &mut todo_list)
+                self._maybe_push_other_isxn(c1, c2, &mut results, &mut todo_list)
             });
         }
 
@@ -325,23 +312,17 @@ where
 
     fn _maybe_push_other_isxn(
         &self,
-        node1: FlatbushNode,
-        node2: FlatbushNode,
-        other: &Flatbush<C>,
+        node1: FlatbushNode<C>,
+        node2: FlatbushNode<C>,
         results: &mut Vec<(usize, usize)>,
-        todo_list: &mut Vec<(FlatbushNode, FlatbushNode)>,
+        todo_list: &mut Vec<(FlatbushNode<C>, FlatbushNode<C>)>,
     ) {
-        if !self
-            .get_envelope(node1.tree_index)
-            .intersects(other.get_envelope(node2.tree_index))
-        {
+        if !node1.envelope.intersects(node2.envelope) {
             return;
         }
         match (node1.level, node2.level) {
             (0, 0) => {
-                let item_index1 = self.tree[node1.tree_index].0;
-                let item_index2 = other.tree[node2.tree_index].0;
-                results.push((item_index1, item_index2));
+                results.push((node1.sibling_index, node2.sibling_index));
             }
             (0, _) | (_, 0) => {
                 panic!("Flatbush-intersection found with different levels.");
@@ -352,41 +333,40 @@ where
         }
     }
 
-    fn root_node(&self) -> FlatbushNode {
+    fn root_node(&self) -> FlatbushNode<C> {
+        let tree_index = self.tree.len() - 1;
         FlatbushNode {
             level: self.level_indices.len() - 1,
-            tree_index: self.tree.len() - 1,
-            node_index: 0,
+            tree_index: tree_index,
+            sibling_index: self.tree[tree_index].0,
+            envelope: self.tree[tree_index].1,
         }
     }
 
-    fn get_envelope(&self, tree_index: usize) -> Envelope<C> {
-        let (_, env) = self.tree[tree_index];
-        env
-    }
-
-    fn get_children(&self, node: FlatbushNode) -> Vec<FlatbushNode> {
+    fn get_children(&self, node: FlatbushNode<C>) -> Vec<FlatbushNode<C>> {
         let child_level = node.level - 1;
-        let start_index = self.level_indices[child_level] + node.node_index * self.degree;
+        let start_index = self.level_indices[child_level] + node.sibling_index * self.degree;
         let child_index_range = start_index..start_index + self.degree;
         child_index_range
             .map(move |tree_index| FlatbushNode {
                 level: child_level,
                 tree_index: tree_index,
-                node_index: self.tree[tree_index].0,
+                sibling_index: self.tree[tree_index].0,
+                envelope: self.tree[tree_index].1,
             })
             .collect()
     }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-struct FlatbushNode {
-    // The index within the tree
-    tree_index: usize,
+struct FlatbushNode<C: Coordinate> {
     // Level in tree, 0 is leaf, max is root.
     level: usize,
+    // The index within the tree
+    tree_index: usize,
     // Index of node in a level
-    node_index: usize,
+    sibling_index: usize,
+    envelope: Envelope<C>,
 }
 
 /**
