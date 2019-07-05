@@ -8,6 +8,8 @@ pub struct Position<C: Coordinate> {
     pub y: C,
 }
 
+pub type SafePosition<C> = (NotNan<C>, NotNan<C>);
+
 impl<C: Coordinate> From<(C, C)> for Position<C> {
     fn from(coords: (C, C)) -> Self {
         Position {
@@ -26,8 +28,8 @@ impl<C: Coordinate> From<[C; 2]> for Position<C> {
     }
 }
 
-impl<C: Coordinate> From<(NotNan<C>, NotNan<C>)> for Position<C> {
-    fn from(coords: (NotNan<C>, NotNan<C>)) -> Self {
+impl<C: Coordinate> From<SafePosition<C>> for Position<C> {
+    fn from(coords: SafePosition<C>) -> Self {
         Position {
             x: coords.0.into_inner(),
             y: coords.1.into_inner(),
@@ -75,7 +77,7 @@ impl<C: Coordinate> Position<C> {
         Ok(())
     }
 
-    pub fn to_hashable(&self) -> Result<(NotNan<C>, NotNan<C>), FloatIsNan> {
+    pub fn to_hashable(&self) -> Result<SafePosition<C>, FloatIsNan> {
         let x = NotNan::new(self.x)?;
         let y = NotNan::new(self.y)?;
         Ok((x, y))
