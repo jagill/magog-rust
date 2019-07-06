@@ -21,7 +21,7 @@ pub struct Flatbush<C>
 where
     C: Coordinate,
 {
-    degree: usize,
+    pub degree: usize,
     // nodes in level i are (level_indices[i] .. level_indices[i + 1] - 1)
     level_indices: Vec<usize>,
     tree: Vec<(usize, Envelope<C>)>,
@@ -315,7 +315,7 @@ where
         todo_list.push((node1, node2));
     }
 
-    fn root_node(&self) -> FlatbushNode<C> {
+    pub fn root_node(&self) -> FlatbushNode<C> {
         let tree_index = self.tree.len() - 1;
         FlatbushNode {
             level: self.level_indices.len() - 1,
@@ -325,7 +325,7 @@ where
         }
     }
 
-    fn get_children(&self, node: FlatbushNode<C>) -> Vec<FlatbushNode<C>> {
+    pub fn get_children(&self, node: FlatbushNode<C>) -> Vec<FlatbushNode<C>> {
         let child_level = node.level - 1;
         let start_index = self.level_indices[child_level] + node.sibling_index * self.degree;
         let child_index_range = start_index..start_index + self.degree;
@@ -341,14 +341,14 @@ where
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-struct FlatbushNode<C: Coordinate> {
+pub struct FlatbushNode<C: Coordinate> {
     // Level in tree, 0 is leaf, max is root.
-    level: usize,
+    pub level: usize,
     // The index within the tree
-    tree_index: usize,
+    pub tree_index: usize,
     // Index of node in a level
-    sibling_index: usize,
-    envelope: Envelope<C>,
+    pub sibling_index: usize,
+    pub envelope: Envelope<C>,
 }
 
 /**
