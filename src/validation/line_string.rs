@@ -1,6 +1,6 @@
-use crate::primitives::{SegmentIntersection, Coordinate};
-use crate::types::LineString;
 use crate::flatbush::Flatbush;
+use crate::primitives::{Coordinate, SegmentIntersection};
+use crate::types::LineString;
 
 impl<C: Coordinate> LineString<C> {
     /**
@@ -23,13 +23,18 @@ impl<C: Coordinate> LineString<C> {
      * used for additional validation checks, eg for MultiLineString.
      */
     pub(crate) fn _validate_with_rtree(&self) -> Result<Flatbush<C>, &'static str> {
-        // Must have at least 2 points to be 1-dimensional.
-        if self.num_points() < 2 {
+        if self.is_empty() {
+            // LineStrings with no points are valid empty geometries
+            return Ok(Flatbush::new_empty());
+        } else if self.num_points() == 1 {
+            // Must have at least 2 points to be 1-dimensional.
             return Err("LineString must have at least 2 points.");
         }
+
         // Declare the errors here
         let repeated_err = Err("LineString has repeated points.");
         let intersection_err = Err("LineString has self-intersection.");
+
         for seg in self.segments_iter() {
             // First check: should have finite coordinates.
             seg.start.validate()?;
@@ -67,5 +72,51 @@ impl<C: Coordinate> LineString<C> {
             }
         }
         Ok(rtree)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::primitives::Position;
+
+    #[test]
+    fn test_valid_microsoft_examples() {
+        assert!(LineString::from(Vec::<Position<f32>>::new())
+            .validate()
+            .is_ok());
+        assert!(
+            LineString::from(vec![(1., 1.), (2., 3.), (4., 8.), (-6., 3.)])
+                .validate()
+                .is_ok()
+        );
+        assert!(LineString::from(vec![(1., 1.), (3., 3.)])
+            .validate()
+            .is_ok());
+    }
+
+    #[test]
+    fn test_invalid_microsoft_examples() {
+        assert!(LineString::from(vec![(1., 1.)]).validate().is_err());
+        assert!(LineString::from(vec![(1., 1.), (1., 1.)])
+            .validate()
+            .is_err());
+        assert!(
+            LineString::from(vec![(1., 4.), (3., 4.), (2., 4.), (2., 0.)])
+                .validate()
+                .is_err()
+        );
+        // The following two are "valid" by Microsoft's criteria, but non-simple.
+        // This library equates valid and simple, as per the SQL3 spec.
+        assert!(
+            LineString::from(vec![(1., 1.), (3., 3.), (2., 4.), (2., 0.)])
+                .validate()
+                .is_err()
+        );
+        assert!(
+            LineString::from(vec![(1., 1.), (3., 3.), (2., 4.), (2., 0.), (1., 1.)])
+                .validate()
+                .is_err()
+        );
     }
 }

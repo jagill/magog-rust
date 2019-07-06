@@ -7,13 +7,11 @@ impl<C: Coordinate> MultiPoint<C> {
     /**
      * Validate the geometry.
      *
-     * A MultiPoint is valid if it is not empty, has no invalid points, and has
-     * no duplicate points.
+     * A MultiPoint is valid if it:
+     * 1. is empty, or
+     * 2. has no invalid points and no duplicate points.
      */
     pub fn validate(&self) -> Result<(), &'static str> {
-        if self.points.is_empty() {
-            return Err("MultiPoint has no points.");
-        }
         let mut position_set = HashSet::new();
         for point in &self.points {
             point.validate()?;

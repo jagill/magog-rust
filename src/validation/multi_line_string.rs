@@ -5,7 +5,8 @@ use crate::types::{Geometry, MultiLineString, Point};
 impl<C: Coordinate> MultiLineString<C> {
     pub fn validate(&self) -> Result<(), &'static str> {
         if self.line_strings.len() == 0 {
-            return Err("MultiLineString has no LineStrings.");
+            // Empty multilinestrings are valid empty geometries.
+            return Ok(());
         }
         let intersection_err = Err("Intersection between LineStrings.");
 
@@ -44,5 +45,49 @@ impl<C: Coordinate> MultiLineString<C> {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::LineString;
+
+    #[test]
+    fn test_valid_microsoft_examples() {
+        assert!(MultiLineString::from(Vec::<LineString<f32>>::new())
+            .validate()
+            .is_ok());
+
+        assert!(MultiLineString::from(
+            vec![vec![(1., 1.), (3., 5.)], vec![(-5., 3.), (-8., -2.)],]
+        )
+        .validate()
+        .is_ok());
+        assert!(
+            MultiLineString::from(vec![vec![(0., 2.), (1., 1.)], vec![(1., 0.), (1., 1.)],])
+                .validate()
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn test_invalid_microsoft_examples() {
+        assert!(
+            MultiLineString::from(vec![vec![(1., 1.), (5., 5.)], vec![(3., 1.), (1., 3.)],])
+                .validate()
+                .is_err()
+        );
+        assert!(MultiLineString::from(vec![
+            vec![(1., 1.), (3., 3.), (5., 5.)],
+            vec![(3., 3.), (5., 5.), (7., 7.)],
+        ])
+        .validate()
+        .is_err());
+        assert!(
+            MultiLineString::from(vec![vec![(1., 1.), (3., 5.)], vec![(-5., 3.)],])
+                .validate()
+                .is_err()
+        );
     }
 }

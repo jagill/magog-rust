@@ -68,15 +68,20 @@ impl<C: Coordinate> Position<C> {
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
-        if !&self.x.is_finite() {
+        if !self.x.is_finite() {
             return Err("x is not finite");
         };
-        if !&self.y.is_finite() {
+        if !self.y.is_finite() {
             return Err("y is not finite");
         };
         Ok(())
     }
 
+    /**
+     * Return a position guaranteed not to have NaNs.
+     *
+     * If one of the coordinates is NaN, return FloatIsNan error.
+     */
     pub fn to_hashable(&self) -> Result<SafePosition<C>, FloatIsNan> {
         let x = NotNan::new(self.x)?;
         let y = NotNan::new(self.y)?;
