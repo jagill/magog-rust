@@ -64,18 +64,6 @@ impl<C: Coordinate> MultiPolygon<C> {
         }
     }
 
-    pub fn validate(&self) -> Result<(), &'static str> {
-        if self.polygons.len() == 0 {
-            return Err("MultiPolygon has no Polygon.");
-        }
-
-        for polygon in self.polygons.iter() {
-            polygon.validate()?;
-        }
-
-        Ok(())
-    }
-
     /// The boundary of a MultiPolygon is the boundaries of the Polygons.
     pub fn boundary(&self) -> Geometry<C> {
         // TODO: STUB  Should be a union of the boundaries of the component polygons.

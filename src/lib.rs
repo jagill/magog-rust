@@ -3,6 +3,7 @@ pub mod types;
 
 mod algorithms;
 mod flatbush;
+mod validation;
 
 #[cfg(test)]
 mod tests {

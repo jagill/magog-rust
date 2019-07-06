@@ -1,7 +1,6 @@
 use crate::primitives::{Coordinate, Envelope, Position};
 use crate::types::{Geometry, Point};
-use ordered_float::FloatIsNan;
-use std::collections::{BTreeSet, HashSet};
+use std::collections::BTreeSet;
 
 #[derive(Debug, PartialEq)]
 pub struct MultiPoint<C: Coordinate> {
@@ -50,33 +49,6 @@ impl<C: Coordinate> MultiPoint<C> {
             Err(_) => false,
             Ok(_) => true,
         }
-    }
-
-    /**
-     * Validate the geometry.
-     *
-     * A MultiPoint is valid if it is not empty, has no invalid points, and has
-     * no duplicate points.
-     */
-    pub fn validate(&self) -> Result<(), &'static str> {
-        if self.points.is_empty() {
-            return Err("MultiPoint has no points.");
-        }
-        let mut position_set = HashSet::new();
-        for point in &self.points {
-            point.validate()?;
-            match point.0.to_hashable() {
-                Err(FloatIsNan) => return Err("Point contains NaN."),
-                Ok(hashable) => {
-                    if position_set.contains(&hashable) {
-                        return Err("Duplicate point");
-                    } else {
-                        position_set.insert(hashable);
-                    }
-                }
-            }
-        }
-        Ok(())
     }
 
     /**

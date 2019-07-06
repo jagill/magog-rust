@@ -16,10 +16,6 @@ impl<C: Coordinate> Point<C> {
         Point(position)
     }
 
-    pub fn validate(&self) -> Result<(), &'static str> {
-        self.0.validate()
-    }
-
     pub fn x(&self) -> C {
         self.0.x
     }
