@@ -1,4 +1,4 @@
-use crate::primitives::{Coordinate, Envelope, Position};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position};
 use crate::types::Geometry;
 
 #[derive(Debug, PartialEq)]
@@ -25,6 +25,12 @@ impl<C: Coordinate> Point<C> {
     }
 }
 
+impl<C: Coordinate> HasEnvelope<C> for Point<C> {
+    fn envelope(&self) -> Envelope<C> {
+        Envelope::from((self.0, self.0))
+    }
+}
+
 // GEOMETRY implementation
 impl<C: Coordinate> Point<C> {
     pub fn dimension(&self) -> u8 {
@@ -33,10 +39,6 @@ impl<C: Coordinate> Point<C> {
 
     pub fn geometry_type(&self) -> &'static str {
         "Point"
-    }
-
-    pub fn envelope(&self) -> Envelope<C> {
-        Envelope::from((self.0, self.0))
     }
 
     pub fn is_empty(&self) -> bool {

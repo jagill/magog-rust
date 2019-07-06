@@ -1,10 +1,16 @@
-use crate::primitives::{Coordinate, Envelope};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope};
 use crate::types::Geometry;
 use std::marker::PhantomData;
 
 #[derive(Debug, PartialEq)]
 pub struct Empty<C: Coordinate> {
     phantom: PhantomData<C>,
+}
+
+impl<C: Coordinate> HasEnvelope<C> for Empty<C> {
+    fn envelope(&self) -> Envelope<C> {
+        Envelope::new(None)
+    }
 }
 
 impl<C: Coordinate> Empty<C> {
@@ -20,10 +26,6 @@ impl<C: Coordinate> Empty<C> {
 
     pub fn geometry_type(&self) -> &'static str {
         "Empty"
-    }
-
-    pub fn envelope(&self) -> Envelope<C> {
-        Envelope::new(None)
     }
 
     pub fn is_empty(&self) -> bool {

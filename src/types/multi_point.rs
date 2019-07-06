@@ -1,4 +1,4 @@
-use crate::primitives::{Coordinate, Envelope, Position};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position};
 use crate::types::{Geometry, Point};
 use std::collections::BTreeSet;
 
@@ -26,6 +26,12 @@ impl<C: Coordinate> MultiPoint<C> {
     }
 }
 
+impl<C: Coordinate> HasEnvelope<C> for MultiPoint<C> {
+    fn envelope(&self) -> Envelope<C> {
+        self._envelope
+    }
+}
+
 // GEOMETRY implementation
 impl<C: Coordinate> MultiPoint<C> {
     pub fn dimension(&self) -> u8 {
@@ -34,10 +40,6 @@ impl<C: Coordinate> MultiPoint<C> {
 
     pub fn geometry_type(&self) -> &'static str {
         "MultiPoint"
-    }
-
-    pub fn envelope(&self) -> Envelope<C> {
-        self._envelope
     }
 
     pub fn is_empty(&self) -> bool {

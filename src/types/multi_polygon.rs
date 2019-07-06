@@ -38,6 +38,12 @@ impl<C: Coordinate> MultiPolygon<C> {
     }
 }
 
+impl<C: Coordinate> HasEnvelope<C> for MultiPolygon<C> {
+    fn envelope(&self) -> Envelope<C> {
+        self._envelope
+    }
+}
+
 // GEOMETRY implementation
 impl<C: Coordinate> MultiPolygon<C> {
     pub fn dimension(&self) -> u8 {
@@ -46,10 +52,6 @@ impl<C: Coordinate> MultiPolygon<C> {
 
     pub fn geometry_type(&self) -> &'static str {
         "MultiPolygon"
-    }
-
-    pub fn envelope(&self) -> Envelope<C> {
-        self._envelope
     }
 
     pub fn is_empty(&self) -> bool {

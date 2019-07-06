@@ -36,6 +36,12 @@ impl<C: Coordinate> MultiLineString<C> {
     }
 }
 
+impl<C: Coordinate> HasEnvelope<C> for MultiLineString<C> {
+    fn envelope(&self) -> Envelope<C> {
+        self._envelope
+    }
+}
+
 // GEOMETRY implementation
 impl<C: Coordinate> MultiLineString<C> {
     pub fn dimension(&self) -> u8 {
@@ -44,10 +50,6 @@ impl<C: Coordinate> MultiLineString<C> {
 
     pub fn geometry_type(&self) -> &'static str {
         "MultiLineString"
-    }
-
-    pub fn envelope(&self) -> Envelope<C> {
-        self._envelope
     }
 
     pub fn is_empty(&self) -> bool {
