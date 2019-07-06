@@ -85,10 +85,10 @@ mod tests {
     }
 
     #[test]
-    fn check_empty_not_simple() {
+    fn check_empty_simple() {
         let ls: Vec<LineString<f32>> = Vec::new();
         let mls = MultiLineString::new(ls);
-        assert!(!mls.is_simple());
+        assert!(mls.is_simple());
     }
 
     #[test]

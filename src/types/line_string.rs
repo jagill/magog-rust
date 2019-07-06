@@ -234,10 +234,10 @@ mod tests {
 
     // is_simple checks
     #[test]
-    fn check_empty_not_simple() {
+    fn check_empty_simple() {
         let empty_vec: Vec<Position<f32>> = Vec::new();
         let ls = LineString::new(empty_vec);
-        assert!(!ls.is_simple());
+        assert!(ls.is_simple());
     }
 
     #[test]

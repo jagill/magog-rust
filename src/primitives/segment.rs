@@ -111,7 +111,7 @@ impl<C: Coordinate> Segment<C> {
                 let da_2 = Position::dot(da, da);
                 // Offset, in units of da.
                 let t0 = Position::dot(offset, da) / da_2;
-                // self.start to other end, in units of da.
+                // self.start to other.end, in units of da.
                 let t1 = t0 + Position::dot(da, db) / da_2;
                 let (t_min, t_max) = t0.min_max(t1);
                 if t_min > C::one() || t_max < C::zero() {
@@ -119,10 +119,13 @@ impl<C: Coordinate> Segment<C> {
                     return SegmentIntersection::None;
                 } else {
                     // Else, the intersect
-                    return SegmentIntersection::Segment(Segment::new(
-                        self.start + da * t_min.max(C::zero()),
-                        self.start + da * t_max.min(C::one()),
-                    ));
+                    let start = self.start + da * t_min.max(C::zero());
+                    let end = self.start + da * t_max.min(C::one());
+                    if start == end {
+                        return SegmentIntersection::Position(start);
+                    } else {
+                        return SegmentIntersection::Segment(Segment::new(start, end));
+                    }
                 }
             }
         } else {
@@ -330,6 +333,16 @@ mod tests {
         assert_eq!(
             s1.intersect_segment(s2),
             SegmentIntersection::Segment(((0.2, 0.2), (0.5, 0.5)).into())
+        );
+    }
+
+    #[test]
+    fn check_degenerate_segment_intersection() {
+        let s1 = Segment::from(((0.0, 0.0), (1.0, 0.0)));
+        let s2 = Segment::from(((1.0, 0.0), (2.0, 0.0)));
+        assert_eq!(
+            s1.intersect_segment(s2),
+            SegmentIntersection::Position((1.0, 0.0).into())
         );
     }
 

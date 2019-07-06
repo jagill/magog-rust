@@ -53,6 +53,12 @@ impl<C: Coordinate> Polygon<C> {
     }
 }
 
+impl<C: Coordinate> HasEnvelope<C> for Polygon<C> {
+    fn envelope(&self) -> Envelope<C> {
+        self._envelope
+    }
+}
+
 // GEOMETRY implementation
 impl<C: Coordinate> Polygon<C> {
     pub fn dimension(&self) -> u8 {
@@ -61,10 +67,6 @@ impl<C: Coordinate> Polygon<C> {
 
     pub fn geometry_type(&self) -> &'static str {
         "Polygon"
-    }
-
-    pub fn envelope(&self) -> Envelope<C> {
-        self._envelope
     }
 
     pub fn is_empty(&self) -> bool {

@@ -65,7 +65,9 @@ pub fn find_loop_loop_relation<C: Coordinate>(
             let seg2 = segments_2[node2.sibling_index];
             let mut intersecting_position: Option<Position<C>> = None;
             match seg1.intersect_segment(seg2) {
-                SegmentIntersection::Segment(_) => return LoopLoopRelation::Crosses,
+                SegmentIntersection::Segment(_s) => {
+                    return LoopLoopRelation::Crosses;
+                }
                 SegmentIntersection::Position(p) => {
                     if ![seg1.start, seg1.end, seg2.start, seg2.end].contains(&p) {
                         return LoopLoopRelation::Crosses;
@@ -82,10 +84,6 @@ pub fn find_loop_loop_relation<C: Coordinate>(
                     .entry(seg1.start.to_hashable().unwrap())
                     .or_insert(0);
                 *wn1 += Segment::find_winding_number(seg1.start, seg2);
-                println!(
-                    "seg1.start {:?} wn {} p {:?}",
-                    seg1.start, *wn1, intersecting_position
-                );
             }
 
             if Some(seg2.start) != intersecting_position {
@@ -93,10 +91,6 @@ pub fn find_loop_loop_relation<C: Coordinate>(
                     .entry(seg2.start.to_hashable().unwrap())
                     .or_insert(0);
                 *wn2 += Segment::find_winding_number(seg2.start, seg1);
-                println!(
-                    "seg2.start {:?} wn {} p {:?}",
-                    seg2.start, *wn2, intersecting_position
-                );
             }
         } else if node1.level >= node2.level {
             for child1 in rtree_1.get_children(node1) {
@@ -411,6 +405,16 @@ mod tests {
         assert_eq!(
             find_loop_loop_relation(&loop_a, &loop_b),
             LoopLoopRelation::Contains
+        )
+    }
+
+    #[test]
+    fn check_loops_touching_at_corner() {
+        let loop_a = LineString::from(vec![(1., 1.), (1., -1.), (-1., -1.), (-1., 1.), (1., 1.)]);
+        let loop_b = LineString::from(vec![(1., 1.), (3., 1.), (3., 3.), (1., 3.), (1., 1.)]);
+        assert_eq!(
+            find_loop_loop_relation(&loop_a, &loop_b),
+            LoopLoopRelation::Separate
         )
     }
 
