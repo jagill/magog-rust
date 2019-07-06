@@ -82,10 +82,10 @@ impl<C: Coordinate> LineString<C> {
 
     /// Return the first coordinate of the linestring
     pub fn start_point(&self) -> Option<Point<C>> {
-        if self.positions.len() == 0 {
-            return None;
+        match self.positions.get(0) {
+            None => None,
+            Some(pos) => Some(Point(*pos)),
         }
-        Some(Point(self.positions[0]))
     }
 
     /// Return the last coordinate of the linestring

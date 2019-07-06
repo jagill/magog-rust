@@ -1,5 +1,5 @@
 use crate::primitives::{Coordinate, Envelope, HasEnvelope};
-use crate::types::{Geometry, Point, Polygon};
+use crate::types::{Geometry, Point, Polygon, MultiLineString};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiPolygon<C: Coordinate> {
@@ -32,9 +32,15 @@ impl<C: Coordinate> MultiPolygon<C> {
         Point::from((C::zero(), C::zero()))
     }
 
-    pub fn point_on_surface(&self) -> Point<C> {
-        // TODO: STUB
-        Point::from((C::zero(), C::zero()))
+    pub fn point_on_surface(&self) -> Option<Point<C>> {
+        if !self.polygons.is_empty() {
+            for poly in &self.polygons {
+                if !poly.is_empty() {
+                    return poly.point_on_surface();
+                }
+            }
+        }
+        None
     }
 }
 
@@ -68,7 +74,11 @@ impl<C: Coordinate> MultiPolygon<C> {
 
     /// The boundary of a MultiPolygon is the boundaries of the Polygons.
     pub fn boundary(&self) -> Geometry<C> {
-        // TODO: STUB  Should be a union of the boundaries of the component polygons.
-        Geometry::empty()
+        let line_strings = self.polygons.iter().map(|p| p.boundary())
+            .filter(|g| !g.is_empty())
+            .filter_map(|g| g.as_multilinestring())
+            .flat_map(|mls| mls.line_strings)
+            .collect();
+        MultiLineString::new(line_strings).into()
     }
 }

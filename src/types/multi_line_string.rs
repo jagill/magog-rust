@@ -1,5 +1,6 @@
-use crate::primitives::{Coordinate, Envelope, HasEnvelope};
-use crate::types::{Geometry, LineString};
+use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position};
+use crate::types::{Geometry, LineString, MultiPoint};
+use std::collections::BTreeSet;
 
 #[derive(Debug, PartialEq)]
 pub struct MultiLineString<C: Coordinate> {
@@ -56,11 +57,31 @@ impl<C: Coordinate> MultiLineString<C> {
         self.line_strings.iter().all(|ls| ls.is_empty())
     }
 
-    /// The boundary of a MultiLineString is are the boundaries of
-    /// the component LineStrings that don't touch any other LineString.
+    /**
+     * A point is in the MultiLineString boundary if it is in an odd-number of
+     * boundaries of the compoinent LineStrings.
+     */
     pub fn boundary(&self) -> Geometry<C> {
-        // TODO: STUB
-        Geometry::empty()
+        // Use BTreeSet to ensure consistent output ordering.
+        let mut boundary = BTreeSet::new();
+        self.line_strings
+            .iter()
+            .filter_map(|ls| ls.boundary().as_multipoint())
+            .flat_map(|mp| mp.points)
+            .filter_map(|point| point.0.to_hashable().ok())
+            .for_each(|pos| {
+                if boundary.contains(&pos) {
+                    boundary.remove(&pos);
+                } else {
+                    boundary.insert(pos);
+                }
+            });
+        if boundary.is_empty() {
+            Geometry::empty()
+        } else {
+            let positions: Vec<Position<C>> = boundary.iter().map(|p| Position::from(*p)).collect();
+            MultiPoint::from(positions).into()
+        }
     }
 
     /// A MultiLineString is simple if each LineString is simple, and none
