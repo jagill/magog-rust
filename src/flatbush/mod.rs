@@ -5,7 +5,6 @@
  * Initial conversion to rust by Jacob Wasserman @jwass
  */
 use num_traits::PrimInt;
-use rayon::prelude::*;
 
 use itertools::iproduct;
 mod hilbert;
@@ -61,7 +60,7 @@ where
             .map(|(i, e)| (hilbert_square.safe_hilbert(e), i, e))
             .collect();
 
-        entries.par_sort_unstable_by_key(|&(h, _, _)| h);
+        entries.sort_unstable_by_key(|&(h, _, _)| h);
 
         Flatbush::_new_unsorted(
             entries.into_iter().map(|(_, i, e)| (i, e)).collect(),

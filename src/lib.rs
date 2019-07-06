@@ -3,7 +3,6 @@ pub mod types;
 
 mod algorithms;
 mod flatbush;
-mod rtree;
 
 #[cfg(test)]
 mod tests {
