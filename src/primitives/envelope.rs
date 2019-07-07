@@ -88,6 +88,13 @@ impl<C: Coordinate> Envelope<C> {
             (Some(r1), Some(r2)) => r1.merge(r2).into(),
         }
     }
+
+    pub fn center(&self) -> Option<Position<C>> {
+        match self.rect {
+            None => None,
+            Some(r) => Some(r.center()),
+        }
+    }
 }
 
 pub trait HasEnvelope<C: Coordinate> {

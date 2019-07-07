@@ -1,6 +1,6 @@
 use crate::primitives::Coordinate;
 use ordered_float::{FloatIsNan, NotNan};
-use std::ops::{Add, Mul, Sub};
+use std::ops::{Add, Mul, Sub, Div};
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Position<C: Coordinate> {
@@ -110,6 +110,14 @@ impl<C: Coordinate> Mul<C> for Position<C> {
 
     fn mul(self, rhs: C) -> Self::Output {
         Position::new(self.x * rhs, self.y * rhs)
+    }
+}
+
+impl<C: Coordinate> Div<C> for Position<C> {
+    type Output = Self;
+
+    fn div(self, rhs: C) -> Self::Output {
+        Position::new(self.x / rhs, self.y / rhs)
     }
 }
 

@@ -74,6 +74,10 @@ impl<C: Coordinate> Rect<C> {
             },
         }
     }
+
+    pub fn center(&self) -> Position<C> {
+        (self.max + self.min) / (C::one() + C::one())
+    }
 }
 
 #[cfg(test)]
