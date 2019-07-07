@@ -47,17 +47,20 @@ where
 
     pub fn new(items: &Vec<impl HasEnvelope<C>>, degree: usize) -> Flatbush<C> {
         let total_envelope = Envelope::from_envelopes(items.iter().map(|e| e.envelope()));
-        if total_envelope.rect == None {
-            // The list of items are empty, or all items are empty.
-            return Flatbush::new_unsorted(items, degree);
+        let hilbert_square: Hilbert<C>;
+        match total_envelope.rect {
+            None => {
+                // The list of items are empty, or all items are empty.
+                return Flatbush::new_unsorted(items, degree);
+            }
+            Some(rect) => hilbert_square = Hilbert::new(rect),
         }
-        let hilbert_square = Hilbert::new(total_envelope.rect.unwrap());
 
         let mut entries: Vec<(u32, usize, Envelope<C>)> = items
             .iter()
             .map(|e| e.envelope())
             .enumerate()
-            .map(|(i, e)| (hilbert_square.safe_hilbert(e), i, e))
+            .map(|(i, e)| (hilbert_square.safe_hilbert(e.center()), i, e))
             .collect();
 
         entries.sort_unstable_by_key(|&(h, _, _)| h);

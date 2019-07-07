@@ -1,8 +1,7 @@
-use crate::primitives::{Coordinate, Envelope, Rect};
+use crate::primitives::{Coordinate, Position, Rect};
 
 pub struct Hilbert<C: Coordinate> {
-    x: C,
-    y: C,
+    rect: Rect<C>,
     x_scale: C,
     y_scale: C,
 }
@@ -12,34 +11,51 @@ where
     C: Coordinate,
 {
     pub fn new(rect: Rect<C>) -> Self {
-        let hilbert_max = C::from((1 << 16) - 1).unwrap();
-        let delta = rect.max - rect.min;
-        Hilbert {
-            x: rect.min.x,
-            y: rect.min.y,
-            x_scale: hilbert_max / delta.x,
-            y_scale: hilbert_max / delta.y,
+        if rect.max == rect.min {
+            Hilbert {
+                rect,
+                x_scale: C::zero(),
+                y_scale: C::zero(),
+            }
+        } else {
+            let hilbert_max = C::from((1 << 16) - 1).unwrap();
+            let delta = rect.max - rect.min;
+            Hilbert {
+                rect,
+                x_scale: hilbert_max / delta.x,
+                y_scale: hilbert_max / delta.y,
+            }
         }
     }
 
     /**
-     * Place empty envelopes at the end.
+     * Like hilbert, but checks that position is not None and with range.
+     *
+     * None positions and those out of range are assigned maxint.
      */
-    pub fn safe_hilbert(&self, env: Envelope<C>) -> u32 {
-        match env.rect {
-            None => u32::max_value(),
-            Some(r) => self.hilbert(r),
+    pub fn safe_hilbert(&self, position: Option<Position<C>>) -> u32 {
+        match position {
+            Some(p) if self.rect.contains(p) => self.hilbert(p),
+            _ => u32::max_value(),
         }
     }
 
-    pub fn hilbert(&self, rect: Rect<C>) -> u32 {
-        let x = self.x_scale * (rect.min.x - self.x);
-        let y = self.y_scale * (rect.min.y - self.y);
+    /**
+     * Returns the hilbert index of position in the rectangle.
+     *
+     * This does not check bounds; it will probably panic for positions
+     * outside of the rectangle.  This behavior should not be relied on.
+     */
+    pub fn hilbert(&self, position: Position<C>) -> u32 {
+        let x = self.x_scale * (position.x - self.rect.min.x);
+        let y = self.y_scale * (position.y - self.rect.min.y);
         Self::hilbert_normalized(x.floor().to_u32().unwrap(), y.floor().to_u32().unwrap())
     }
 
-    // Fast Hilbert curve algorithm by http://threadlocalmutex.com/
-    // Ported from C++ https://github.com/rawrunprotected/hilbert_curves (public domain)
+    /**
+     * Fast Hilbert curve algorithm by http://threadlocalmutex.com/
+     * Ported from C++ https://github.com/rawrunprotected/hilbert_curves (public domain)
+     */
     #[allow(non_snake_case)]
     pub fn hilbert_normalized(x: u32, y: u32) -> u32 {
         let mut a = x ^ y;
@@ -99,8 +115,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::Hilbert;
-    use super::Rect;
+    use super::*;
 
     #[test]
     fn normalized() {
@@ -109,13 +124,56 @@ mod tests {
     }
 
     #[test]
-    fn hilbert() {
+    fn hilbert_from_position() {
         let total_rect = Rect::from(((1., 2.), (2., 8.)));
-        let query_rect = Rect::from(((1.25, 5.), (2., 8.)));
+        let position = Position::new(1.25, 5.);
         let h = Hilbert::new(total_rect);
-        let result = h.hilbert(query_rect);
+        let result = h.hilbert(position);
         // x = floor(0.25 * 65535) y = floor(0.5 * 65535)
         // or hilbert_normalized(16383, 32767)
         assert_eq!(result, 805306368);
     }
+
+    #[test]
+    fn hilbert_from_none_position() {
+        let total_rect = Rect::from(((1., 2.), (2., 3.)));
+        let position = None;
+        let h = Hilbert::new(total_rect);
+        let result = h.safe_hilbert(position);
+        assert_eq!(result, u32::max_value());
+    }
+
+    #[test]
+    fn hilbert_from_out_of_bounds_position() {
+        let total_rect = Rect::from(((1., 2.), (2., 3.)));
+        let position = Some(Position::new(4., 4.));
+        let h = Hilbert::new(total_rect);
+        let result = h.safe_hilbert(position);
+        assert_eq!(result, u32::max_value());
+    }
+
+    #[test]
+    fn hilbert_with_degenerate_rect() {
+        let position = Position::new(1., 1.);
+        let total_rect = Rect::from((position, position));
+        let h = Hilbert::new(total_rect);
+        let result = h.hilbert(position);
+        assert_eq!(result, 0);
+    }
+
+    #[test]
+    fn hilbert_ordering() {
+        let total_rect = Rect::from(((0., 0.), (4., 4.)));
+        let h = Hilbert::new(total_rect);
+        let hi0 = h.hilbert(Position::new(0., 0.));
+        let hi1 = h.hilbert(Position::new(1., 1.));
+        let hi2 = h.hilbert(Position::new(1., 3.));
+        let hi3 = h.hilbert(Position::new(3., 3.));
+        let hi4 = h.hilbert(Position::new(3., 1.));
+        assert!(hi0 < hi1);
+        assert!(hi1 < hi2);
+        assert!(hi2 < hi3);
+        assert!(hi3 < hi4);
+    }
+
 }
