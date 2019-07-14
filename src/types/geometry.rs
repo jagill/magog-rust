@@ -151,15 +151,15 @@ impl<C: Coordinate> Geometry<C> {
     delegate_accessor!(is_simple, bool);
     delegate_accessor!(boundary, Geometry<C>);
 
-    //     // Intersection Relations
-    //     // fn equals(&self, other: &Geometry<C>) -> bool;
-    //     // fn disjoint(&self, other: &Geometry<C>) -> bool;
-    //     // fn intersects(&self, other: &Geometry<C>) -> bool;
-    //     // fn touches(&self, other: &Geometry<C>) -> bool;
-    //     // fn crosses(&self, other: &Geometry<C>) -> bool;
-    //     // fn within(&self, other: &Geometry<C>) -> bool;
-    //     // fn contains(&self, other: &Geometry<C>) -> bool;
-    //     // fn overlaps(&self, other: &Geometry<C>) -> bool;
+    // Intersection Relations
+    // fn equals(&self, other: &Geometry<C>) -> bool;
+    // fn disjoint(&self, other: &Geometry<C>) -> bool;
+    // fn intersects(&self, other: &Geometry<C>) -> bool;
+    // fn touches(&self, other: &Geometry<C>) -> bool;
+    // fn crosses(&self, other: &Geometry<C>) -> bool;
+    // fn within(&self, other: &Geometry<C>) -> bool;
+    // fn contains(&self, other: &Geometry<C>) -> bool;
+    // fn overlaps(&self, other: &Geometry<C>) -> bool;
 }
 
 #[cfg(test)]

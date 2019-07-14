@@ -1,5 +1,5 @@
 use crate::primitives::{Coordinate, Envelope, HasEnvelope};
-use crate::types::{Geometry, Point, Polygon, MultiLineString};
+use crate::types::{Geometry, MultiLineString, Point, Polygon};
 
 #[derive(Debug, PartialEq)]
 pub struct MultiPolygon<C: Coordinate> {
@@ -33,14 +33,8 @@ impl<C: Coordinate> MultiPolygon<C> {
     }
 
     pub fn point_on_surface(&self) -> Option<Point<C>> {
-        if !self.polygons.is_empty() {
-            for poly in &self.polygons {
-                if !poly.is_empty() {
-                    return poly.point_on_surface();
-                }
-            }
-        }
-        None
+        let polys = &mut self.polygons.iter().filter(|p| !p.is_empty());
+        polys.next()?.point_on_surface()
     }
 }
 
@@ -66,15 +60,15 @@ impl<C: Coordinate> MultiPolygon<C> {
 
     /// A MultiPolygon is simple if it has no self-intersections in or between the Polygons.
     pub fn is_simple(&self) -> bool {
-        match self.validate() {
-            Err(_) => false,
-            Ok(_) => true,
-        }
+        self.validate().is_ok()
     }
 
     /// The boundary of a MultiPolygon is the boundaries of the Polygons.
     pub fn boundary(&self) -> Geometry<C> {
-        let line_strings = self.polygons.iter().map(|p| p.boundary())
+        let line_strings = self
+            .polygons
+            .iter()
+            .map(|p| p.boundary())
             .filter(|g| !g.is_empty())
             .filter_map(|g| g.as_multilinestring())
             .flat_map(|mls| mls.line_strings)

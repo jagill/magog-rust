@@ -33,7 +33,7 @@ impl<C: Coordinate> Polygon<C> {
 
     /// A Polygon is simple if it has no self-intersections in its envelopes.
     pub fn is_simple(&self) -> bool {
-        !self.validate().is_err()
+        self.validate().is_ok()
     }
 }
 

@@ -59,10 +59,8 @@ impl<C: Coordinate> LineString<C> {
     /// Get the point at coordinate `n` of the LineString.
     /// If `n > self.num_points`, return None.
     pub fn get_point(&self, n: usize) -> Option<Point<C>> {
-        match self.positions.get(n) {
-            None => None,
-            Some(c) => Some(Point::new(*c)),
-        }
+        let position = self.positions.get(n)?;
+        Some(Point::new(*position))
     }
 
     pub fn is_closed(&self) -> bool {
@@ -82,10 +80,8 @@ impl<C: Coordinate> LineString<C> {
 
     /// Return the first coordinate of the linestring
     pub fn start_point(&self) -> Option<Point<C>> {
-        match self.positions.get(0) {
-            None => None,
-            Some(pos) => Some(Point(*pos)),
-        }
+        let position = self.positions.get(0)?;
+        Some(Point(*position))
     }
 
     /// Return the last coordinate of the linestring
@@ -124,10 +120,7 @@ impl<C: Coordinate> LineString<C> {
 
     /// A LineString is simple if it has no self-intersections.
     pub fn is_simple(&self) -> bool {
-        match self.validate() {
-            Err(_) => false,
-            Ok(_) => true,
-        }
+        self.validate().is_ok()
     }
 }
 

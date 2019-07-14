@@ -46,10 +46,7 @@ impl<C: Coordinate> Point<C> {
     }
 
     pub fn is_simple(&self) -> bool {
-        match self.validate() {
-            Err(_) => false,
-            Ok(_) => true,
-        }
+        self.validate().is_ok()
     }
 
     pub fn boundary(&self) -> Geometry<C> {
