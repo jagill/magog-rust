@@ -135,19 +135,20 @@ where
      * This only checks bounding-box intersection, so the candidates must be
      * checked by the caller.
      */
-    pub fn find_intersection_candidates(&self, query_rect: Rect<C>) -> Vec<usize> {
+    pub fn find_intersection_candidates<E: Into<Envelope<C>>>(&self, query: E) -> Vec<usize> {
+        let query_env: Envelope<C> = query.into();
         let mut todo_list: Vec<FlatbushNode<C>> =
             Vec::with_capacity(self.degree * self.level_indices.len());
         let mut results = Vec::new();
 
-        self._maybe_push_isxn(self.root_node(), query_rect, &mut results, &mut todo_list);
+        self._maybe_push_isxn(self.root_node(), query_env, &mut results, &mut todo_list);
 
         // The todo_list will keep a LIFO stack of nodes to be processed.
         // The invariant is that everything in todo_list (envelope) intersects
         // query_rect, and is level > 0 (leaves are yielded).
         while let Some(node) = todo_list.pop() {
             self.get_children(node).iter().for_each(|&child| {
-                self._maybe_push_isxn(child, query_rect, &mut results, &mut todo_list);
+                self._maybe_push_isxn(child, query_env, &mut results, &mut todo_list);
             });
         }
 
@@ -157,11 +158,11 @@ where
     fn _maybe_push_isxn(
         &self,
         node: FlatbushNode<C>,
-        query_rect: Rect<C>,
+        query_env: Envelope<C>,
         results: &mut Vec<usize>,
         todo_list: &mut Vec<FlatbushNode<C>>,
     ) {
-        if !node.envelope.intersects(query_rect.into()) {
+        if !node.envelope.intersects(query_env) {
             return;
         }
         if node.level == 0 {

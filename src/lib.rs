@@ -1,8 +1,8 @@
 pub mod primitives;
 pub mod types;
+pub mod flatbush;
 
 mod algorithms;
-mod flatbush;
 mod validation;
 
 #[cfg(test)]
