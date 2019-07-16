@@ -19,8 +19,8 @@ impl<C: Coordinate> MultiPolygon<C> {
 }
 
 /// Turn a `Vec` of `Polygon`-ish objects into a `MultiPolygon`.
-impl<C: Coordinate, IP: Into<Polygon<C>>> From<Vec<IP>> for MultiPolygon<C> {
-    fn from(v: Vec<IP>) -> Self {
+impl<C: Coordinate, P: Into<Polygon<C>>> From<Vec<P>> for MultiPolygon<C> {
+    fn from(v: Vec<P>) -> Self {
         MultiPolygon::new(v.into_iter().map(|p| p.into()).collect())
     }
 }

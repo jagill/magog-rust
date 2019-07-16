@@ -5,8 +5,8 @@ use crate::types::Geometry;
 pub struct Point<C: Coordinate>(pub Position<C>);
 
 /// Turn a `Position`-ish object into a `Point`.
-impl<C: Coordinate, IP: Into<Position<C>>> From<IP> for Point<C> {
-    fn from(p: IP) -> Self {
+impl<C: Coordinate, P: Into<Position<C>>> From<P> for Point<C> {
+    fn from(p: P) -> Self {
         Point(p.into())
     }
 }

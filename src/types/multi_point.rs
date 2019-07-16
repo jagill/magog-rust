@@ -9,8 +9,8 @@ pub struct MultiPoint<C: Coordinate> {
 }
 
 /// Turn a `Vec` of `Position`-ish objects into a `LineString`.
-impl<C: Coordinate, IP: Into<Position<C>>> From<Vec<IP>> for MultiPoint<C> {
-    fn from(v: Vec<IP>) -> Self {
+impl<C: Coordinate, P: Into<Position<C>>> From<Vec<P>> for MultiPoint<C> {
+    fn from(v: Vec<P>) -> Self {
         MultiPoint::new(v.into_iter().map(|p| Point(p.into())).collect())
     }
 }

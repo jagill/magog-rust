@@ -20,8 +20,8 @@ impl<C: Coordinate> MultiLineString<C> {
 }
 
 /// Turn a `Vec` of `LineString`-ish objects into a `MultiLineString`.
-impl<C: Coordinate, IL: Into<LineString<C>>> From<Vec<IL>> for MultiLineString<C> {
-    fn from(v: Vec<IL>) -> Self {
+impl<C: Coordinate, L: Into<LineString<C>>> From<Vec<L>> for MultiLineString<C> {
+    fn from(v: Vec<L>) -> Self {
         MultiLineString::new(v.into_iter().map(|l| l.into()).collect())
     }
 }

@@ -9,14 +9,18 @@ pub struct LineString<C: Coordinate> {
 }
 
 /// Turn a `Vec` of `Position`-ish objects into a `LineString`.
-impl<C: Coordinate, IP: Into<Position<C>>> From<Vec<IP>> for LineString<C> {
-    fn from(v: Vec<IP>) -> Self {
+impl<C, P> From<Vec<P>> for LineString<C>
+where
+    C: Coordinate,
+    P: Into<Position<C>>,
+{
+    fn from(v: Vec<P>) -> Self {
         LineString::new(v.into_iter().map(|p| p.into()).collect())
     }
 }
 
 impl<C: Coordinate> LineString<C> {
-    pub fn new(positions: Vec<Position<C>>) -> LineString<C> {
+    pub fn new(positions: Vec<Position<C>>) -> Self {
         let _envelope = Envelope::from(&positions);
         LineString {
             positions,
@@ -24,13 +28,22 @@ impl<C: Coordinate> LineString<C> {
         }
     }
 
+    /// Turn a iterator of `Position`s into a `LineString`.
+    pub fn collect_from<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Position<C>>,
+    {
+        let positions = iter.collect();
+        LineString::new(positions)
+    }
+
     pub fn segments_iter<'a>(&'a self) -> impl Iterator<Item = Segment<C>> + 'a {
         self.positions
             .iter()
             .zip(self.positions.iter().skip(1))
             .map(|(start, end)| Segment {
-                start: start.clone(),
-                end: end.clone(),
+                start: *start,
+                end: *end,
             })
     }
 

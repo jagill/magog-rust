@@ -1,6 +1,6 @@
 use crate::primitives::Coordinate;
 use ordered_float::{FloatIsNan, NotNan};
-use std::ops::{Add, Mul, Sub, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 pub struct Position<C: Coordinate> {
@@ -34,6 +34,12 @@ impl<C: Coordinate> From<SafePosition<C>> for Position<C> {
             x: coords.0.into_inner(),
             y: coords.1.into_inner(),
         }
+    }
+}
+
+impl<C: Coordinate, P: Into<Position<C>>> From<&P> for Position<C> {
+    fn from(p: &P) -> Self {
+        p.into()
     }
 }
 
