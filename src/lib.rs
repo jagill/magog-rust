@@ -1,6 +1,7 @@
-pub mod primitives;
-pub mod types;
 pub mod flatbush;
+pub mod primitives;
+pub mod serde;
+pub mod types;
 
 mod algorithms;
 mod validation;
