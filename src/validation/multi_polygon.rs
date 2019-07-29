@@ -65,7 +65,7 @@ impl<C: Coordinate> MultiPolygon<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Polygon, LineString};
+    use crate::types::{LineString, Polygon};
 
     #[test]
     fn test_valid_microsoft_examples() {
