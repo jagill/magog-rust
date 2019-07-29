@@ -220,9 +220,9 @@ mod tests {
     #[test]
     fn check_envelope() {
         let ls = LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
-        match ls.envelope().rect {
-            None => assert!(false, "Envelope should not be empty."),
-            Some(r) => assert_eq!(r, Rect::from(((0.0, 0.0), (1.0, 1.0)))),
+        match ls.envelope() {
+            Envelope::Empty => assert!(false, "Envelope should not be empty."),
+            Envelope::Bounds(r) => assert_eq!(r, Rect::from(((0.0, 0.0), (1.0, 1.0)))),
         }
     }
 

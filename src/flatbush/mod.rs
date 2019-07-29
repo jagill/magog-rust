@@ -41,19 +41,19 @@ where
         Flatbush {
             degree: FLATBUSH_DEFAULT_DEGREE,
             level_indices: vec![0],
-            tree: vec![(0, Envelope::empty())],
+            tree: vec![(0, Envelope::Empty)],
         }
     }
 
     pub fn new(items: &Vec<impl HasEnvelope<C>>, degree: usize) -> Flatbush<C> {
         let total_envelope = Envelope::from_envelopes(items.iter().map(|e| e.envelope()));
         let hilbert_square: Hilbert<C>;
-        match total_envelope.rect {
-            None => {
+        match total_envelope {
+            Envelope::Empty => {
                 // The list of items are empty, or all items are empty.
                 return Flatbush::new_unsorted(items, degree);
             }
-            Some(rect) => hilbert_square = Hilbert::new(rect),
+            Envelope::Bounds(rect) => hilbert_square = Hilbert::new(rect),
         }
 
         let mut entries: Vec<(u32, usize, Envelope<C>)> = items
@@ -103,7 +103,7 @@ where
             // Pad out the remaining spaces with empties that will never match.
             let mut dummy_index = level_size;
             while tree.len() < level_indices[level + 1] {
-                tree.push((dummy_index, Envelope::empty()));
+                tree.push((dummy_index, Envelope::Empty));
                 dummy_index += 1;
             }
 
@@ -464,8 +464,8 @@ mod tests {
             vec![
                 (0, Envelope::from(((7.0, 44.), (99., 79.)))),
                 (1, Envelope::from(((7.1, 40.), (108., 91.)))),
-                (2, Envelope::empty()),
-                (3, Envelope::empty()),
+                (2, Envelope::Empty),
+                (3, Envelope::Empty),
             ][..]
         );
         assert_eq!(

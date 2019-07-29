@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::flatbush::{Flatbush, FlatbushNode, FLATBUSH_DEFAULT_DEGREE};
 use crate::primitives::{
-    Coordinate, HasEnvelope, Position, SafePosition, Segment, SegmentIntersection,
+    Coordinate, Envelope, HasEnvelope, Position, SafePosition, Segment, SegmentIntersection,
 };
 use crate::types::LineString;
 
@@ -132,7 +132,7 @@ fn _maybe_push_other_isxn<C: Coordinate>(
     node2: FlatbushNode<C>,
     stack: &mut Vec<(FlatbushNode<C>, FlatbushNode<C>)>,
 ) {
-    if let (Some(r1), Some(r2)) = (node1.envelope.rect, node2.envelope.rect) {
+    if let (Envelope::Bounds(r1), Envelope::Bounds(r2)) = (node1.envelope, node2.envelope) {
         // right is a position that will extend r1 to the right edge of r2.
         let right = Position::new(r2.max.x, r1.max.y);
         if r1.add_position(right).intersects(r2) {
