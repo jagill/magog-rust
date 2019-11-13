@@ -5,6 +5,7 @@ pub mod serde;
 pub mod types;
 
 mod algorithms;
+mod linear;
 mod validation;
 
 pub use crate::coordinate::Coordinate;
