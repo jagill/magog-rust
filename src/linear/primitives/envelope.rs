@@ -23,7 +23,7 @@ impl<C: Coordinate> HasEnvelope<C> for Position<C> {
     }
 }
 
-// (Position, Position) -> Rect
+// (Position, Position) -> Envelope
 impl<C: Coordinate, IP: Into<Position<C>>> From<(IP, IP)> for Envelope<C> {
     fn from(positions: (IP, IP)) -> Self {
         Envelope::new(positions.0.into(), positions.1.into())

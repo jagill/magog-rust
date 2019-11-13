@@ -13,6 +13,16 @@ impl<C: Coordinate> HasEnvelope<C> for Segment<C> {
     }
 }
 
+// (C, C) -> Segment
+impl<C: Coordinate, IC: Into<Position<C>>> From<(IC, IC)> for Segment<C> {
+    fn from(positions: (IC, IC)) -> Self {
+        Segment {
+            start: positions.0.into(),
+            end: positions.1.into(),
+        }
+    }
+}
+
 impl<C: Coordinate> Segment<C> {
     pub fn new(start: Position<C>, end: Position<C>) -> Segment<C> {
         Segment { start, end }
