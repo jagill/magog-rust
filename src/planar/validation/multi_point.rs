@@ -1,4 +1,4 @@
-use crate::types::MultiPoint;
+use crate::planar::types::MultiPoint;
 use crate::Coordinate;
 use ordered_float::FloatIsNan;
 use std::collections::HashSet;

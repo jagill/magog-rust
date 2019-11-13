@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-use crate::primitives::{Position, PositionLocation, Segment};
-use crate::types::LineString;
+use crate::planar::primitives::{Position, PositionLocation, Segment};
+use crate::planar::types::LineString;
 use crate::Coordinate;
 /**
  * Algorithms for calculating convex hulls.

@@ -1,5 +1,5 @@
-use crate::primitives::{Envelope, HasEnvelope, Position};
-use crate::types::{Geometry, LineString, MultiPoint};
+use crate::planar::primitives::{Envelope, HasEnvelope, Position};
+use crate::planar::types::{Geometry, LineString, MultiPoint};
 use crate::Coordinate;
 use std::collections::BTreeSet;
 

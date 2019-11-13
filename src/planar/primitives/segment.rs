@@ -1,4 +1,4 @@
-use crate::primitives::{Envelope, HasEnvelope, Position, Rect};
+use crate::planar::primitives::{Envelope, HasEnvelope, Position, Rect};
 use crate::Coordinate;
 
 #[derive(Copy, Clone, Debug, PartialEq)]

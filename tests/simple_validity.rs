@@ -1,4 +1,4 @@
-use magog::types::{LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use magog::planar::types::{LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
 
 #[test]
 fn validity_simple_point_valid() {

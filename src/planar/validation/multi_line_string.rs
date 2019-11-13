@@ -1,6 +1,6 @@
 use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
-use crate::primitives::SegmentIntersection;
-use crate::types::{Geometry, MultiLineString, Point};
+use crate::planar::primitives::SegmentIntersection;
+use crate::planar::types::{Geometry, MultiLineString, Point};
 use crate::Coordinate;
 
 impl<C: Coordinate> MultiLineString<C> {
@@ -52,7 +52,7 @@ impl<C: Coordinate> MultiLineString<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::LineString;
+    use crate::planar::types::LineString;
 
     #[test]
     fn test_valid_microsoft_examples() {

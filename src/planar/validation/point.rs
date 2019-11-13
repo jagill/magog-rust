@@ -1,4 +1,4 @@
-use crate::types::Point;
+use crate::planar::types::Point;
 use crate::Coordinate;
 
 impl<C: Coordinate> Point<C> {

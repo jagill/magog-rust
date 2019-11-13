@@ -1,6 +1,6 @@
 use crate::flatbush::Flatbush;
-use crate::primitives::SegmentIntersection;
-use crate::types::LineString;
+use crate::planar::primitives::SegmentIntersection;
+use crate::planar::types::LineString;
 use crate::Coordinate;
 
 impl<C: Coordinate> LineString<C> {
@@ -79,7 +79,7 @@ impl<C: Coordinate> LineString<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::Position;
+    use crate::planar::primitives::Position;
 
     #[test]
     fn test_valid_microsoft_examples() {

@@ -1,5 +1,5 @@
-use crate::primitives::Position;
-use crate::types::{
+use crate::planar::primitives::Position;
+use crate::planar::types::{
     Geometry, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
 };
 use wkt;

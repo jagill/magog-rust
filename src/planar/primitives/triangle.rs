@@ -1,4 +1,4 @@
-use crate::primitives::Position;
+use crate::planar::primitives::Position;
 use crate::Coordinate;
 
 #[derive(Copy, Clone, Debug)]

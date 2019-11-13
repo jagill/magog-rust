@@ -9,7 +9,7 @@ use num_traits::PrimInt;
 use itertools::iproduct;
 mod hilbert;
 
-use crate::primitives::{Envelope, HasEnvelope, Position, Rect};
+use crate::planar::primitives::{Envelope, HasEnvelope, Position, Rect};
 use crate::Coordinate;
 use hilbert::Hilbert;
 

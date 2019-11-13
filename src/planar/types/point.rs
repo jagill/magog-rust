@@ -1,5 +1,5 @@
-use crate::primitives::{Envelope, HasEnvelope, Position};
-use crate::types::Geometry;
+use crate::planar::primitives::{Envelope, HasEnvelope, Position};
+use crate::planar::types::Geometry;
 use crate::Coordinate;
 
 #[derive(Debug, PartialEq)]

@@ -4,7 +4,7 @@ mod rect;
 mod segment;
 mod triangle;
 
-pub use crate::primitives::{
+pub use crate::planar::primitives::{
     envelope::{Envelope, HasEnvelope},
     position::{Position, SafePosition},
     rect::Rect,

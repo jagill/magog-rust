@@ -1,4 +1,4 @@
-use crate::primitives::{Position, Rect};
+use crate::planar::primitives::{Position, Rect};
 use crate::Coordinate;
 
 pub struct Hilbert<C: Coordinate> {

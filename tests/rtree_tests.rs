@@ -1,6 +1,6 @@
 use magog::flatbush::Flatbush;
-use magog::primitives::HasEnvelope;
-use magog::types::{Point, Polygon};
+use magog::planar::primitives::HasEnvelope;
+use magog::planar::types::{Point, Polygon};
 
 #[test]
 fn test_octagons() {

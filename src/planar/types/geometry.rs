@@ -1,5 +1,7 @@
-use crate::primitives::{Envelope, HasEnvelope};
-use crate::types::{Empty, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+use crate::planar::primitives::{Envelope, HasEnvelope};
+use crate::planar::types::{
+    Empty, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+};
 use crate::Coordinate;
 
 /// An enum representing any possible geometry type.
@@ -166,7 +168,7 @@ impl<C: Coordinate> Geometry<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::Position;
+    use crate::planar::primitives::Position;
 
     #[test]
     fn check_dim_point() {

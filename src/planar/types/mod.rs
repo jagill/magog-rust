@@ -7,7 +7,7 @@ mod multi_polygon;
 mod point;
 mod polygon;
 
-pub use crate::types::{
+pub use crate::planar::types::{
     empty::Empty, geometry::Geometry, line_string::LineString, multi_line_string::MultiLineString,
     multi_point::MultiPoint, multi_polygon::MultiPolygon, point::Point, polygon::Polygon,
 };
@@ -19,5 +19,4 @@ mod tests {
     fn check_trivial() {
         assert!(true);
     }
-
 }

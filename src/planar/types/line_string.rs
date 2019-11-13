@@ -1,6 +1,6 @@
 use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
-use crate::primitives::{Envelope, HasEnvelope, Position, Segment};
-use crate::types::{Geometry, MultiPoint, Point};
+use crate::planar::primitives::{Envelope, HasEnvelope, Position, Segment};
+use crate::planar::types::{Geometry, MultiPoint, Point};
 use crate::Coordinate;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -147,7 +147,7 @@ impl<C: Coordinate> HasEnvelope<C> for LineString<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::Rect;
+    use crate::planar::primitives::Rect;
 
     use core::f32;
 

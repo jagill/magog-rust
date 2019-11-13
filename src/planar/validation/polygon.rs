@@ -1,6 +1,6 @@
-use crate::algorithms::loop_relation::{find_loop_loop_relation, LoopLoopRelation};
 use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
-use crate::types::Polygon;
+use crate::planar::algorithms::loop_relation::{find_loop_loop_relation, LoopLoopRelation};
+use crate::planar::types::Polygon;
 use crate::Coordinate;
 
 impl<C: Coordinate> Polygon<C> {
@@ -39,7 +39,7 @@ impl<C: Coordinate> Polygon<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::LineString;
+    use crate::planar::types::LineString;
 
     #[test]
     fn test_valid_microsoft_examples() {

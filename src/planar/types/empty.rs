@@ -1,5 +1,5 @@
-use crate::primitives::{Envelope, HasEnvelope};
-use crate::types::Geometry;
+use crate::planar::primitives::{Envelope, HasEnvelope};
+use crate::planar::types::Geometry;
 use crate::Coordinate;
 use std::marker::PhantomData;
 

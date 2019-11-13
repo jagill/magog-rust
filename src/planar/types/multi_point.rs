@@ -1,5 +1,5 @@
-use crate::primitives::{Envelope, HasEnvelope, Position};
-use crate::types::{Geometry, Point};
+use crate::planar::primitives::{Envelope, HasEnvelope, Position};
+use crate::planar::types::{Geometry, Point};
 use crate::Coordinate;
 use std::collections::BTreeSet;
 
@@ -94,7 +94,7 @@ impl<C: Coordinate> MultiPoint<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::Rect;
+    use crate::planar::primitives::Rect;
     use core::f32;
 
     #[test]

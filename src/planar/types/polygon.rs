@@ -1,5 +1,5 @@
-use crate::primitives::{Envelope, HasEnvelope};
-use crate::types::{Geometry, LineString, MultiLineString, Point};
+use crate::planar::primitives::{Envelope, HasEnvelope};
+use crate::planar::types::{Geometry, LineString, MultiLineString, Point};
 use crate::Coordinate;
 
 #[derive(Debug, PartialEq)]

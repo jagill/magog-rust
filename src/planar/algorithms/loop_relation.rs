@@ -2,10 +2,10 @@ use crate::Coordinate;
 use std::collections::{HashMap, HashSet};
 
 use crate::flatbush::{Flatbush, FlatbushNode, FLATBUSH_DEFAULT_DEGREE};
-use crate::primitives::{
+use crate::planar::primitives::{
     Envelope, HasEnvelope, Position, SafePosition, Segment, SegmentIntersection,
 };
-use crate::types::LineString;
+use crate::planar::types::LineString;
 
 #[derive(PartialEq, Debug)]
 pub enum LoopLoopRelation {
