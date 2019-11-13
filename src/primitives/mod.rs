@@ -1,4 +1,3 @@
-mod coordinate;
 mod envelope;
 mod position;
 mod rect;
@@ -6,7 +5,6 @@ mod segment;
 mod triangle;
 
 pub use crate::primitives::{
-    coordinate::Coordinate,
     envelope::{Envelope, HasEnvelope},
     position::{Position, SafePosition},
     rect::Rect,
@@ -71,5 +69,4 @@ mod tests {
             }
         }
     }
-
 }

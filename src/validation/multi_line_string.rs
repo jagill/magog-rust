@@ -1,6 +1,7 @@
 use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
-use crate::primitives::{Coordinate, SegmentIntersection};
+use crate::primitives::SegmentIntersection;
 use crate::types::{Geometry, MultiLineString, Point};
+use crate::Coordinate;
 
 impl<C: Coordinate> MultiLineString<C> {
     pub fn validate(&self) -> Result<(), &'static str> {

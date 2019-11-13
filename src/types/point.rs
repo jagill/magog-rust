@@ -1,5 +1,6 @@
-use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position};
+use crate::primitives::{Envelope, HasEnvelope, Position};
 use crate::types::Geometry;
+use crate::Coordinate;
 
 #[derive(Debug, PartialEq)]
 pub struct Point<C: Coordinate>(pub Position<C>);
@@ -89,5 +90,4 @@ mod tests {
         });
         assert!(!p.is_simple());
     }
-
 }

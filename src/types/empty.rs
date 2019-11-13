@@ -1,5 +1,6 @@
-use crate::primitives::{Coordinate, Envelope, HasEnvelope};
+use crate::primitives::{Envelope, HasEnvelope};
 use crate::types::Geometry;
+use crate::Coordinate;
 use std::marker::PhantomData;
 
 #[derive(Debug, PartialEq)]

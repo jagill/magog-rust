@@ -1,4 +1,5 @@
-use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position, Rect};
+use crate::primitives::{Envelope, HasEnvelope, Position, Rect};
+use crate::Coordinate;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Segment<C: Coordinate> {
@@ -345,5 +346,4 @@ mod tests {
             SegmentIntersection::Position((1.0, 0.0).into())
         );
     }
-
 }

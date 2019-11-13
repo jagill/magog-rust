@@ -1,5 +1,5 @@
-use crate::primitives::Coordinate;
 use crate::types::MultiPoint;
+use crate::Coordinate;
 use ordered_float::FloatIsNan;
 use std::collections::HashSet;
 

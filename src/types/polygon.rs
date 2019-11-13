@@ -1,5 +1,6 @@
-use crate::primitives::{Coordinate, Envelope, HasEnvelope};
+use crate::primitives::{Envelope, HasEnvelope};
 use crate::types::{Geometry, LineString, MultiLineString, Point};
+use crate::Coordinate;
 
 #[derive(Debug, PartialEq)]
 pub struct Polygon<C: Coordinate> {
@@ -147,5 +148,4 @@ mod tests {
 
         assert!(!poly.is_simple());
     }
-
 }

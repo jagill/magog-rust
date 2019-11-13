@@ -1,4 +1,5 @@
-use crate::primitives::{Coordinate, Position, Rect};
+use crate::primitives::{Position, Rect};
+use crate::Coordinate;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Envelope<C: Coordinate> {
@@ -141,5 +142,4 @@ mod tests {
         let max: Position<f64> = Position { x: 3., y: 2. };
         assert_eq!(e, Envelope::Bounds(Rect { min, max }));
     }
-
 }

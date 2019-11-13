@@ -1,5 +1,5 @@
-use crate::primitives::Coordinate;
 use crate::types::Point;
+use crate::Coordinate;
 
 impl<C: Coordinate> Point<C> {
     pub fn validate(&self) -> Result<(), &'static str> {

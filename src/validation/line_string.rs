@@ -1,6 +1,7 @@
 use crate::flatbush::Flatbush;
-use crate::primitives::{Coordinate, SegmentIntersection};
+use crate::primitives::SegmentIntersection;
 use crate::types::LineString;
+use crate::Coordinate;
 
 impl<C: Coordinate> LineString<C> {
     /**

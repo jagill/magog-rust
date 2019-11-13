@@ -1,8 +1,9 @@
+use crate::Coordinate;
 use std::collections::{HashMap, HashSet};
 
 use crate::flatbush::{Flatbush, FlatbushNode, FLATBUSH_DEFAULT_DEGREE};
 use crate::primitives::{
-    Coordinate, Envelope, HasEnvelope, Position, SafePosition, Segment, SegmentIntersection,
+    Envelope, HasEnvelope, Position, SafePosition, Segment, SegmentIntersection,
 };
 use crate::types::LineString;
 
@@ -417,5 +418,4 @@ mod tests {
             LoopLoopRelation::Separate
         )
     }
-
 }

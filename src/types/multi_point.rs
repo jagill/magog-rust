@@ -1,5 +1,6 @@
-use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position};
+use crate::primitives::{Envelope, HasEnvelope, Position};
 use crate::types::{Geometry, Point};
+use crate::Coordinate;
 use std::collections::BTreeSet;
 
 #[derive(Debug, PartialEq)]
@@ -139,5 +140,4 @@ mod tests {
         let mp2 = MultiPoint::from(vec![(0.0, 0.0), (1.0, 1.0)]);
         assert_eq!(mp1.make_simple(), Geometry::from(mp2));
     }
-
 }

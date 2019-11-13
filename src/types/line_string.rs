@@ -1,6 +1,7 @@
 use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
-use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position, Segment};
+use crate::primitives::{Envelope, HasEnvelope, Position, Segment};
 use crate::types::{Geometry, MultiPoint, Point};
+use crate::Coordinate;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LineString<C: Coordinate> {
@@ -349,5 +350,4 @@ mod tests {
         let ls = LineString::from(vec![(1., 0.), (1., 1.), (0., 0.)]);
         assert!(ls.is_simple());
     }
-
 }

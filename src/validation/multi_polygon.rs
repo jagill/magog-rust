@@ -1,7 +1,7 @@
 use crate::algorithms::loop_relation::{find_loop_loop_relation, LoopLoopRelation};
 use crate::flatbush::{Flatbush, FLATBUSH_DEFAULT_DEGREE};
-use crate::primitives::Coordinate;
 use crate::types::MultiPolygon;
+use crate::Coordinate;
 
 impl<C: Coordinate> MultiPolygon<C> {
     pub fn validate(&self) -> Result<(), &'static str> {

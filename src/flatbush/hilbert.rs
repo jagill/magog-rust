@@ -1,4 +1,5 @@
-use crate::primitives::{Coordinate, Position, Rect};
+use crate::primitives::{Position, Rect};
+use crate::Coordinate;
 
 pub struct Hilbert<C: Coordinate> {
     rect: Rect<C>,
@@ -175,5 +176,4 @@ mod tests {
         assert!(hi2 < hi3);
         assert!(hi3 < hi4);
     }
-
 }

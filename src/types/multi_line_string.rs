@@ -1,5 +1,6 @@
-use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position};
+use crate::primitives::{Envelope, HasEnvelope, Position};
 use crate::types::{Geometry, LineString, MultiPoint};
+use crate::Coordinate;
 use std::collections::BTreeSet;
 
 #[derive(Debug, PartialEq)]
@@ -156,5 +157,4 @@ mod tests {
         ]);
         assert!(mls.is_simple());
     }
-
 }

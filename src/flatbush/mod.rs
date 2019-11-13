@@ -9,7 +9,8 @@ use num_traits::PrimInt;
 use itertools::iproduct;
 mod hilbert;
 
-use crate::primitives::{Coordinate, Envelope, HasEnvelope, Position, Rect};
+use crate::primitives::{Envelope, HasEnvelope, Position, Rect};
+use crate::Coordinate;
 use hilbert::Hilbert;
 
 pub const FLATBUSH_DEFAULT_DEGREE: usize = 8;

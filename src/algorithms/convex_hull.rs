@@ -1,6 +1,7 @@
 #![allow(dead_code)]
-use crate::primitives::{Coordinate, Position, PositionLocation, Segment};
+use crate::primitives::{Position, PositionLocation, Segment};
 use crate::types::LineString;
+use crate::Coordinate;
 /**
  * Algorithms for calculating convex hulls.
  */
@@ -139,7 +140,7 @@ mod tests {
             (4., 4.),
             (0., 4.),
             (0., 0.),
-        ]);;
+        ]);
         assert_loops_equiv(&mut hull, &mut target);
     }
 }
