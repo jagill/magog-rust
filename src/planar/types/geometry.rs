@@ -218,7 +218,7 @@ mod tests {
         ];
         assert_eq!(
             Geometry::from(LineString::from(positions.clone())).envelope(),
-            Envelope::from(&positions)
+            Envelope::of(positions.iter())
         );
     }
 }

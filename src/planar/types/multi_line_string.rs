@@ -11,8 +11,7 @@ pub struct MultiLineString<C: Coordinate> {
 
 impl<C: Coordinate> MultiLineString<C> {
     pub fn new(line_strings: Vec<LineString<C>>) -> Self {
-        let envs: Vec<Envelope<C>> = line_strings.iter().map(|ls| ls.envelope()).collect();
-        let _envelope = Envelope::from(&envs);
+        let _envelope = Envelope::of(line_strings.iter());
         MultiLineString {
             line_strings,
             _envelope,

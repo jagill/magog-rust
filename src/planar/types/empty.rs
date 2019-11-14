@@ -10,12 +10,12 @@ pub struct Empty<C: Coordinate> {
 
 impl<C: Coordinate> HasEnvelope<C> for Empty<C> {
     fn envelope(&self) -> Envelope<C> {
-        Envelope::new(None)
+        Envelope::empty()
     }
 }
 
 impl<C: Coordinate> Empty<C> {
-    pub fn new() -> Empty<C> {
+    pub fn new() -> Self {
         Empty {
             phantom: PhantomData,
         }

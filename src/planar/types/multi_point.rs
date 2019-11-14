@@ -9,6 +9,12 @@ pub struct MultiPoint<C: Coordinate> {
     _envelope: Envelope<C>,
 }
 
+impl<C: Coordinate> HasEnvelope<C> for MultiPoint<C> {
+    fn envelope(&self) -> Envelope<C> {
+        self._envelope
+    }
+}
+
 /// Turn a `Vec` of `Position`-ish objects into a `LineString`.
 impl<C: Coordinate, P: Into<Position<C>>> From<Vec<P>> for MultiPoint<C> {
     fn from(v: Vec<P>) -> Self {
@@ -18,18 +24,12 @@ impl<C: Coordinate, P: Into<Position<C>>> From<Vec<P>> for MultiPoint<C> {
 
 impl<C: Coordinate> MultiPoint<C> {
     pub fn new(points: Vec<Point<C>>) -> Self {
-        let _envelope: Envelope<C> = Envelope::from(&points);
+        let _envelope: Envelope<C> = Envelope::of(points.iter());
         MultiPoint { points, _envelope }
     }
 
     pub fn num_points(&self) -> usize {
         self.points.len()
-    }
-}
-
-impl<C: Coordinate> HasEnvelope<C> for MultiPoint<C> {
-    fn envelope(&self) -> Envelope<C> {
-        self._envelope
     }
 }
 

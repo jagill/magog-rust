@@ -5,6 +5,12 @@ use crate::Coordinate;
 #[derive(Debug, PartialEq)]
 pub struct Point<C: Coordinate>(pub Position<C>);
 
+impl<C: Coordinate> HasEnvelope<C> for Point<C> {
+    fn envelope(&self) -> Envelope<C> {
+        Envelope::from((self.0, self.0))
+    }
+}
+
 /// Turn a `Position`-ish object into a `Point`.
 impl<C: Coordinate, P: Into<Position<C>>> From<P> for Point<C> {
     fn from(p: P) -> Self {
@@ -23,12 +29,6 @@ impl<C: Coordinate> Point<C> {
 
     pub fn y(&self) -> C {
         self.0.y
-    }
-}
-
-impl<C: Coordinate> HasEnvelope<C> for Point<C> {
-    fn envelope(&self) -> Envelope<C> {
-        Envelope::from((self.0, self.0))
     }
 }
 
@@ -52,15 +52,6 @@ impl<C: Coordinate> Point<C> {
 
     pub fn boundary(&self) -> Geometry<C> {
         Geometry::empty()
-    }
-}
-
-// Vec<Point> -> Envelope
-impl<'a, C: Coordinate> From<&'a Vec<Point<C>>> for Envelope<C> {
-    fn from(positions: &'a Vec<Point<C>>) -> Self {
-        positions
-            .iter()
-            .fold(Envelope::Empty, |env, p| env.add_position(p.0))
     }
 }
 

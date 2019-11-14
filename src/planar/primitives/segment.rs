@@ -7,6 +7,12 @@ pub struct Segment<C: Coordinate> {
     pub end: Position<C>,
 }
 
+impl<C: Coordinate> HasEnvelope<C> for Segment<C> {
+    fn envelope(&self) -> Envelope<C> {
+        Envelope::from((self.start, self.end))
+    }
+}
+
 /// Location of a point in relation to a line
 #[derive(PartialEq, Clone, Debug)]
 pub enum PositionLocation {
@@ -24,9 +30,9 @@ pub enum SegmentIntersection<C: Coordinate> {
     Segment(Segment<C>),
 }
 
-// (C, C) -> Segment
-impl<C: Coordinate, IC: Into<Position<C>>> From<(IC, IC)> for Segment<C> {
-    fn from(positions: (IC, IC)) -> Self {
+// (Position, Position) -> Segment
+impl<C: Coordinate, IP: Into<Position<C>>> From<(IP, IP)> for Segment<C> {
+    fn from(positions: (IP, IP)) -> Self {
         Segment {
             start: positions.0.into(),
             end: positions.1.into(),
@@ -34,14 +40,8 @@ impl<C: Coordinate, IC: Into<Position<C>>> From<(IC, IC)> for Segment<C> {
     }
 }
 
-impl<C: Coordinate> HasEnvelope<C> for Segment<C> {
-    fn envelope(&self) -> Envelope<C> {
-        Envelope::from((self.start, self.end))
-    }
-}
-
 impl<C: Coordinate> Segment<C> {
-    pub fn new(start: Position<C>, end: Position<C>) -> Segment<C> {
+    pub fn new(start: Position<C>, end: Position<C>) -> Self {
         Segment { start, end }
     }
 

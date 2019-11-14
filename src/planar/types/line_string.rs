@@ -22,7 +22,7 @@ where
 
 impl<C: Coordinate> LineString<C> {
     pub fn new(positions: Vec<Position<C>>) -> Self {
-        let _envelope = Envelope::from(&positions);
+        let _envelope = Envelope::of(positions.iter());
         LineString {
             positions,
             _envelope,
@@ -94,16 +94,14 @@ impl<C: Coordinate> LineString<C> {
 
     /// Return the first coordinate of the linestring
     pub fn start_point(&self) -> Option<Point<C>> {
-        let position = self.positions.get(0)?;
+        let position = self.positions.first()?;
         Some(Point(*position))
     }
 
     /// Return the last coordinate of the linestring
     pub fn end_point(&self) -> Option<Point<C>> {
-        if self.positions.len() == 0 {
-            return None;
-        }
-        Some(Point(self.positions[self.positions.len() - 1]))
+        let position = self.positions.last()?;
+        Some(Point(*position))
     }
 }
 

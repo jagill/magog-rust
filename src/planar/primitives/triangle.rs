@@ -10,6 +10,7 @@ impl<C: Coordinate> Triangle<C> {
     }
 }
 
+// (P, P, P) -> Triangle
 impl<C: Coordinate, IC: Into<Position<C>> + Copy> From<(IC, IC, IC)> for Triangle<C> {
     fn from(positions: (IC, IC, IC)) -> Triangle<C> {
         Triangle(positions.0.into(), positions.1.into(), positions.2.into())

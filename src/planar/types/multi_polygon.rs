@@ -10,8 +10,7 @@ pub struct MultiPolygon<C: Coordinate> {
 
 impl<C: Coordinate> MultiPolygon<C> {
     pub fn new(polygons: Vec<Polygon<C>>) -> Self {
-        let envs: Vec<Envelope<C>> = polygons.iter().map(|p| p.envelope()).collect();
-        let _envelope = Envelope::from(&envs);
+        let _envelope = Envelope::of(polygons.iter());
         MultiPolygon {
             polygons,
             _envelope,

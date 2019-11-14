@@ -47,7 +47,7 @@ where
     }
 
     pub fn new(items: &Vec<impl HasEnvelope<C>>, degree: usize) -> Flatbush<C> {
-        let total_envelope = Envelope::from_envelopes(items.iter().map(|e| e.envelope()));
+        let total_envelope = Envelope::of(items.iter());
         let hilbert_square: Hilbert<C>;
         match total_envelope {
             Envelope::Empty => {
@@ -111,7 +111,7 @@ where
             let level_items = &tree[level_indices[level]..level_indices[level + 1]];
             let chunks = level_items.chunks(degree);
             let next_items: Vec<Envelope<C>> = chunks
-                .map(|items| Envelope::from_envelopes(items.iter().map(|(_, e)| *e)))
+                .map(|items| Envelope::of(items.iter().map(|(_, e)| e)))
                 .collect();
             tree.extend(next_items.into_iter().enumerate());
 

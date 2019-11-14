@@ -8,6 +8,22 @@ pub enum Envelope<C: Coordinate> {
     Bounds(Rect<C>),
 }
 
+pub trait HasEnvelope<C: Coordinate> {
+    fn envelope(&self) -> Envelope<C>;
+}
+
+impl<C: Coordinate> HasEnvelope<C> for Envelope<C> {
+    fn envelope(&self) -> Envelope<C> {
+        *self
+    }
+}
+
+impl<C: Coordinate> HasEnvelope<C> for Position<C> {
+    fn envelope(&self) -> Envelope<C> {
+        Envelope::from((*self, *self))
+    }
+}
+
 // Rect -> Envelope
 impl<C: Coordinate, IR: Into<Rect<C>>> From<IR> for Envelope<C> {
     fn from(rectish: IR) -> Self {
@@ -15,34 +31,26 @@ impl<C: Coordinate, IR: Into<Rect<C>>> From<IR> for Envelope<C> {
     }
 }
 
-// Vec<Position> -> Envelope
-impl<'a, C: Coordinate> From<&'a Vec<Position<C>>> for Envelope<C> {
-    fn from(positions: &'a Vec<Position<C>>) -> Self {
-        positions
-            .iter()
-            .fold(Envelope::Empty, |env, p| env.add_position(*p))
-    }
-}
-
-// Vec<Envelope> -> Envelope
-impl<'a, C: Coordinate> From<&'a Vec<Envelope<C>>> for Envelope<C> {
-    fn from(envelopes: &'a Vec<Envelope<C>>) -> Self {
-        envelopes
-            .iter()
-            .fold(Envelope::Empty, |env, e| env.merge(*e))
-    }
-}
-
 impl<C: Coordinate> Envelope<C> {
-    pub fn new(rect: Option<Rect<C>>) -> Envelope<C> {
+    pub fn empty() -> Self {
+        Envelope::Empty
+    }
+
+    pub fn new(rect: Option<Rect<C>>) -> Self {
         match rect {
             None => Envelope::Empty,
             Some(r) => Envelope::Bounds(r),
         }
     }
 
-    pub fn from_envelopes(envs: impl Iterator<Item = Envelope<C>>) -> Envelope<C> {
-        envs.fold(Envelope::Empty, |base, env| base.merge(env))
+    pub fn is_empty(&self) -> bool {
+        self == &Envelope::Empty
+    }
+
+    pub fn of<'a>(objs: impl Iterator<Item = &'a (impl HasEnvelope<C> + 'a)>) -> Self {
+        objs.fold(Envelope::empty(), |base, other| {
+            base.merge(other.envelope())
+        })
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
@@ -50,10 +58,6 @@ impl<C: Coordinate> Envelope<C> {
             Envelope::Empty => Ok(()),
             Envelope::Bounds(r) => r.validate(),
         }
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self == &Envelope::Empty
     }
 
     pub fn contains(&self, p: Position<C>) -> bool {
@@ -95,16 +99,6 @@ impl<C: Coordinate> Envelope<C> {
     }
 }
 
-pub trait HasEnvelope<C: Coordinate> {
-    fn envelope(&self) -> Envelope<C>;
-}
-
-impl<C: Coordinate> HasEnvelope<C> for Envelope<C> {
-    fn envelope(&self) -> Envelope<C> {
-        return *self;
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -127,7 +121,7 @@ mod tests {
 
     #[test]
     fn check_from_vec_positions() {
-        let e = Envelope::from(&vec![Position::new(0., 1.), Position::new(2., 0.)]);
+        let e = Envelope::of(vec![Position::new(0., 1.), Position::new(2., 0.)].iter());
         let min: Position<f64> = Position { x: 0., y: 0. };
         let max: Position<f64> = Position { x: 2., y: 1. };
         assert_eq!(e, Envelope::Bounds(Rect { min, max }));
@@ -135,10 +129,13 @@ mod tests {
 
     #[test]
     fn check_from_vec_envelops() {
-        let e = Envelope::from(&vec![
-            Envelope::from(((0., 1.), (2., 0.))),
-            Envelope::from(((0., 2.), (3., 0.))),
-        ]);
+        let e = Envelope::of(
+            vec![
+                Envelope::from(((0., 1.), (2., 0.))),
+                Envelope::from(((0., 2.), (3., 0.))),
+            ]
+            .iter(),
+        );
         let min: Position<f64> = Position { x: 0., y: 0. };
         let max: Position<f64> = Position { x: 3., y: 2. };
         assert_eq!(e, Envelope::Bounds(Rect { min, max }));
