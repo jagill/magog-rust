@@ -1,4 +1,4 @@
-use crate::primitives::{Coordinate, Position, PositionLocation, Rect};
+use crate::primitives::{Coordinate, Position, PositionLocation};
 use crate::relation::Intersection;
 use crate::types::{LineString, Point, Polygon};
 
@@ -34,7 +34,7 @@ pub fn intersection_linestring_point<C: Coordinate>(
 
     if linestring
         .segments_iter()
-        .filter(|&s| Rect::from(s).contains(position))
+        .filter(|&s| Envelope::from(s).contains(position))
         .any(|s| s.position_location(position) == PositionLocation::On)
     {
         Intersection::Contains
@@ -85,8 +85,8 @@ where
     // loop through all edges of the polygon
     let right_segments = ls.segments_iter().filter(|&s| {
         // We only care about segments we are on, or intersect a ray in the positive x dir.
-        let rect = Rect::from(s);
-        position.y <= rect.max.y && position.y >= rect.min.y && position.x <= rect.max.x
+        let seg_min, seg_max = Position::min_max(s.start, s.end);
+        position.y <= seg_max.y && position.y >= seg_min.y && position.x <= seg_max.x
     });
     for seg in right_segments {
         if seg.contains(position) {

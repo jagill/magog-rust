@@ -94,7 +94,6 @@ impl<C: Coordinate> MultiPoint<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::planar::primitives::Rect;
     use core::f32;
 
     #[test]
@@ -118,7 +117,7 @@ mod tests {
     #[test]
     fn check_envelope_nan() {
         let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, f32::NAN)]);
-        let env = Envelope::from(Rect::from(((0.0, 0.0), (1.0, 0.0))));
+        let env = Envelope::from(((0.0, 0.0), (1.0, 0.0)));
         assert_eq!(mp.envelope(), env);
     }
 

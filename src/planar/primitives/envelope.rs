@@ -1,4 +1,5 @@
-use crate::planar::primitives::{Position, Rect};
+use super::rect::Rect;
+use super::Position;
 use crate::Coordinate;
 
 #[derive(Copy, Clone, Debug, PartialEq)]

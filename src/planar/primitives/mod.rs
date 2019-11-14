@@ -7,7 +7,6 @@ mod triangle;
 pub use crate::planar::primitives::{
     envelope::{Envelope, HasEnvelope},
     position::{Position, SafePosition},
-    rect::Rect,
     segment::{PositionLocation, Segment, SegmentIntersection},
     triangle::Triangle,
 };
@@ -48,17 +47,8 @@ mod tests {
     }
 
     #[test]
-    fn check_rect() {
-        let r = Rect::new(Position::from((0.0, 0.1)), Position::from((1.0, 1.1)));
-        assert_eq!(r.min.x, 0.0);
-        assert_eq!(r.min.y, 0.1);
-        assert_eq!(r.max.x, 1.0);
-        assert_eq!(r.max.y, 1.1);
-    }
-
-    #[test]
     fn check_envelope() {
-        let e = Envelope::new(Some(Rect::from(((0.0, 0.1), (1.0, 1.1)))));
+        let e = Envelope::from(((0.0, 0.1), (1.0, 1.1)));
         match e {
             Envelope::Empty => panic!("Envelope should not be empty"),
             Envelope::Bounds(r) => {

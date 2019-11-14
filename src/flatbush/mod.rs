@@ -9,7 +9,7 @@ use num_traits::PrimInt;
 use itertools::iproduct;
 mod hilbert;
 
-use crate::planar::primitives::{Envelope, HasEnvelope, Position, Rect};
+use crate::planar::primitives::{Envelope, HasEnvelope, Position};
 use crate::Coordinate;
 use hilbert::Hilbert;
 
@@ -54,7 +54,7 @@ where
                 // The list of items are empty, or all items are empty.
                 return Flatbush::new_unsorted(items, degree);
             }
-            Envelope::Bounds(rect) => hilbert_square = Hilbert::new(rect),
+            Envelope::Bounds(_) => hilbert_square = Hilbert::new(total_envelope),
         }
 
         let mut entries: Vec<(u32, usize, Envelope<C>)> = items
@@ -181,7 +181,7 @@ where
      */
     pub fn find_candidates_within(&self, position: Position<C>, distance: C) -> Vec<usize> {
         let delta = Position::new(distance, distance);
-        self.find_intersection_candidates(Rect::new(position - delta, position + delta))
+        self.find_intersection_candidates(Envelope::from((position - delta, position + delta)))
     }
 
     /**
@@ -398,7 +398,7 @@ fn next_multiple<I: PrimInt>(n: I, k: I) -> I {
 
 #[cfg(test)]
 mod tests {
-    use super::{div_ceil, iproduct, next_multiple, quick_log_ceil, Envelope, Flatbush, Rect};
+    use super::{div_ceil, iproduct, next_multiple, quick_log_ceil, Envelope, Flatbush};
 
     #[test]
     fn test_quick_log_ciel() {
@@ -432,7 +432,7 @@ mod tests {
     #[test]
     fn test_empty_tree() {
         let empty = Flatbush::new_empty();
-        let query_rect = Rect::from(((0., 0.), (1., 1.)));
+        let query_rect = Envelope::from(((0., 0.), (1., 1.)));
         assert_eq!(empty.find_intersection_candidates(query_rect), vec![]);
         assert_eq!(empty.find_self_intersection_candidates(), vec![]);
     }
@@ -592,7 +592,7 @@ mod tests {
     fn test_intersection_candidates_unsorted() {
         let envelopes = get_envelopes();
         let f = Flatbush::new_unsorted(&envelopes, 16);
-        let query_rect = Rect::from(((40., 40.), (60., 60.)));
+        let query_rect = Envelope::from(((40., 40.), (60., 60.)));
 
         let brute_results = find_brute_intersections(query_rect, &envelopes);
         let mut rtree_results = f.find_intersection_candidates(query_rect);
@@ -604,7 +604,7 @@ mod tests {
     fn test_intersection_candidates_hilbert() {
         let envelopes = get_envelopes();
         let f = Flatbush::new(&envelopes, 16);
-        let query_rect = Rect::from(((40., 40.), (60., 60.)));
+        let query_rect = Envelope::from(((40., 40.), (60., 60.)));
 
         let brute_results = find_brute_intersections(query_rect, &envelopes);
         let mut rtree_results = f.find_intersection_candidates(query_rect);
@@ -674,7 +674,7 @@ mod tests {
     }
 
     fn find_brute_intersections(
-        query_rect: Rect<f32>,
+        query_rect: Envelope<f32>,
         envelopes: &Vec<Envelope<f32>>,
     ) -> Vec<usize> {
         envelopes

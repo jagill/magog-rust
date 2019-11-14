@@ -1,4 +1,4 @@
-use crate::planar::primitives::{Envelope, HasEnvelope, Position, Rect};
+use crate::planar::primitives::{Envelope, HasEnvelope, Position};
 use crate::Coordinate;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -34,10 +34,9 @@ impl<C: Coordinate, IC: Into<Position<C>>> From<(IC, IC)> for Segment<C> {
     }
 }
 
-// Segment -> Rect
-impl<C: Coordinate> From<Segment<C>> for Rect<C> {
-    fn from(seg: Segment<C>) -> Self {
-        Rect::from((seg.start, seg.end))
+impl<C: Coordinate> HasEnvelope<C> for Segment<C> {
+    fn envelope(&self) -> Envelope<C> {
+        Envelope::from((self.start, self.end))
     }
 }
 
@@ -81,7 +80,7 @@ impl<C: Coordinate> Segment<C> {
     }
 
     pub fn contains(self, p: Position<C>) -> bool {
-        Rect::from(self).contains(p) && self.position_location(p) == PositionLocation::On
+        self.envelope().contains(p) && self.position_location(p) == PositionLocation::On
     }
 
     /**
@@ -152,10 +151,10 @@ impl<C: Coordinate> Segment<C> {
      *
      */
     pub(crate) fn find_winding_number(position: Position<C>, seg: Segment<C>) -> i32 {
-        let seg_rect = Rect::from(seg);
+        let (seg_min, seg_max) = Position::min_max(seg.start, seg.end);
         let upward = seg.end.y > seg.start.y;
 
-        if position.y >= seg_rect.max.y || position.y < seg_rect.min.y {
+        if position.y >= seg_max.y || position.y < seg_min.y {
             return 0;
         }
 
@@ -166,12 +165,6 @@ impl<C: Coordinate> Segment<C> {
             (PositionLocation::Right, false) => 1,
             _ => 0,
         };
-    }
-}
-
-impl<C: Coordinate> HasEnvelope<C> for Segment<C> {
-    fn envelope(&self) -> Envelope<C> {
-        Envelope::from(*self)
     }
 }
 
@@ -244,13 +237,18 @@ mod tests {
     }
 
     #[test]
-    fn check_to_rect() {
+    fn check_envelope() {
         let s = Segment::from(((0.0, 2.0), (1.0, 3.0)));
-        let e = Rect::from(s);
-        assert_eq!(e.min.x, 0.0);
-        assert_eq!(e.min.y, 2.0);
-        assert_eq!(e.max.x, 1.0);
-        assert_eq!(e.max.y, 3.0);
+        let e = s.envelope();
+        match e {
+            Envelope::Empty => assert!(false, "Envelope should not be empty."),
+            Envelope::Bounds(r) => {
+                assert_eq!(r.min.x, 0.0);
+                assert_eq!(r.min.y, 2.0);
+                assert_eq!(r.max.x, 1.0);
+                assert_eq!(r.max.y, 3.0);
+            }
+        }
     }
 
     // Intersection tests

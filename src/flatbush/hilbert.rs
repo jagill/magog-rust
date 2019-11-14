@@ -1,8 +1,10 @@
-use crate::planar::primitives::{Position, Rect};
+use crate::planar::primitives::{Envelope, Position};
 use crate::Coordinate;
 
 pub struct Hilbert<C: Coordinate> {
-    rect: Rect<C>,
+    env: Envelope<C>,
+    x_min: C,
+    y_min: C,
     x_scale: C,
     y_scale: C,
 }
@@ -11,20 +13,32 @@ impl<C> Hilbert<C>
 where
     C: Coordinate,
 {
-    pub fn new(rect: Rect<C>) -> Self {
-        if rect.max == rect.min {
-            Hilbert {
-                rect,
+    pub fn new(env: Envelope<C>) -> Self {
+        match env {
+            Envelope::Empty => Hilbert {
+                env,
                 x_scale: C::zero(),
                 y_scale: C::zero(),
-            }
-        } else {
-            let hilbert_max = C::from((1 << 16) - 1).unwrap();
-            let delta = rect.max - rect.min;
-            Hilbert {
-                rect,
-                x_scale: hilbert_max / delta.x,
-                y_scale: hilbert_max / delta.y,
+                x_min: C::zero(),
+                y_min: C::zero(),
+            },
+            Envelope::Bounds(rect) if rect.max == rect.min => Hilbert {
+                env,
+                x_scale: C::zero(),
+                y_scale: C::zero(),
+                x_min: rect.min.x,
+                y_min: rect.min.y,
+            },
+            Envelope::Bounds(rect) => {
+                let hilbert_max = C::from((1 << 16) - 1).unwrap();
+                let delta = rect.max - rect.min;
+                Hilbert {
+                    env,
+                    x_scale: hilbert_max / delta.x,
+                    y_scale: hilbert_max / delta.y,
+                    x_min: rect.min.x,
+                    y_min: rect.min.y,
+                }
             }
         }
     }
@@ -36,7 +50,7 @@ where
      */
     pub fn safe_hilbert(&self, position: Option<Position<C>>) -> u32 {
         match position {
-            Some(p) if self.rect.contains(p) => self.hilbert(p),
+            Some(p) if self.env.contains(p) => self.hilbert(p),
             _ => u32::max_value(),
         }
     }
@@ -48,8 +62,8 @@ where
      * outside of the rectangle.  This behavior should not be relied on.
      */
     pub fn hilbert(&self, position: Position<C>) -> u32 {
-        let x = self.x_scale * (position.x - self.rect.min.x);
-        let y = self.y_scale * (position.y - self.rect.min.y);
+        let x = self.x_scale * (position.x - self.x_min);
+        let y = self.y_scale * (position.y - self.y_min);
         Self::hilbert_normalized(x.floor().to_u32().unwrap(), y.floor().to_u32().unwrap())
     }
 
@@ -126,7 +140,7 @@ mod tests {
 
     #[test]
     fn hilbert_from_position() {
-        let total_rect = Rect::from(((1., 2.), (2., 8.)));
+        let total_rect = Envelope::from(((1., 2.), (2., 8.)));
         let position = Position::new(1.25, 5.);
         let h = Hilbert::new(total_rect);
         let result = h.hilbert(position);
@@ -137,7 +151,7 @@ mod tests {
 
     #[test]
     fn hilbert_from_none_position() {
-        let total_rect = Rect::from(((1., 2.), (2., 3.)));
+        let total_rect = Envelope::from(((1., 2.), (2., 3.)));
         let position = None;
         let h = Hilbert::new(total_rect);
         let result = h.safe_hilbert(position);
@@ -146,7 +160,7 @@ mod tests {
 
     #[test]
     fn hilbert_from_out_of_bounds_position() {
-        let total_rect = Rect::from(((1., 2.), (2., 3.)));
+        let total_rect = Envelope::from(((1., 2.), (2., 3.)));
         let position = Some(Position::new(4., 4.));
         let h = Hilbert::new(total_rect);
         let result = h.safe_hilbert(position);
@@ -156,7 +170,7 @@ mod tests {
     #[test]
     fn hilbert_with_degenerate_rect() {
         let position = Position::new(1., 1.);
-        let total_rect = Rect::from((position, position));
+        let total_rect = Envelope::from((position, position));
         let h = Hilbert::new(total_rect);
         let result = h.hilbert(position);
         assert_eq!(result, 0);
@@ -164,7 +178,7 @@ mod tests {
 
     #[test]
     fn hilbert_ordering() {
-        let total_rect = Rect::from(((0., 0.), (4., 4.)));
+        let total_rect = Envelope::from(((0., 0.), (4., 4.)));
         let h = Hilbert::new(total_rect);
         let hi0 = h.hilbert(Position::new(0., 0.));
         let hi1 = h.hilbert(Position::new(1., 1.));

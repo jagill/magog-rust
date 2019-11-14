@@ -37,12 +37,6 @@ impl<C: Coordinate> From<SafePosition<C>> for Position<C> {
     }
 }
 
-impl<C: Coordinate, P: Into<Position<C>>> From<&P> for Position<C> {
-    fn from(p: &P) -> Self {
-        p.into()
-    }
-}
-
 impl<C: Coordinate> Position<C> {
     pub fn new(x: C, y: C) -> Position<C> {
         Position { x: x, y: y }

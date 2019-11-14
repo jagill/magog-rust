@@ -147,7 +147,6 @@ impl<C: Coordinate> HasEnvelope<C> for LineString<C> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::planar::primitives::Rect;
 
     use core::f32;
 
@@ -221,10 +220,7 @@ mod tests {
     #[test]
     fn check_envelope() {
         let ls = LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
-        match ls.envelope() {
-            Envelope::Empty => assert!(false, "Envelope should not be empty."),
-            Envelope::Bounds(r) => assert_eq!(r, Rect::from(((0.0, 0.0), (1.0, 1.0)))),
-        }
+        assert_eq!(ls.envelope(), Envelope::from(((0.0, 0.0), (1.0, 1.0))));
     }
 
     #[test]
