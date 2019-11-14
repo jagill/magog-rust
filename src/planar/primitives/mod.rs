@@ -1,6 +1,5 @@
 mod envelope;
 mod position;
-mod rect;
 mod segment;
 mod triangle;
 
@@ -44,19 +43,5 @@ mod tests {
                 Position::new(1.0, 0.0)
             ]
         );
-    }
-
-    #[test]
-    fn check_envelope() {
-        let e = Envelope::from(((0.0, 0.1), (1.0, 1.1)));
-        match e {
-            Envelope::Empty => panic!("Envelope should not be empty"),
-            Envelope::Bounds(r) => {
-                assert_eq!(r.min.x, 0.0);
-                assert_eq!(r.min.y, 0.1);
-                assert_eq!(r.max.x, 1.0);
-                assert_eq!(r.max.y, 1.1);
-            }
-        }
     }
 }

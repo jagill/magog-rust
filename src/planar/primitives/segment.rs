@@ -9,7 +9,7 @@ pub struct Segment<C: Coordinate> {
 
 impl<C: Coordinate> HasEnvelope<C> for Segment<C> {
     fn envelope(&self) -> Envelope<C> {
-        Envelope::from((self.start, self.end))
+        Envelope::new(self.start, self.end)
     }
 }
 
@@ -240,15 +240,13 @@ mod tests {
     fn check_envelope() {
         let s = Segment::from(((0.0, 2.0), (1.0, 3.0)));
         let e = s.envelope();
-        match e {
-            Envelope::Empty => assert!(false, "Envelope should not be empty."),
-            Envelope::Bounds(r) => {
-                assert_eq!(r.min.x, 0.0);
-                assert_eq!(r.min.y, 2.0);
-                assert_eq!(r.max.x, 1.0);
-                assert_eq!(r.max.y, 3.0);
-            }
-        }
+        assert!(!e.is_empty());
+        let min_p = e.min().unwrap();
+        let max_p = e.max().unwrap();
+        assert_eq!(min_p.x, 0.0);
+        assert_eq!(min_p.y, 2.0);
+        assert_eq!(max_p.x, 1.0);
+        assert_eq!(max_p.y, 3.0);
     }
 
     // Intersection tests

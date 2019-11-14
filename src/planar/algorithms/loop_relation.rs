@@ -133,11 +133,23 @@ fn _maybe_push_other_isxn<C: Coordinate>(
     node2: FlatbushNode<C>,
     stack: &mut Vec<(FlatbushNode<C>, FlatbushNode<C>)>,
 ) {
-    if let (Envelope::Bounds(r1), Envelope::Bounds(r2)) = (node1.envelope, node2.envelope) {
-        // right is a position that will extend r1 to the right edge of r2.
-        let right = Position::new(r2.max.x, r1.max.y);
-        if r1.add_position(right).intersects(r2) {
-            stack.push((node1, node2));
+    match (node1.envelope, node2.envelope) {
+        (Envelope::Empty, _) | (_, Envelope::Empty) => (),
+        (
+            Envelope::Bounds {
+                min: _min1,
+                max: max1,
+            },
+            Envelope::Bounds {
+                min: _min2,
+                max: max2,
+            },
+        ) => {
+            // right is a position that will extend r1 to the right edge of r2.
+            let right = Position::new(max2.x, max1.y);
+            if node1.envelope.merge(right).intersects(node2.envelope) {
+                stack.push((node1, node2));
+            }
         }
     }
 }

@@ -117,7 +117,7 @@ mod tests {
     #[test]
     fn check_envelope_nan() {
         let mp = MultiPoint::from(vec![(0.0, 0.0), (1.0, f32::NAN)]);
-        let env = Envelope::from(((0.0, 0.0), (1.0, 0.0)));
+        let env = Envelope::new((0.0, 0.0).into(), (1.0, 0.0).into());
         assert_eq!(mp.envelope(), env);
     }
 

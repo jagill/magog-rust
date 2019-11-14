@@ -42,19 +42,18 @@ where
         Flatbush {
             degree: FLATBUSH_DEFAULT_DEGREE,
             level_indices: vec![0],
-            tree: vec![(0, Envelope::Empty)],
+            tree: vec![(0, Envelope::empty())],
         }
     }
 
     pub fn new(items: &Vec<impl HasEnvelope<C>>, degree: usize) -> Flatbush<C> {
         let total_envelope = Envelope::of(items.iter());
         let hilbert_square: Hilbert<C>;
-        match total_envelope {
-            Envelope::Empty => {
-                // The list of items are empty, or all items are empty.
-                return Flatbush::new_unsorted(items, degree);
-            }
-            Envelope::Bounds(_) => hilbert_square = Hilbert::new(total_envelope),
+        if total_envelope.is_empty() {
+            // The list of items are empty, or all items are empty.
+            return Flatbush::new_unsorted(items, degree);
+        } else {
+            hilbert_square = Hilbert::new(total_envelope);
         }
 
         let mut entries: Vec<(u32, usize, Envelope<C>)> = items
@@ -104,7 +103,7 @@ where
             // Pad out the remaining spaces with empties that will never match.
             let mut dummy_index = level_size;
             while tree.len() < level_indices[level + 1] {
-                tree.push((dummy_index, Envelope::Empty));
+                tree.push((dummy_index, Envelope::empty()));
                 dummy_index += 1;
             }
 
@@ -181,7 +180,7 @@ where
      */
     pub fn find_candidates_within(&self, position: Position<C>, distance: C) -> Vec<usize> {
         let delta = Position::new(distance, distance);
-        self.find_intersection_candidates(Envelope::from((position - delta, position + delta)))
+        self.find_intersection_candidates(Envelope::new(position - delta, position + delta))
     }
 
     /**
@@ -432,7 +431,7 @@ mod tests {
     #[test]
     fn test_empty_tree() {
         let empty = Flatbush::new_empty();
-        let query_rect = Envelope::from(((0., 0.), (1., 1.)));
+        let query_rect = Envelope::new((0., 0.).into(), (1., 1.).into());
         assert_eq!(empty.find_intersection_candidates(query_rect), vec![]);
         assert_eq!(empty.find_self_intersection_candidates(), vec![]);
     }
@@ -440,14 +439,14 @@ mod tests {
     #[test]
     fn test_build_tree_unsorted() {
         let degree = 4;
-        let e0 = Envelope::from(((7.0f32, 44.), (8., 48.)));
-        let e1 = Envelope::from(((25., 48.), (35., 55.)));
-        let e2 = Envelope::from(((98., 46.), (99., 56.)));
-        let e3 = Envelope::from(((58., 65.), (73., 79.)));
-        let e4 = Envelope::from(((43., 40.), (44., 45.)));
-        let e5 = Envelope::from(((97., 87.), (100., 91.)));
-        let e6 = Envelope::from(((92., 46.), (108., 57.)));
-        let e7 = Envelope::from(((7.1, 48.), (10., 56.)));
+        let e0 = Envelope::new((7.0f32, 44.).into(), (8., 48.).into());
+        let e1 = Envelope::new((25., 48.).into(), (35., 55.).into());
+        let e2 = Envelope::new((98., 46.).into(), (99., 56.).into());
+        let e3 = Envelope::new((58., 65.).into(), (73., 79.).into());
+        let e4 = Envelope::new((43., 40.).into(), (44., 45.).into());
+        let e5 = Envelope::new((97., 87.).into(), (100., 91.).into());
+        let e6 = Envelope::new((92., 46.).into(), (108., 57.).into());
+        let e7 = Envelope::new((7.1, 48.).into(), (10., 56.).into());
         let envs = vec![e0, e1, e2, e3, e4, e5, e6, e7];
 
         let flatbush = Flatbush::new_unsorted(&envs, degree);
@@ -463,15 +462,15 @@ mod tests {
         assert_eq!(
             flatbush.tree[8..12],
             vec![
-                (0, Envelope::from(((7.0, 44.), (99., 79.)))),
-                (1, Envelope::from(((7.1, 40.), (108., 91.)))),
-                (2, Envelope::Empty),
-                (3, Envelope::Empty),
+                (0, Envelope::new((7.0, 44.).into(), (99., 79.).into())),
+                (1, Envelope::new((7.1, 40.).into(), (108., 91.).into())),
+                (2, Envelope::empty()),
+                (3, Envelope::empty()),
             ][..]
         );
         assert_eq!(
             flatbush.tree[12],
-            (0, Envelope::from(((7., 40.,), (108., 91.))))
+            (0, Envelope::new((7., 40.).into(), (108., 91.).into()))
         );
     }
 
@@ -584,7 +583,7 @@ mod tests {
         .collect();
         rects
             .chunks(4)
-            .map(|r| Envelope::from(((r[0], r[1]), (r[2], r[3]))))
+            .map(|r| Envelope::new((r[0], r[1]).into(), (r[2], r[3]).into()))
             .collect()
     }
 
@@ -592,7 +591,7 @@ mod tests {
     fn test_intersection_candidates_unsorted() {
         let envelopes = get_envelopes();
         let f = Flatbush::new_unsorted(&envelopes, 16);
-        let query_rect = Envelope::from(((40., 40.), (60., 60.)));
+        let query_rect = Envelope::new((40., 40.).into(), (60., 60.).into());
 
         let brute_results = find_brute_intersections(query_rect, &envelopes);
         let mut rtree_results = f.find_intersection_candidates(query_rect);
@@ -604,7 +603,7 @@ mod tests {
     fn test_intersection_candidates_hilbert() {
         let envelopes = get_envelopes();
         let f = Flatbush::new(&envelopes, 16);
-        let query_rect = Envelope::from(((40., 40.), (60., 60.)));
+        let query_rect = Envelope::new((40., 40.).into(), (60., 60.).into());
 
         let brute_results = find_brute_intersections(query_rect, &envelopes);
         let mut rtree_results = f.find_intersection_candidates(query_rect);
@@ -680,7 +679,7 @@ mod tests {
         envelopes
             .iter()
             .enumerate()
-            .filter(|(_, e)| e.intersects(query_rect.into()))
+            .filter(|(_, e)| e.intersects(query_rect))
             .map(|(i, _)| i)
             .collect()
     }

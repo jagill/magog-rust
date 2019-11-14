@@ -205,7 +205,7 @@ mod tests {
         let p = (0.0, 1.0);
         assert_eq!(
             Geometry::from(Point::from(p)).envelope(),
-            Envelope::from((p, p))
+            Envelope::new(p.into(), p.into())
         );
     }
 

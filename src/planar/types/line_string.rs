@@ -218,7 +218,10 @@ mod tests {
     #[test]
     fn check_envelope() {
         let ls = LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (1.0, 0.0), (0.0, 0.0)]);
-        assert_eq!(ls.envelope(), Envelope::from(((0.0, 0.0), (1.0, 1.0))));
+        assert_eq!(
+            ls.envelope(),
+            Envelope::new((0.0, 0.0).into(), (1.0, 1.0).into())
+        );
     }
 
     #[test]

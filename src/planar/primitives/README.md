@@ -11,8 +11,7 @@ The primitive types are:
   * Segment: A finite line between two points, start and end.  Start and end may
     be identical.
   * Triangle: Three points.  They may be colinear.
-  * Rect: A bounding box with min/max-x/y values.  This will allow many
-    algorithms to short-circuit quickly.
-  * Envelope: Either empty (None), or a Rect. A None Envelope comes from an
-    empty geometry, and should be viewed as the empty geometry wrt intersections,
-    containment, etc.
+  * Envelope: Either Empty or a Bounds with min/max-x/y values. This
+    will allow many algorithms to short-circuit quickly. Rect. An Empty
+    Envelope comes from an empty geometry, and should be viewed as the empty
+    geometry wrt intersections, containment, etc.

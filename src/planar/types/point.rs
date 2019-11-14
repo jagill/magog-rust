@@ -7,7 +7,7 @@ pub struct Point<C: Coordinate>(pub Position<C>);
 
 impl<C: Coordinate> HasEnvelope<C> for Point<C> {
     fn envelope(&self) -> Envelope<C> {
-        Envelope::from((self.0, self.0))
+        Envelope::new(self.0, self.0)
     }
 }
 

@@ -52,6 +52,16 @@ impl<C: Coordinate> Position<C> {
         c1.x * c2.x + c1.y * c2.y
     }
 
+    /// Return a position with the minimum of the x and y coordinates.
+    pub fn min(&self, other: Position<C>) -> Position<C> {
+        Position::new(self.x.min(other.x), self.y.min(other.y))
+    }
+
+    /// Return a position with the maximum of the x and y coordinates.
+    pub fn max(&self, other: Position<C>) -> Position<C> {
+        Position::new(self.x.max(other.x), self.y.max(other.y))
+    }
+
     /**
      * Given p1, p2, return p_min and p_max.
      *
