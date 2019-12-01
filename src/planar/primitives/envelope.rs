@@ -86,7 +86,7 @@ impl<C: Coordinate> Envelope<C> {
                     min: min2,
                     max: max2,
                 },
-            ) => min1.x <= min2.x && max2.x <= max1.x && min1.y <= min2.y && max2.y <= max2.y,
+            ) => min1.x <= min2.x && max2.x <= max1.x && min1.y <= min2.y && max2.y <= max1.y,
         }
     }
 
