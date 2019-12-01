@@ -5,7 +5,7 @@ use crate::Coordinate;
 
 impl<C: Coordinate> MultiLineString<C> {
     pub fn validate(&self) -> Result<(), &'static str> {
-        if self.line_strings.len() == 0 {
+        if self.line_strings.is_empty() {
             // Empty multilinestrings are valid empty geometries.
             return Ok(());
         }

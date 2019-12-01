@@ -46,8 +46,8 @@ impl<C: Coordinate> Segment<C> {
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
-        &self.start.validate()?;
-        &self.end.validate()?;
+        self.start.validate()?;
+        self.end.validate()?;
         Ok(())
     }
 
@@ -158,17 +158,18 @@ impl<C: Coordinate> Segment<C> {
             return 0;
         }
 
-        return match (seg.position_location(position), upward) {
+        match (seg.position_location(position), upward) {
             // have a valid up intersect
             (PositionLocation::Left, true) => -1,
             // have a valid down intersect
             (PositionLocation::Right, false) => 1,
             _ => 0,
-        };
+        }
     }
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 

@@ -9,7 +9,7 @@ pub struct Segment<C: Coordinate> {
 
 impl<C: Coordinate> HasEnvelope<C> for Segment<C> {
     fn envelope(&self) -> Envelope<C> {
-        return Envelope::new(self.start, self.end);
+        Envelope::new(self.start, self.end)
     }
 }
 
@@ -29,8 +29,8 @@ impl<C: Coordinate> Segment<C> {
     }
 
     pub fn validate(&self) -> Result<(), &'static str> {
-        &self.start.validate()?;
-        &self.end.validate()?;
+        self.start.validate()?;
+        self.end.validate()?;
         Ok(())
     }
 

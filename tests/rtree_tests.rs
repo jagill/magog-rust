@@ -33,7 +33,7 @@ fn test_octagons() {
     let point_w: Point<f32> = Point::from((20.0, 20.0));
     let point_z: Point<f32> = Point::from((6.0, 6.0));
 
-    let point_rtree = Flatbush::new(&vec![point_x, point_y, point_z, point_w], 8);
+    let point_rtree = Flatbush::new(&[point_x, point_y, point_z, point_w], 8);
     let mut candidates_a = point_rtree.find_intersection_candidates(octagon_a.envelope());
     candidates_a.sort();
     assert_eq!(vec![0, 1], candidates_a);

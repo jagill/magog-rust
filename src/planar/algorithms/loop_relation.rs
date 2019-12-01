@@ -48,8 +48,8 @@ pub fn find_loop_loop_relation<C: Coordinate>(
         return LoopLoopRelation::Separate;
     }
 
-    let segments_1 = loop_1.segments_iter().collect();
-    let segments_2 = loop_2.segments_iter().collect();
+    let segments_1: Vec<Segment<C>> = loop_1.segments_iter().collect();
+    let segments_2: Vec<Segment<C>> = loop_2.segments_iter().collect();
     let rtree_1 = Flatbush::new_unsorted(&segments_1, FLATBUSH_DEFAULT_DEGREE);
     let rtree_2 = Flatbush::new_unsorted(&segments_2, FLATBUSH_DEFAULT_DEGREE);
 

@@ -56,6 +56,7 @@ impl<C: Coordinate> Point<C> {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
     use core::f32;

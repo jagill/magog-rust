@@ -156,6 +156,7 @@ impl<C: Coordinate> Envelope<C> {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 

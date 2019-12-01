@@ -93,7 +93,7 @@ mod tests {
         let geom = get_single_geom(wkt_str);
         let polygon = geom.as_polygon().unwrap();
         let exterior_ls = LineString::from(exterior);
-        let interiors_ls = interiors.into_iter().map(|i| LineString::from(i)).collect();
+        let interiors_ls = interiors.into_iter().map(LineString::from).collect();
         assert_eq!(polygon, Polygon::new(exterior_ls, interiors_ls));
     }
 

@@ -46,7 +46,7 @@ where
         }
     }
 
-    pub fn new(items: &Vec<impl HasEnvelope<C>>, degree: usize) -> Flatbush<C> {
+    pub fn new(items: &[impl HasEnvelope<C>], degree: usize) -> Flatbush<C> {
         let total_envelope = Envelope::of(items.iter());
         let hilbert_square: Hilbert<C>;
         if total_envelope.is_empty() {
@@ -71,7 +71,7 @@ where
         )
     }
 
-    pub fn new_unsorted(items: &Vec<impl HasEnvelope<C>>, degree: usize) -> Flatbush<C> {
+    pub fn new_unsorted(items: &[impl HasEnvelope<C>], degree: usize) -> Flatbush<C> {
         let entries = items.iter().map(|e| e.envelope()).enumerate().collect();
         Flatbush::_new_unsorted(entries, degree)
     }
@@ -82,7 +82,7 @@ where
         }
         let degree_exp = degree.trailing_zeros();
 
-        if entries.len() == 0 {
+        if entries.is_empty() {
             return Flatbush::new_empty();
         }
 
@@ -322,7 +322,7 @@ where
         let tree_index = self.tree.len() - 1;
         FlatbushNode {
             level: self.level_indices.len() - 1,
-            tree_index: tree_index,
+            tree_index,
             sibling_index: self.tree[tree_index].0,
             envelope: self.tree[tree_index].1,
         }
@@ -335,7 +335,7 @@ where
         child_index_range
             .map(move |tree_index| FlatbushNode {
                 level: child_level,
-                tree_index: tree_index,
+                tree_index,
                 sibling_index: self.tree[tree_index].0,
                 envelope: self.tree[tree_index].1,
             })
@@ -397,7 +397,7 @@ fn next_multiple<I: PrimInt>(n: I, k: I) -> I {
 
 #[cfg(test)]
 mod tests {
-    use super::{div_ceil, iproduct, next_multiple, quick_log_ceil, Envelope, Flatbush};
+    use super::*;
 
     #[test]
     fn test_quick_log_ciel() {
@@ -674,7 +674,7 @@ mod tests {
 
     fn find_brute_intersections(
         query_rect: Envelope<f32>,
-        envelopes: &Vec<Envelope<f32>>,
+        envelopes: &[Envelope<f32>],
     ) -> Vec<usize> {
         envelopes
             .iter()
@@ -684,26 +684,21 @@ mod tests {
             .collect()
     }
 
-    fn find_brute_self_intersections(envelopes: &Vec<Envelope<f32>>) -> Vec<(usize, usize)> {
-        type EnumEnv = (usize, Envelope<f32>);
-        let enum_envelopes: Vec<EnumEnv> = envelopes.clone().into_iter().enumerate().collect();
-        let env_prod: Vec<(EnumEnv, EnumEnv)> =
-            iproduct!(enum_envelopes.clone(), enum_envelopes).collect();
-        env_prod
-            .into_iter()
+    fn find_brute_self_intersections(envelopes: &[Envelope<f32>]) -> Vec<(usize, usize)> {
+        iproduct!(envelopes.iter().enumerate(), envelopes.iter().enumerate())
             .filter(|((i1, _), (i2, _))| i1 < i2)
-            .filter(|((_, e1), (_, e2))| e1.intersects(*e2))
+            .filter(|((_, &e1), (_, &e2))| e1.intersects(e2))
             .map(|((i1, _), (i2, _))| (i1, i2))
             .collect()
     }
 
     fn find_brute_cross_intersections(
-        envelopes1: &Vec<Envelope<f32>>,
-        envelopes2: &Vec<Envelope<f32>>,
+        envelopes1: &[Envelope<f32>],
+        envelopes2: &[Envelope<f32>],
     ) -> Vec<(usize, usize)> {
         type EnumEnv = (usize, Envelope<f32>);
-        let envelopes1: Vec<EnumEnv> = envelopes1.clone().into_iter().enumerate().collect();
-        let envelopes2: Vec<EnumEnv> = envelopes2.clone().into_iter().enumerate().collect();
+        let envelopes1: Vec<EnumEnv> = envelopes1.iter().map(HasEnvelope::envelope).enumerate().collect();
+        let envelopes2: Vec<EnumEnv> = envelopes2.iter().map(HasEnvelope::envelope).enumerate().collect();
         iproduct!(envelopes1, envelopes2)
             .filter(|((_, e1), (_, e2))| e1.intersects(*e2))
             .map(|((i1, _), (i2, _))| (i1, i2))

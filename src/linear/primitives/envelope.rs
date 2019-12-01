@@ -13,13 +13,13 @@ pub trait HasEnvelope<C: Coordinate> {
 
 impl<C: Coordinate> HasEnvelope<C> for Envelope<C> {
     fn envelope(&self) -> Envelope<C> {
-        return *self;
+        *self
     }
 }
 
 impl<C: Coordinate> HasEnvelope<C> for Position<C> {
     fn envelope(&self) -> Envelope<C> {
-        return Envelope::new(*self, *self);
+        Envelope::new(*self, *self)
     }
 }
 
@@ -142,6 +142,7 @@ impl<C: Coordinate> Envelope<C> {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
     use core::f32;
@@ -176,14 +177,14 @@ mod tests {
         let p = Position::new(2.);
         let env2 = env1.merge(p);
         match env1 {
-            Envelope::Empty => assert!(false),
+            Envelope::Empty => panic!(),
             Envelope::Bounds { min, max } => {
                 assert_eq!(min.x, 0.0);
                 assert_eq!(max.x, 1.0);
             }
         }
         match env2 {
-            Envelope::Empty => assert!(false),
+            Envelope::Empty => panic!(),
             Envelope::Bounds { min, max } => {
                 assert_eq!(min.x, 0.0);
                 assert_eq!(max.x, 2.0);
@@ -197,7 +198,7 @@ mod tests {
         let p = Position::new(2.);
         env1.expand(p);
         match env1 {
-            Envelope::Empty => assert!(false),
+            Envelope::Empty => panic!(),
             Envelope::Bounds { min, max } => {
                 assert_eq!(min.x, 0.0);
                 assert_eq!(max.x, 2.0);

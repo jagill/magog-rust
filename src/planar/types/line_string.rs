@@ -59,7 +59,7 @@ impl<C: Coordinate> LineString<C> {
     }
 
     pub fn build_rtree(&self) -> Flatbush<C> {
-        let segments = self.segments_iter().collect();
+        let segments: Vec<Segment<C>> = self.segments_iter().collect();
         Flatbush::new_unsorted(&segments, FLATBUSH_DEFAULT_DEGREE)
     }
 }
@@ -81,7 +81,7 @@ impl<C: Coordinate> LineString<C> {
         if self.positions.len() < 4 {
             return false;
         }
-        return self.positions[0] == self.positions[self.positions.len() - 1];
+        self.positions[0] == self.positions[self.positions.len() - 1]
     }
 
     pub fn is_ring(&self) -> bool {

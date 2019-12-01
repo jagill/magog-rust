@@ -39,7 +39,7 @@ impl<C: Coordinate> From<SafePosition<C>> for Position<C> {
 
 impl<C: Coordinate> Position<C> {
     pub fn new(x: C, y: C) -> Position<C> {
-        Position { x: x, y: y }
+        Position { x, y }
     }
 
     /// Cross product of the vector c1 x c2
@@ -132,6 +132,7 @@ impl<C: Coordinate> Div<C> for Position<C> {
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 
@@ -139,7 +140,7 @@ mod tests {
     fn check_basic_pos_f32() {
         let x: f32 = 1.;
         let y: f32 = 2.;
-        let p = Position { x: x, y: y };
+        let p = Position { x, y };
         assert_eq!(p.x, x);
         assert_eq!(p.y, y);
     }
@@ -148,7 +149,7 @@ mod tests {
     fn check_basic_pos_f64() {
         let x: f64 = 1.;
         let y: f64 = 2.;
-        let p = Position { x: x, y: y };
+        let p = Position { x, y };
         assert_eq!(p.x, x);
         assert_eq!(p.y, y);
     }

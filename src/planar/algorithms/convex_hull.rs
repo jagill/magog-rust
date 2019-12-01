@@ -21,13 +21,13 @@ use std::collections::VecDeque;
 pub(crate) fn find_convex_hull_of_simple_loop<C: Coordinate>(
     aloop: &LineString<C>,
 ) -> LineString<C> {
-    let mut points = aloop.positions.iter().copied();
+    let mut positions = aloop.positions.iter().copied();
     let mut deque = VecDeque::new();
 
-    points.next(); // Drop first point; it's also the last so we'll get to it.
-    let a = points.next().unwrap();
-    let b = points.next().unwrap();
-    let c = points.next().unwrap();
+    positions.next(); // Drop first point; it's also the last so we'll get to it.
+    let a = positions.next().unwrap();
+    let b = positions.next().unwrap();
+    let c = positions.next().unwrap();
     deque.push_front(c);
     match _triple_location(a, b, c) {
         PositionLocation::Right => {
@@ -40,7 +40,7 @@ pub(crate) fn find_convex_hull_of_simple_loop<C: Coordinate>(
         }
     }
     deque.push_back(c);
-    while let Some(pos) = points.next() {
+    for pos in positions {
         if !(_triple_location(pos, deque[0], deque[1]) == PositionLocation::Left
             || _triple_location(deque[deque.len() - 2], deque[deque.len() - 1], pos)
                 == PositionLocation::Left)

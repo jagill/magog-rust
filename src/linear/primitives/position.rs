@@ -24,7 +24,7 @@ impl<C: Coordinate> From<SafePosition<C>> for Position<C> {
 
 impl<C: Coordinate> Position<C> {
     pub fn new(x: C) -> Self {
-        Position { x: x }
+        Position { x }
     }
 
     pub fn min(&self, other: Self) -> Self {

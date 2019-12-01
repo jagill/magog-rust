@@ -72,6 +72,7 @@ where
      * Ported from C++ https://github.com/rawrunprotected/hilbert_curves (public domain)
      */
     #[allow(non_snake_case)]
+    #[allow(clippy::many_single_char_names)]
     pub fn hilbert_normalized(x: u32, y: u32) -> u32 {
         let mut a = x ^ y;
         let mut b = 0xFFFF ^ a;
@@ -114,17 +115,17 @@ where
         let mut i0 = x ^ y;
         let mut i1 = b | (0xFFFF ^ (i0 | a));
 
-        i0 = (i0 | (i0 << 8)) & 0x00FF00FF;
-        i0 = (i0 | (i0 << 4)) & 0x0F0F0F0F;
-        i0 = (i0 | (i0 << 2)) & 0x33333333;
-        i0 = (i0 | (i0 << 1)) & 0x55555555;
+        i0 = (i0 | (i0 << 8)) & 0x00FF_00FF;
+        i0 = (i0 | (i0 << 4)) & 0x0F0F_0F0F;
+        i0 = (i0 | (i0 << 2)) & 0x3333_3333;
+        i0 = (i0 | (i0 << 1)) & 0x5555_5555;
 
-        i1 = (i1 | (i1 << 8)) & 0x00FF00FF;
-        i1 = (i1 | (i1 << 4)) & 0x0F0F0F0F;
-        i1 = (i1 | (i1 << 2)) & 0x33333333;
-        i1 = (i1 | (i1 << 1)) & 0x55555555;
+        i1 = (i1 | (i1 << 8)) & 0x00FF_00FF;
+        i1 = (i1 | (i1 << 4)) & 0x0F0F_0F0F;
+        i1 = (i1 | (i1 << 2)) & 0x3333_3333;
+        i1 = (i1 | (i1 << 1)) & 0x5555_5555;
 
-        return ((i1 << 1) | i0) >> 0;
+        (i1 << 1) | i0
     }
 }
 
@@ -135,7 +136,7 @@ mod tests {
     #[test]
     fn normalized() {
         let h = Hilbert::<f32>::hilbert_normalized(12345, 67890);
-        assert_eq!(h, 99289669);
+        assert_eq!(h, 99_289_669);
     }
 
     #[test]
@@ -146,7 +147,7 @@ mod tests {
         let result = h.hilbert(position);
         // x = floor(0.25 * 65535) y = floor(0.5 * 65535)
         // or hilbert_normalized(16383, 32767)
-        assert_eq!(result, 805306368);
+        assert_eq!(result, 805_306_368);
     }
 
     #[test]
