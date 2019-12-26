@@ -125,6 +125,16 @@ impl<C: Coordinate> Envelope<C> {
         }
     }
 
+    pub fn buffer(&self, distance: C) -> Envelope<C> {
+        match *self {
+            Envelope::Empty => *self,
+            Envelope::Bounds { min, max } => Envelope::Bounds {
+                min: min - (distance, distance).into(),
+                max: max + (distance, distance).into(),
+            },
+        }
+    }
+
     pub fn expand(&mut self, other: impl HasEnvelope<C>) {
         match (&self, other.envelope()) {
             (_, Envelope::Empty) => (),
