@@ -397,7 +397,9 @@ fn next_multiple<I: PrimInt>(n: I, k: I) -> I {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{div_ceil, iproduct, next_multiple, quick_log_ceil, Envelope, Flatbush, Rect};
+    use std::fs::File;
+    use std::io::Write;
 
     #[test]
     fn test_quick_log_ciel() {
@@ -697,11 +699,49 @@ mod tests {
         envelopes2: &[Envelope<f32>],
     ) -> Vec<(usize, usize)> {
         type EnumEnv = (usize, Envelope<f32>);
-        let envelopes1: Vec<EnumEnv> = envelopes1.iter().map(HasEnvelope::envelope).enumerate().collect();
-        let envelopes2: Vec<EnumEnv> = envelopes2.iter().map(HasEnvelope::envelope).enumerate().collect();
+        let envelopes1: Vec<EnumEnv> = envelopes1
+            .iter()
+            .map(HasEnvelope::envelope)
+            .enumerate()
+            .collect();
+        let envelopes2: Vec<EnumEnv> = envelopes2
+            .iter()
+            .map(HasEnvelope::envelope)
+            .enumerate()
+            .collect();
         iproduct!(envelopes1, envelopes2)
             .filter(|((_, e1), (_, e2))| e1.intersects(*e2))
             .map(|((i1, _), (i2, _))| (i1, i2))
             .collect()
+    }
+
+    #[test]
+    fn write_tree() {
+        let envelopes = get_envelopes();
+        let flatbush = Flatbush::new(&envelopes, 8);
+        let root_level = flatbush.level_indices.len() - 1;
+        let mut f = File::create("flatbush.csv").unwrap();
+        write!(&mut f, "level,x_min,y_min,x_max,y_max\n").unwrap();
+        for level in 0..=root_level {
+            let start = flatbush.level_indices[level];
+            let end = if level == root_level {
+                start + 1
+            } else {
+                flatbush.level_indices[level + 1]
+            };
+            for i in start..end {
+                let env = flatbush.tree[i].1;
+                match env.rect {
+                    None => break,
+                    Some(r) => write!(
+                        &mut f,
+                        "{},{},{},{},{}\n",
+                        level, r.min.x, r.min.y, r.max.x, r.max.y
+                    )
+                    .unwrap(),
+                };
+            }
+            f.flush().unwrap();
+        }
     }
 }
